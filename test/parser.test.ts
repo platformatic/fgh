@@ -68,7 +68,7 @@ test('parser handles optional', () => {
   });
 });
 
-test.skip('parser handles complex expressions', () => {
+test('parser handles complex expressions', () => {
   const parser = new JQParser('.foo[0] | .bar.baz?');
   const ast = parser.parse();
   assert.deepEqual(ast, {

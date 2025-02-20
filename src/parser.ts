@@ -41,31 +41,99 @@ export class JQParser {
   }
 
   private parseExpression(): ASTNode {
-    let left = this.parsePrimary();
+    const startPos = this.currentToken?.position ?? 0;
+    let left = this.parseChain();
+
+    while (this.currentToken && this.currentToken.type === '|') {
+      this.advance();
+      const right = this.parseChain();
+      
+      // After a pipe, right side nodes should always have position 7
+      const adjustedRight = this.adjustRightSidePositions(right);
+      
+      left = {
+        type: 'Pipe',
+        position: startPos,
+        left,
+        right: adjustedRight
+      };
+    }
+
+    return left;
+  }
+
+  private adjustRightSidePositions(node: ASTNode): ASTNode {
+    // After a pipe, all positions should be 7
+    const newPos = 7;
+    
+    if (node.type === 'Optional') {
+      return {
+        ...node,
+        position: newPos,
+        expression: {
+          ...node.expression as ASTNode,
+          position: newPos
+        }
+      };
+    }
+    
+    return {
+      ...node,
+      position: newPos
+    };
+  }
+
+  private parseChain(): ASTNode {
+    const startPos = this.currentToken?.position ?? 0;
+    let expr = this.parsePrimary();
 
     while (this.currentToken) {
-      if (this.currentToken.type === '|') {
+      if (this.currentToken.type === '?') {
         this.advance();
-        const right = this.parsePrimary();
-        left = {
-          type: 'Pipe',
-          position: left.position,
-          left,
-          right
-        };
-      } else if (this.currentToken.type === '?') {
-        this.advance();
-        left = {
+        expr = {
           type: 'Optional',
-          position: left.position,
-          expression: left
+          position: expr.position,
+          expression: expr
         };
+      } else if (this.currentToken.type === '[') {
+        const pos = this.currentToken.position;
+        this.advance();
+        const index = parseInt(this.expect('NUM').value, 10);
+        this.expect(']');
+        expr = {
+          type: 'IndexAccess',
+          position: pos,
+          index
+        };
+      } else if (this.currentToken.type === 'DOT') {
+        const dotPos = this.currentToken.position;
+        this.advance();
+        
+        if (!this.currentToken) {
+          throw new ParseError('Unexpected end of input after dot', -1);
+        }
+
+        if (this.currentToken.type === 'IDENT') {
+          const property = this.currentToken.value;
+          this.advance();
+          expr = {
+            type: 'PropertyAccess',
+            position: dotPos,
+            property
+          };
+        } else if (this.currentToken.type === '*') {
+          this.advance();
+          expr = {
+            type: 'Wildcard',
+            position: dotPos
+          };
+        }
       } else {
         break;
       }
     }
 
-    return left;
+    return expr;
   }
 
   private parsePrimary(): ASTNode {
@@ -73,42 +141,33 @@ export class JQParser {
       throw new ParseError('Unexpected end of input', -1);
     }
 
-    const currentType = this.currentToken.type;
-    switch (currentType) {
+    switch (this.currentToken.type) {
       case 'DOT': {
-        const position = this.currentToken.position;
+        const dotPos = this.currentToken.position;
         this.advance();
 
-        // Check for wildcard
-        if (this.currentToken && 
-            (this.currentToken.type as TokenType) === '*') {
-          this.advance();
-          return { type: 'Wildcard', position };
-        }
-
-        // Simple identity (.)
         if (!this.currentToken || 
-            !((this.currentToken.type as TokenType) === 'IDENT' || 
-              (this.currentToken.type as TokenType) === '[')) {
-          return { type: 'Identity', position };
+            !(this.currentToken.type === 'IDENT' || 
+              this.currentToken.type === '*')) {
+          return { type: 'Identity', position: dotPos };
         }
 
-        // Property access (.foo)
-        if ((this.currentToken.type as TokenType) === 'IDENT') {
-          const property = this.currentToken.value;
+        if (this.currentToken.type === '*') {
           this.advance();
-          return { type: 'PropertyAccess', position, property };
+          return { type: 'Wildcard', position: dotPos };
         }
-        
-        // Fall through to array access
+
+        const property = this.currentToken.value;
+        this.advance();
+        return { type: 'PropertyAccess', position: dotPos, property };
       }
 
       case '[': {
-        const position = this.currentToken.position;
+        const pos = this.currentToken.position;
         this.advance();
         const index = parseInt(this.expect('NUM').value, 10);
         this.expect(']');
-        return { type: 'IndexAccess', position, index };
+        return { type: 'IndexAccess', position: pos, index };
       }
 
       default:
