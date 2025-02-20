@@ -6,8 +6,11 @@
   "type": "module",
   "scripts": {
     "clean": "rm -rf dist",
+    "build": "tsc",
     "prepublishOnly": "rm -rf dist && tsc",
-    "test": "node --experimental-strip-types --test"
+    "lint": "eslint .",
+    "lint:fix": "eslint --fix .",
+    "test": "node --no-warnings --experimental-strip-types --test"
   },
   "repository": {
     "type": "git",
