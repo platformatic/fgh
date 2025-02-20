@@ -58,7 +58,7 @@ export class JQLexer implements Lexer {
   private skipWhitespace(): void {
     while (
       this.hasMoreTokens() &&
-      /\s/.test(this.input[this.position])
+      this.isWhitespace(this.input[this.position])
     ) {
       this.position++;
     }
@@ -94,15 +94,19 @@ export class JQLexer implements Lexer {
     return { type: 'IDENT', value, position: startPos };
   }
 
-  private isDigit(char: string): boolean {
-    return /[0-9]/.test(char);
+  private isWhitespace(char: string | undefined): boolean {
+    return char !== undefined && /\s/.test(char);
   }
 
-  private isIdentifierStart(char: string): boolean {
-    return /[a-zA-Z_]/.test(char);
+  private isDigit(char: string | undefined): boolean {
+    return char !== undefined && /[0-9]/.test(char);
   }
 
-  private isIdentifierPart(char: string): boolean {
-    return /[a-zA-Z0-9_]/.test(char);
+  private isIdentifierStart(char: string | undefined): boolean {
+    return char !== undefined && /[a-zA-Z_]/.test(char);
+  }
+
+  private isIdentifierPart(char: string | undefined): boolean {
+    return char !== undefined && /[a-zA-Z0-9_]/.test(char);
   }
 }

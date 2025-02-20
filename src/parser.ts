@@ -73,26 +73,28 @@ export class JQParser {
       throw new ParseError('Unexpected end of input', -1);
     }
 
-    switch (this.currentToken.type) {
+    const currentType = this.currentToken.type;
+    switch (currentType) {
       case 'DOT': {
         const position = this.currentToken.position;
         this.advance();
 
-        // .* for wildcard
-        if (this.currentToken?.type === '*') {
+        // Check for wildcard
+        if (this.currentToken && 
+            (this.currentToken.type as TokenType) === '*') {
           this.advance();
           return { type: 'Wildcard', position };
         }
 
         // Simple identity (.)
         if (!this.currentToken || 
-            (this.currentToken.type !== 'IDENT' && 
-             this.currentToken.type !== '[')) {
+            !((this.currentToken.type as TokenType) === 'IDENT' || 
+              (this.currentToken.type as TokenType) === '[')) {
           return { type: 'Identity', position };
         }
 
         // Property access (.foo)
-        if (this.currentToken.type === 'IDENT') {
+        if ((this.currentToken.type as TokenType) === 'IDENT') {
           const property = this.currentToken.value;
           this.advance();
           return { type: 'PropertyAccess', position, property };

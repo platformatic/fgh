@@ -70,10 +70,13 @@ export class JQCodeGenerator implements CodeGenerator {
         []))`;
   }
 
+  private generateSequence(node: SequenceNode): string {
+    return `[${node.expressions.map(expr => this.generateNode(expr as ASTNode)).join(', ')}]`;
+  }
+
   private generatePipe(node: PipeNode): string {
-    const left = this.generateNode(node.left);
-    // Create a new scope for the right side of the pipe
-    const right = this.generateNode(node.right).replace(/input/g, 'pipeInput');
+    const left = this.generateNode(node.left as ASTNode);
+    const right = this.generateNode(node.right as ASTNode).replace(/input/g, 'pipeInput');
     return `((result) => {
       const pipeInput = result;
       return ${right};
@@ -81,11 +84,7 @@ export class JQCodeGenerator implements CodeGenerator {
   }
 
   private generateOptional(node: OptionalNode): string {
-    const expr = this.generateNode(node.expression);
+    const expr = this.generateNode(node.expression as ASTNode);
     return `(isNullOrUndefined(input) ? null : ${expr})`;
-  }
-
-  private generateSequence(node: SequenceNode): string {
-    return `[${node.expressions.map(expr => this.generateNode(expr)).join(', ')}]`;
   }
 }

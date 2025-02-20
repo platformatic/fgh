@@ -88,6 +88,7 @@ export type NodeType =
 export interface Node {
   type: NodeType;
   position: number;
+  expressions?: Node[];
 }
 
 export interface IdentityNode extends Node {
