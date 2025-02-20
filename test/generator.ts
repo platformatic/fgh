@@ -27,7 +27,7 @@ test('generates property access', () => {
   );
 });
 
-test.skip('generates array access', () => {
+test('generates array access', () => {
   const parser = new JQParser('[0]');
   const generator = new JQCodeGenerator();
   const code = generator.generate(parser.parse());
@@ -78,7 +78,7 @@ test('generates optional access', () => {
   assert.equal(fn({ foo: 'bar' }), 'bar');
 });
 
-test.skip('generates complex expressions', () => {
+test('generates complex expressions', () => {
   const parser = new JQParser('.foo[0] | .bar?');
   const generator = new JQCodeGenerator();
   const code = generator.generate(parser.parse());

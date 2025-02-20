@@ -17,6 +17,7 @@ export class JQCodeGenerator implements CodeGenerator {
 (input) => {
   const isNullOrUndefined = (x) => x === null || x === undefined;
   const wrapArray = (x) => Array.isArray(x) ? x : [x];
+  const isArrayOfArrays = (x) => Array.isArray(x) && x.some(item => Array.isArray(item));
   return ${body};
 }`;
   }
@@ -48,13 +49,13 @@ export class JQCodeGenerator implements CodeGenerator {
 
   private generatePropertyAccess(node: PropertyAccessNode): string {
     return `(Array.isArray(input) ? 
-      input.map(item => item?.${node.property}) : 
+      input.map(item => item?.${node.property}).filter(x => !isNullOrUndefined(x)) : 
       input?.${node.property})`;
   }
 
   private generateIndexAccess(node: IndexAccessNode): string {
-    return `(Array.isArray(input) ? 
-      input.map(item => item?.[${node.index}]) : 
+    return `(isArrayOfArrays(input) ? 
+      input.map(item => Array.isArray(item) ? item[${node.index}] : item).filter(x => !isNullOrUndefined(x)) :
       input?.[${node.index}])`;
   }
 
@@ -63,8 +64,8 @@ export class JQCodeGenerator implements CodeGenerator {
       input.flatMap(item => 
         item && typeof item === 'object' ? 
           Object.values(item) : 
-          []
-      ) : 
+          [item]
+      ).filter(x => !isNullOrUndefined(x)) : 
       (input && typeof input === 'object' ? 
         Object.values(input) : 
         []))`;
@@ -76,11 +77,8 @@ export class JQCodeGenerator implements CodeGenerator {
 
   private generatePipe(node: PipeNode): string {
     const left = this.generateNode(node.left as ASTNode);
-    const right = this.generateNode(node.right as ASTNode).replace(/input/g, 'pipeInput');
-    return `((result) => {
-      const pipeInput = result;
-      return ${right};
-    })(${left})`;
+    const right = this.generateNode(node.right as ASTNode).replace(/input/g, 'x');
+    return `((x) => ${right})(${left})`;
   }
 
   private generateOptional(node: OptionalNode): string {
