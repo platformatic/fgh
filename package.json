@@ -13,6 +13,7 @@
     "test": "node --no-warnings --experimental-strip-types --test"
   },
   "pre-commit": [
+    "lint",
     "test"
   ],
   "repository": {
