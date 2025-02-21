@@ -77,20 +77,39 @@ export interface CodeGenerator {
 }
 
 
-export type NodeType = 
-  | 'Identity'       // .
-  | 'PropertyAccess' // .foo
-  | 'IndexAccess'    // [0]
-  | 'Wildcard'       // .*
-  | 'Pipe'          // a | b
-  | 'Optional'       // a?
-  | 'Sequence';      // Multiple expressions
-
+/**
+ * Base interface for all AST nodes
+ * @param type The type of the node
+ * @param position The position in the input string where the node starts
+ * @example const node: Node = { type: 'Identity', position: 0 };
+ * @example const node: Node = { type: 'PropertyAccess', position: 2, property: 'foo' };
+ */
 export interface Node {
   type: NodeType;
   position: number;
-  expressions?: Node[];
 }
+
+/**
+ * Types of AST nodes
+ */
+export type NodeType = 
+  | 'Identity'
+  | 'PropertyAccess'
+  | 'IndexAccess'
+  | 'Wildcard'
+  | 'Pipe'
+  | 'Optional'
+  | 'Sequence';
+
+// Update ASTNode type to be a union of all possible node types
+export type ASTNode =
+  | IdentityNode
+  | PropertyAccessNode
+  | IndexAccessNode
+  | WildcardNode
+  | PipeNode
+  | OptionalNode
+  | SequenceNode;
 
 export interface IdentityNode extends Node {
   type: 'Identity';
@@ -126,15 +145,6 @@ export interface SequenceNode extends Node {
   type: 'Sequence';
   expressions: Node[];
 }
-
-export type ASTNode =
-  | IdentityNode
-  | PropertyAccessNode
-  | IndexAccessNode
-  | WildcardNode
-  | PipeNode
-  | OptionalNode
-  | SequenceNode;
 
 export interface Parser {
   /**

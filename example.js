@@ -1,4 +1,4 @@
-import fgh from './dist/fgh'
+import fgh from './dist/fgh.js'
 
 // Example usage
 const data = {

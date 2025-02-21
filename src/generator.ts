@@ -95,7 +95,7 @@ export class JQCodeGenerator implements CodeGenerator {
   private generatePipe(node: PipeNode): string {
     // If left side is an index access, we need to get the property first
     const isLeftIndexAccess = node.left.type === 'IndexAccess';
-    const right = this.generateNode(node.right).replace(/input/g, 'x');
+    const right = this.generateNode(node.right as ASTNode).replace(/input/g, 'x');
     
     if (isLeftIndexAccess) {
       return `((x) => {
@@ -108,7 +108,7 @@ export class JQCodeGenerator implements CodeGenerator {
     }
     
     // Otherwise use normal pipe
-    const left = this.generateNode(node.left);
+    const left = this.generateNode(node.left as ASTNode);
     return `((result) => {
       if (isNullOrUndefined(result)) return undefined;
       if (Array.isArray(result)) {
@@ -119,7 +119,7 @@ export class JQCodeGenerator implements CodeGenerator {
   }
 
   private generateOptional(node: OptionalNode): string {
-    const expr = this.generateNode(node.expression);
+    const expr = this.generateNode(node.expression as ASTNode);
     return `(isNullOrUndefined(input) ? undefined : ${expr})`;
   }
 }
