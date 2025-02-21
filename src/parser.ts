@@ -1,6 +1,6 @@
 // src/parser.ts
 import { ParseError } from './types.ts'
-import type { Token, TokenType, Lexer, ASTNode, Node } from './types.ts'
+import type { Token, TokenType, Lexer, ASTNode } from './types.ts'
 import { JQLexer } from './lexer.ts'
 
 export class JQParser {

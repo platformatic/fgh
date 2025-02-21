@@ -1,3 +1,4 @@
+/* eslint no-new-func: "off" */
 import type {
   CodeGenerator,
   ASTNode,
@@ -11,36 +12,38 @@ import type {
 } from './types.ts'
 
 export class JQCodeGenerator implements CodeGenerator {
-  generate (ast: ASTNode): string {
+  generate (ast: ASTNode): Function {
     const body = this.generateNode(ast)
-    return `
-(input) => {
-  const isNullOrUndefined = (x) => x === null || x === undefined;
-  const wrapArray = (x) => Array.isArray(x) ? x : [x];
-  const isArrayOfArrays = (x) => Array.isArray(x) && x.some(item => Array.isArray(item));
-  
-  const accessProp = (obj, prop) => {
-    if (Array.isArray(obj)) {
-      return obj.map(item => item?.[prop]).filter(x => !isNullOrUndefined(x));
-    }
-    const result = obj?.[prop];
-    return isNullOrUndefined(result) ? undefined : result;
-  };
 
-  const accessIndex = (arr, idx) => {
-    if (isArrayOfArrays(arr)) {
-      return arr.map(item => Array.isArray(item) ? item[idx] : item)
-        .filter(x => !isNullOrUndefined(x));
-    }
-    if (Array.isArray(arr)) {
-      const val = arr[idx];
-      return isNullOrUndefined(val) ? undefined : val;
-    }
-    return undefined;
-  };
+    const code = `
+const isNullOrUndefined = (x) => x === null || x === undefined;
+const wrapArray = (x) => Array.isArray(x) ? x : [x];
+const isArrayOfArrays = (x) => Array.isArray(x) && x.some(item => Array.isArray(item));
 
-  return ${body};
-}`
+const accessProp = (obj, prop) => {
+  if (Array.isArray(obj)) {
+    return obj.map(item => item?.[prop]).filter(x => !isNullOrUndefined(x));
+  }
+  const result = obj?.[prop];
+  return isNullOrUndefined(result) ? undefined : result;
+};
+
+const accessIndex = (arr, idx) => {
+  if (isArrayOfArrays(arr)) {
+    return arr.map(item => Array.isArray(item) ? item[idx] : item)
+      .filter(x => !isNullOrUndefined(x));
+  }
+  if (Array.isArray(arr)) {
+    const val = arr[idx];
+    return isNullOrUndefined(val) ? undefined : val;
+  }
+  return undefined;
+};
+
+return ${body};
+`
+    const newFunction = new Function('input', code)
+    return newFunction
   }
 
   private generateNode (node: ASTNode): string {
