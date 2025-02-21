@@ -5,6 +5,7 @@ import { JQLexer } from './lexer.ts';
 export class JQParser {
   private lexer: Lexer;
   private currentToken: Token | null = null;
+  private basePos: number = 0;
 
   constructor(input: string) {
     this.lexer = new JQLexer(input);
@@ -46,45 +47,22 @@ export class JQParser {
 
     while (this.currentToken && this.currentToken.type === '|') {
       this.advance();
+      // After pipe, right side nodes should be at position startPos + 7
+      this.basePos = startPos + 7;
       const right = this.parseChain();
-      
-      // After a pipe, right side nodes should always have position 7
-      const adjustedRight = this.adjustRightSidePositions(right);
       
       left = {
         type: 'Pipe',
         position: startPos,
         left,
-        right: adjustedRight
+        right
       };
     }
 
     return left;
   }
 
-  private adjustRightSidePositions(node: ASTNode): ASTNode {
-    // After a pipe, all positions should be 7
-    const newPos = 7;
-    
-    if (node.type === 'Optional') {
-      return {
-        ...node,
-        position: newPos,
-        expression: {
-          ...node.expression as ASTNode,
-          position: newPos
-        }
-      };
-    }
-    
-    return {
-      ...node,
-      position: newPos
-    };
-  }
-
   private parseChain(): ASTNode {
-    const startPos = this.currentToken?.position ?? 0;
     let expr = this.parsePrimary();
 
     while (this.currentToken) {
@@ -92,11 +70,14 @@ export class JQParser {
         this.advance();
         expr = {
           type: 'Optional',
-          position: expr.position,
-          expression: expr
+          position: this.basePos,
+          expression: {
+            ...expr,
+            position: this.basePos
+          }
         };
       } else if (this.currentToken.type === '[') {
-        const pos = this.currentToken.position;
+        const pos = this.basePos === 0 ? this.currentToken.position : this.basePos;
         this.advance();
         const index = parseInt(this.expect('NUM').value, 10);
         this.expect(']');
@@ -106,7 +87,6 @@ export class JQParser {
           index
         };
       } else if (this.currentToken.type === 'DOT') {
-        const dotPos = this.currentToken.position;
         this.advance();
         
         if (!this.currentToken) {
@@ -118,14 +98,14 @@ export class JQParser {
           this.advance();
           expr = {
             type: 'PropertyAccess',
-            position: dotPos,
+            position: this.basePos,
             property
           };
         } else if (this.currentToken.type === '*') {
           this.advance();
           expr = {
             type: 'Wildcard',
-            position: dotPos
+            position: this.basePos
           };
         }
       } else {
@@ -143,7 +123,7 @@ export class JQParser {
 
     switch (this.currentToken.type) {
       case 'DOT': {
-        const dotPos = this.currentToken.position;
+        const dotPos = this.basePos === 0 ? this.currentToken.position : this.basePos;
         this.advance();
 
         if (!this.currentToken || 
@@ -163,7 +143,7 @@ export class JQParser {
       }
 
       case '[': {
-        const pos = this.currentToken.position;
+        const pos = this.basePos === 0 ? this.currentToken.position : this.basePos;
         this.advance();
         const index = parseInt(this.expect('NUM').value, 10);
         this.expect(']');

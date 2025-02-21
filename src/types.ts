@@ -98,6 +98,7 @@ export interface IdentityNode extends Node {
 export interface PropertyAccessNode extends Node {
   type: 'PropertyAccess';
   property: string;
+  input?: Node;
 }
 
 export interface IndexAccessNode extends Node {

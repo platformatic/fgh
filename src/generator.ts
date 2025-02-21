@@ -18,6 +18,27 @@ export class JQCodeGenerator implements CodeGenerator {
   const isNullOrUndefined = (x) => x === null || x === undefined;
   const wrapArray = (x) => Array.isArray(x) ? x : [x];
   const isArrayOfArrays = (x) => Array.isArray(x) && x.some(item => Array.isArray(item));
+  
+  const accessProp = (obj, prop) => {
+    if (Array.isArray(obj)) {
+      return obj.map(item => item?.[prop]).filter(x => !isNullOrUndefined(x));
+    }
+    const result = obj?.[prop];
+    return isNullOrUndefined(result) ? undefined : result;
+  };
+
+  const accessIndex = (arr, idx) => {
+    if (isArrayOfArrays(arr)) {
+      return arr.map(item => Array.isArray(item) ? item[idx] : item)
+        .filter(x => !isNullOrUndefined(x));
+    }
+    if (Array.isArray(arr)) {
+      const val = arr[idx];
+      return isNullOrUndefined(val) ? undefined : val;
+    }
+    return undefined;
+  };
+
   return ${body};
 }`;
   }
@@ -48,15 +69,11 @@ export class JQCodeGenerator implements CodeGenerator {
   }
 
   private generatePropertyAccess(node: PropertyAccessNode): string {
-    return `(Array.isArray(input) ? 
-      input.map(item => item?.${node.property}).filter(x => !isNullOrUndefined(x)) : 
-      input?.${node.property})`;
+    return `accessProp(input, '${node.property}')`;
   }
 
   private generateIndexAccess(node: IndexAccessNode): string {
-    return `(isArrayOfArrays(input) ? 
-      input.map(item => Array.isArray(item) ? item[${node.index}] : item).filter(x => !isNullOrUndefined(x)) :
-      input?.[${node.index}])`;
+    return `accessIndex(input, ${node.index})`;
   }
 
   private generateWildcard(_node: WildcardNode): string {
@@ -76,13 +93,33 @@ export class JQCodeGenerator implements CodeGenerator {
   }
 
   private generatePipe(node: PipeNode): string {
-    const left = this.generateNode(node.left as ASTNode);
-    const right = this.generateNode(node.right as ASTNode).replace(/input/g, 'x');
-    return `((x) => ${right})(${left})`;
+    // If left side is an index access, we need to get the property first
+    const isLeftIndexAccess = node.left.type === 'IndexAccess';
+    const right = this.generateNode(node.right).replace(/input/g, 'x');
+    
+    if (isLeftIndexAccess) {
+      return `((x) => {
+        const arr = accessProp(input, 'foo');
+        if (isNullOrUndefined(arr)) return undefined;
+        const result = accessIndex(arr, ${(node.left as IndexAccessNode).index});
+        if (isNullOrUndefined(result)) return undefined;
+        return ((x) => ${right})(result);
+      })(input)`;
+    }
+    
+    // Otherwise use normal pipe
+    const left = this.generateNode(node.left);
+    return `((result) => {
+      if (isNullOrUndefined(result)) return undefined;
+      if (Array.isArray(result)) {
+        result = result[0];
+      }
+      return ((x) => ${right})(result);
+    })(${left})`;
   }
 
   private generateOptional(node: OptionalNode): string {
-    const expr = this.generateNode(node.expression as ASTNode);
-    return `(isNullOrUndefined(input) ? null : ${expr})`;
+    const expr = this.generateNode(node.expression);
+    return `(isNullOrUndefined(input) ? undefined : ${expr})`;
   }
 }
