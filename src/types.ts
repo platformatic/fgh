@@ -33,12 +33,13 @@ export type TokenType =
   | 'DOT'      // .
   | 'IDENT'    // foo
   | '['        // [
+  | '[]'       // []
   | ']'        // ]
   | 'NUM'      // 0-9
   | '|'        // |
   | '?'        // ?
   | '*'        // *
-  | 'EOF'     // End of file
+  | 'EOF'      // End of file
 
 /**
  * A token from lexical analysis of a JQ expression
@@ -95,6 +96,7 @@ export type NodeType =
   | 'Identity'
   | 'PropertyAccess'
   | 'IndexAccess'
+  | 'ArrayIteration'
   | 'Wildcard'
   | 'Pipe'
   | 'Optional'
@@ -109,6 +111,7 @@ export type ASTNode =
   | PipeNode
   | OptionalNode
   | SequenceNode
+  | ArrayIterationNode
 
 export interface IdentityNode extends Node {
   type: 'Identity';
@@ -143,6 +146,11 @@ export interface OptionalNode extends Node {
 export interface SequenceNode extends Node {
   type: 'Sequence';
   expressions: Node[];
+}
+
+export interface ArrayIterationNode extends Node {
+  type: 'ArrayIteration';
+  source?: PropertyAccessNode;
 }
 
 export interface Parser {

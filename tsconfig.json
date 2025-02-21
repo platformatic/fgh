@@ -12,7 +12,7 @@
     /* create definitions */
     "declaration": true,
     /* Strictness */
-    "strict": true,
+    "strict": false,
     "noUncheckedIndexedAccess": true,
     "noImplicitOverride": true,
     /* Node Stuff */

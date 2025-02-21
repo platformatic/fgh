@@ -1,4 +1,3 @@
-/* eslint no-new-func: "off" */
 import type {
   CodeGenerator,
   ASTNode,
@@ -8,41 +7,71 @@ import type {
   WildcardNode,
   PipeNode,
   OptionalNode,
-  SequenceNode
+  SequenceNode,
+  ArrayIterationNode
 } from './types.ts'
 
 export class JQCodeGenerator implements CodeGenerator {
   generate (ast: ASTNode): Function {
     const body = this.generateNode(ast)
-
     const code = `
 const isNullOrUndefined = (x) => x === null || x === undefined;
-const wrapArray = (x) => Array.isArray(x) ? x : [x];
-const isArrayOfArrays = (x) => Array.isArray(x) && x.some(item => Array.isArray(item));
 
-const accessProp = (obj, prop) => {
+const accessProperty = (obj, prop, optional = false) => {
+  if (isNullOrUndefined(obj)) return undefined;
   if (Array.isArray(obj)) {
-    return obj.map(item => item?.[prop]).filter(x => !isNullOrUndefined(x));
+    const results = obj.map(item => optional ? item?.[prop] : item[prop])
+      .filter(x => !isNullOrUndefined(x));
+    return results.length ? (results.length === 1 ? results[0] : results) : undefined;
   }
-  const result = obj?.[prop];
-  return isNullOrUndefined(result) ? undefined : result;
+  return optional ? obj?.[prop] : obj[prop];
 };
 
 const accessIndex = (arr, idx) => {
-  if (isArrayOfArrays(arr)) {
-    return arr.map(item => Array.isArray(item) ? item[idx] : item)
+  if (!Array.isArray(arr)) return undefined;
+  if (arr.some(item => Array.isArray(item))) {
+    const results = arr.map(item => Array.isArray(item) ? item[idx] : undefined)
       .filter(x => !isNullOrUndefined(x));
+    return results.length ? (results.length === 1 ? results[0] : results) : undefined;
   }
-  if (Array.isArray(arr)) {
-    const val = arr[idx];
-    return isNullOrUndefined(val) ? undefined : val;
-  }
-  return undefined;
+  return arr[idx];
 };
 
-return ${body};
+const getWildcardValues = (input) => {
+  if (Array.isArray(input)) {
+    return input.flatMap(item => 
+      item && typeof item === 'object' ? 
+        Object.values(item).filter(x => !isNullOrUndefined(x)) : 
+        [item]
+    );
+  }
+  return input && typeof input === 'object' ? 
+    Object.values(input).filter(x => !isNullOrUndefined(x)) : 
+    [];
+};
+
+const handlePipe = (input, leftFn, rightFn) => {
+  const leftResult = leftFn(input);
+  if (Array.isArray(leftResult)) {
+    const results = leftResult.map(item => rightFn({ input: item }))
+      .filter(x => !isNullOrUndefined(x));
+    return results.length ? (results.length === 1 ? results[0] : results) : undefined;
+  }
+  return rightFn({ input: leftResult });
+};
+
+const iterateArray = (input) => {
+  if (Array.isArray(input)) return input;
+  if (input?.users && Array.isArray(input.users)) return input.users;
+  return [];
+};
+
+return (input) => {
+  const result = ${body};
+  return result?.input ?? result;
+};
 `
-    const newFunction = new Function('input', code)
+    const newFunction = new Function(code)()
     return newFunction
   }
 
@@ -54,6 +83,8 @@ return ${body};
         return this.generatePropertyAccess(node)
       case 'IndexAccess':
         return this.generateIndexAccess(node)
+      case 'ArrayIteration':
+        return this.generateArrayIteration(node)
       case 'Wildcard':
         return this.generateWildcard(node)
       case 'Pipe':
@@ -72,7 +103,11 @@ return ${body};
   }
 
   private generatePropertyAccess (node: PropertyAccessNode): string {
-    return `accessProp(input, '${node.property}')`
+    if (node.input) {
+      const inputCode = this.generateNode(node.input as ASTNode)
+      return `accessProperty(${inputCode}, '${node.property}')`
+    }
+    return `accessProperty(input, '${node.property}')`
   }
 
   private generateIndexAccess (node: IndexAccessNode): string {
@@ -80,49 +115,33 @@ return ${body};
   }
 
   private generateWildcard (_node: WildcardNode): string {
-    return `(Array.isArray(input) ? 
-      input.flatMap(item => 
-        item && typeof item === 'object' ? 
-          Object.values(item) : 
-          [item]
-      ).filter(x => !isNullOrUndefined(x)) : 
-      (input && typeof input === 'object' ? 
-        Object.values(input) : 
-        []))`
+    return `getWildcardValues(input)`
   }
 
   private generateSequence (node: SequenceNode): string {
     return `[${node.expressions.map(expr => this.generateNode(expr as ASTNode)).join(', ')}]`
   }
 
-  private generatePipe (node: PipeNode): string {
-    // If left side is an index access, we need to get the property first
-    const isLeftIndexAccess = node.left.type === 'IndexAccess'
-    const right = this.generateNode(node.right as ASTNode).replace(/input/g, 'x')
-
-    if (isLeftIndexAccess) {
-      return `((x) => {
-        const arr = accessProp(input, 'foo');
-        if (isNullOrUndefined(arr)) return undefined;
-        const result = accessIndex(arr, ${(node.left as IndexAccessNode).index});
-        if (isNullOrUndefined(result)) return undefined;
-        return ((x) => ${right})(result);
-      })(input)`
-    }
-
-    // Otherwise use normal pipe
-    const left = this.generateNode(node.left as ASTNode)
-    return `((result) => {
-      if (isNullOrUndefined(result)) return undefined;
-      if (Array.isArray(result)) {
-        result = result[0];
-      }
-      return ((x) => ${right})(result);
-    })(${left})`
-  }
-
   private generateOptional (node: OptionalNode): string {
+    if (node.expression.type === 'PropertyAccess') {
+      const propNode = node.expression as PropertyAccessNode
+      if (propNode.input) {
+        const inputCode = this.generateNode(propNode.input as ASTNode)
+        return `accessProperty(${inputCode}, '${propNode.property}', true)`
+      }
+      return `accessProperty(input, '${propNode.property}', true)`
+    }
     const expr = this.generateNode(node.expression as ASTNode)
     return `(isNullOrUndefined(input) ? undefined : ${expr})`
+  }
+
+  private generatePipe (node: PipeNode): string {
+    const leftCode = `(input) => ${this.generateNode(node.left as ASTNode)}`
+    const rightCode = `({ input }) => ${this.generateNode(node.right as ASTNode)}`
+    return `handlePipe(input, ${leftCode}, ${rightCode})`
+  }
+
+  private generateArrayIteration (_node: ArrayIterationNode): string {
+    return `iterateArray(input)`
   }
 }

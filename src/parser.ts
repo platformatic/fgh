@@ -62,8 +62,7 @@ export class JQParser {
 
     return left
   }
-
-  private parseChain (): ASTNode {
+private parseChain (): ASTNode {
     let expr = this.parsePrimary()
 
     while (this.currentToken) {
@@ -79,15 +78,23 @@ export class JQParser {
             position: this.basePos
           }
         }
-      } else if (tokenType === '[') {
+      } else if (tokenType === '[' || tokenType === '[]') {
         const pos = this.basePos === 0 ? this.currentToken.position : this.basePos
-        this.advance()
-        const index = parseInt(this.expect('NUM').value, 10)
-        this.expect(']')
-        expr = {
-          type: 'IndexAccess',
-          position: pos,
-          index
+        if (tokenType === '[]') {
+          this.advance()
+          expr = {
+            type: 'ArrayIteration',
+            position: pos
+          }
+        } else {
+          this.advance()
+          const index = parseInt(this.expect('NUM').value, 10)
+          this.expect(']')
+          expr = {
+            type: 'IndexAccess',
+            position: pos,
+            index
+          }
         }
       } else if (tokenType === 'DOT') {
         this.advance()
@@ -103,7 +110,8 @@ export class JQParser {
           expr = {
             type: 'PropertyAccess',
             position: this.basePos,
-            property
+            property,
+            input: expr
           }
         } else if (nextTokenType === '*') {
           this.advance()
@@ -120,7 +128,7 @@ export class JQParser {
     return expr
   }
 
-  private parsePrimary (): ASTNode {
+private parsePrimary (): ASTNode {
     if (!this.currentToken) {
       throw new ParseError('Unexpected end of input', -1)
     }
@@ -144,7 +152,12 @@ export class JQParser {
 
         const property = this.currentToken.value
         this.advance()
-        return { type: 'PropertyAccess', position: dotPos, property }
+        return {
+          type: 'PropertyAccess',
+          position: dotPos,
+          property,
+          input: { type: 'Identity', position: dotPos }
+        }
       }
 
       case '[': {
