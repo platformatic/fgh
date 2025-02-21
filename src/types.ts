@@ -71,9 +71,9 @@ export interface CodeGenerator {
   /**
    * Generate executable JavaScript code from an AST
    * @param ast The AST to generate code from
-   * @returns A string containing the generated JavaScript code
+   * @returns a function that can be called with input data
    */
-  generate(ast: ASTNode): string;
+  generate(ast: ASTNode): Function;
 }
 
 /**
