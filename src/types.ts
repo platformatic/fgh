@@ -29,7 +29,7 @@ export interface Operator {
 /**
  * Types of tokens in a JQ expression
  */
-export type TokenType =
+export type TokenType = 
   | 'DOT'      // .
   | 'IDENT'    // foo
   | '['        // [
@@ -37,7 +37,8 @@ export type TokenType =
   | 'NUM'      // 0-9
   | '|'        // |
   | '?'        // ?
-  | '*';       // *
+  | '*'        // *
+  | 'EOF';     // End of file
 
 /**
  * A token from lexical analysis of a JQ expression

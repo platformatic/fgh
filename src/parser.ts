@@ -1,3 +1,4 @@
+// src/parser.ts
 import { ParseError } from './types.ts';
 import type { Token, TokenType, Lexer, ASTNode, Node } from './types.ts';
 import { JQLexer } from './lexer.ts';
@@ -29,11 +30,11 @@ export class JQParser {
     this.currentToken = this.lexer.nextToken();
   }
 
-  private expect(type: TokenType): Token {
+  private expect(expectedType: TokenType): Token {
     const token = this.currentToken;
-    if (!token || token.type !== type) {
+    if (!token || token.type !== expectedType) {
       throw new ParseError(
-        `Expected token type ${type}, got ${token?.type ?? 'EOF'}`,
+        `Expected token type ${expectedType}, got ${token?.type ?? 'EOF'}`,
         token?.position ?? -1
       );
     }
@@ -66,7 +67,9 @@ export class JQParser {
     let expr = this.parsePrimary();
 
     while (this.currentToken) {
-      if (this.currentToken.type === '?') {
+      const tokenType = this.currentToken.type;
+      
+      if (tokenType === '?') {
         this.advance();
         expr = {
           type: 'Optional',
@@ -76,7 +79,7 @@ export class JQParser {
             position: this.basePos
           }
         };
-      } else if (this.currentToken.type === '[') {
+      } else if (tokenType === '[') {
         const pos = this.basePos === 0 ? this.currentToken.position : this.basePos;
         this.advance();
         const index = parseInt(this.expect('NUM').value, 10);
@@ -86,14 +89,15 @@ export class JQParser {
           position: pos,
           index
         };
-      } else if (this.currentToken.type === 'DOT') {
+      } else if (tokenType === 'DOT') {
         this.advance();
         
         if (!this.currentToken) {
           throw new ParseError('Unexpected end of input after dot', -1);
         }
 
-        if (this.currentToken.type === 'IDENT') {
+        const nextTokenType = this.currentToken.type;
+        if (nextTokenType === 'IDENT') {
           const property = this.currentToken.value;
           this.advance();
           expr = {
@@ -101,7 +105,7 @@ export class JQParser {
             position: this.basePos,
             property
           };
-        } else if (this.currentToken.type === '*') {
+        } else if (nextTokenType === '*') {
           this.advance();
           expr = {
             type: 'Wildcard',
@@ -121,7 +125,8 @@ export class JQParser {
       throw new ParseError('Unexpected end of input', -1);
     }
 
-    switch (this.currentToken.type) {
+    const tokenType = this.currentToken.type;
+    switch (tokenType) {
       case 'DOT': {
         const dotPos = this.basePos === 0 ? this.currentToken.position : this.basePos;
         this.advance();
