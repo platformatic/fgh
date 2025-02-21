@@ -1,16 +1,16 @@
-import { test } from 'node:test';
-import assert from 'node:assert';
-import { compile, query } from '../src/fgh.ts';
+import { test } from 'node:test'
+import assert from 'node:assert'
+import { compile, query } from '../src/fgh.ts'
 
 test('compile creates reusable function', () => {
-  const fn = compile('.name');
-  assert.equal(fn({ name: 'John' }), 'John');
-  assert.equal(fn({ name: 'Jane' }), 'Jane');
-});
+  const fn = compile('.name')
+  assert.equal(fn({ name: 'John' }), 'John')
+  assert.equal(fn({ name: 'Jane' }), 'Jane')
+})
 
 test('query executes one-off expression', () => {
   assert.equal(
     query('.name', { name: 'John' }),
     'John'
-  );
-});
+  )
+})

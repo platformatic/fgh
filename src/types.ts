@@ -1,18 +1,18 @@
 /**
  * Represents any valid JSON value
  */
-export type JSONValue = 
+export type JSONValue =
   | string
   | number
   | boolean
   | null
   | JSONValue[]
-  | { [key: string]: JSONValue };
+  | { [key: string]: JSONValue }
 
 /**
  * Result of a JQ operation - either a single value or array of values
  */
-export type QueryResult = JSONValue | JSONValue[];
+export type QueryResult = JSONValue | JSONValue[]
 
 /**
  * Base interface for all JQ operators
@@ -29,7 +29,7 @@ export interface Operator {
 /**
  * Types of tokens in a JQ expression
  */
-export type TokenType = 
+export type TokenType =
   | 'DOT'      // .
   | 'IDENT'    // foo
   | '['        // [
@@ -38,7 +38,7 @@ export type TokenType =
   | '|'        // |
   | '?'        // ?
   | '*'        // *
-  | 'EOF';     // End of file
+  | 'EOF'     // End of file
 
 /**
  * A token from lexical analysis of a JQ expression
@@ -76,7 +76,6 @@ export interface CodeGenerator {
   generate(ast: ASTNode): string;
 }
 
-
 /**
  * Base interface for all AST nodes
  * @param type The type of the node
@@ -92,14 +91,14 @@ export interface Node {
 /**
  * Types of AST nodes
  */
-export type NodeType = 
+export type NodeType =
   | 'Identity'
   | 'PropertyAccess'
   | 'IndexAccess'
   | 'Wildcard'
   | 'Pipe'
   | 'Optional'
-  | 'Sequence';
+  | 'Sequence'
 
 // Update ASTNode type to be a union of all possible node types
 export type ASTNode =
@@ -109,7 +108,7 @@ export type ASTNode =
   | WildcardNode
   | PipeNode
   | OptionalNode
-  | SequenceNode;
+  | SequenceNode
 
 export interface IdentityNode extends Node {
   type: 'Identity';
@@ -153,14 +152,13 @@ export interface Parser {
   parse(): ASTNode;
 }
 
-
 /**
  * Base class for all JQ-related errors
  */
 export class JQError extends Error {
-  constructor(message: string) {
-    super(message);
-    this.name = 'JQError';
+  constructor (message: string) {
+    super(message)
+    this.name = 'JQError'
   }
 }
 
@@ -168,9 +166,9 @@ export class JQError extends Error {
  * Error thrown during expression parsing
  */
 export class ParseError extends JQError {
-  constructor(message: string, position: number) {
-    super(`Parse error at position ${position}: ${message}`);
-    this.name = 'ParseError';
+  constructor (message: string, position: number) {
+    super(`Parse error at position ${position}: ${message}`)
+    this.name = 'ParseError'
   }
 }
 
@@ -178,9 +176,9 @@ export class ParseError extends JQError {
  * Error thrown during query execution
  */
 export class ExecutionError extends JQError {
-  constructor(message: string) {
-    super(message);
-    this.name = 'ExecutionError';
+  constructor (message: string) {
+    super(message)
+    this.name = 'ExecutionError'
   }
 }
 
@@ -191,7 +189,7 @@ export class ExecutionError extends JQError {
  * @example const result = fn({ name: 'John' });
  * @example const result = fn([1, 2, 3]);
  */
-export type JQFunction = (input: unknown) => unknown;
+export type JQFunction = (input: unknown) => unknown
 
 /**
  * Options for compiling a JQ expression

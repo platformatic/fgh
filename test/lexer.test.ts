@@ -1,67 +1,67 @@
-import { test } from 'node:test';
-import assert from 'node:assert';
-import { JQLexer } from '../src/lexer.ts';
-import { ParseError } from '../src/types.ts';
+import { test } from 'node:test'
+import assert from 'node:assert'
+import { JQLexer } from '../src/lexer.ts'
+import { ParseError } from '../src/types.ts'
 
 test('lexer handles empty input', () => {
-  const lexer = new JQLexer('');
-  assert.equal(lexer.hasMoreTokens(), false);
-  assert.equal(lexer.nextToken(), null);
-});
+  const lexer = new JQLexer('')
+  assert.equal(lexer.hasMoreTokens(), false)
+  assert.equal(lexer.nextToken(), null)
+})
 
 test('lexer tokenizes simple path', () => {
-  const lexer = new JQLexer('.foo');
-  
-  const dot = lexer.nextToken();
-  assert.deepEqual(dot, { type: 'DOT', value: '.', position: 0 });
-  
-  const ident = lexer.nextToken();
-  assert.deepEqual(ident, { type: 'IDENT', value: 'foo', position: 1 });
-  
-  assert.equal(lexer.nextToken(), null);
-});
+  const lexer = new JQLexer('.foo')
+
+  const dot = lexer.nextToken()
+  assert.deepEqual(dot, { type: 'DOT', value: '.', position: 0 })
+
+  const ident = lexer.nextToken()
+  assert.deepEqual(ident, { type: 'IDENT', value: 'foo', position: 1 })
+
+  assert.equal(lexer.nextToken(), null)
+})
 
 test('lexer tokenizes array access', () => {
-  const lexer = new JQLexer('[0]');
-  
-  const leftBracket = lexer.nextToken();
-  assert.deepEqual(leftBracket, { type: '[', value: '[', position: 0 });
-  
-  const num = lexer.nextToken();
-  assert.deepEqual(num, { type: 'NUM', value: '0', position: 1 });
-  
-  const rightBracket = lexer.nextToken();
-  assert.deepEqual(rightBracket, { type: ']', value: ']', position: 2 });
-  
-  assert.equal(lexer.nextToken(), null);
-});
+  const lexer = new JQLexer('[0]')
+
+  const leftBracket = lexer.nextToken()
+  assert.deepEqual(leftBracket, { type: '[', value: '[', position: 0 })
+
+  const num = lexer.nextToken()
+  assert.deepEqual(num, { type: 'NUM', value: '0', position: 1 })
+
+  const rightBracket = lexer.nextToken()
+  assert.deepEqual(rightBracket, { type: ']', value: ']', position: 2 })
+
+  assert.equal(lexer.nextToken(), null)
+})
 
 test('lexer handles whitespace', () => {
-  const lexer = new JQLexer('  .  foo  ');
-  
-  const dot = lexer.nextToken();
-  assert.deepEqual(dot, { type: 'DOT', value: '.', position: 2 });
-  
-  const ident = lexer.nextToken();
-  assert.deepEqual(ident, { type: 'IDENT', value: 'foo', position: 5 });
-  
-  assert.equal(lexer.nextToken(), null);
-});
+  const lexer = new JQLexer('  .  foo  ')
+
+  const dot = lexer.nextToken()
+  assert.deepEqual(dot, { type: 'DOT', value: '.', position: 2 })
+
+  const ident = lexer.nextToken()
+  assert.deepEqual(ident, { type: 'IDENT', value: 'foo', position: 5 })
+
+  assert.equal(lexer.nextToken(), null)
+})
 
 test('lexer throws on invalid characters', () => {
-  const lexer = new JQLexer('@invalid');
-  
+  const lexer = new JQLexer('@invalid')
+
   assert.throws(
     () => lexer.nextToken(),
     (err: unknown) => {
       return err instanceof ParseError &&
-        err.message === 'Parse error at position 0: Unexpected character: @';
+        err.message === 'Parse error at position 0: Unexpected character: @'
     }
-  );
-});
+  )
+})
 
 test('lexer handles complex expressions', () => {
-  const lexer = new JQLexer('.foo[0] | .bar.baz ? .*');
+  const lexer = new JQLexer('.foo[0] | .bar.baz ? .*')
   const expected = [
     { type: 'DOT', value: '.', position: 0 },
     { type: 'IDENT', value: 'foo', position: 1 },
@@ -76,12 +76,12 @@ test('lexer handles complex expressions', () => {
     { type: '?', value: '?', position: 19 },
     { type: 'DOT', value: '.', position: 21 },
     { type: '*', value: '*', position: 22 },
-  ];
+  ]
 
   for (const exp of expected) {
-    const token = lexer.nextToken();
-    assert.deepEqual(token, exp);
+    const token = lexer.nextToken()
+    assert.deepEqual(token, exp)
   }
-  
-  assert.equal(lexer.nextToken(), null);
-});
+
+  assert.equal(lexer.nextToken(), null)
+})

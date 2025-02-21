@@ -12,6 +12,9 @@
     "lint:fix": "eslint --fix .",
     "test": "node --no-warnings --experimental-strip-types --test"
   },
+  "pre-commit": [
+    "test"
+  ],
   "repository": {
     "type": "git",
     "url": "git+https://github.com/mcollina/fgh.git"
@@ -29,6 +32,7 @@
   },
   "homepage": "https://github.com/mcollina/fgh#readme",
   "devDependencies": {
+    "@fastify/pre-commit": "^2.2.0",
     "@types/node": "^22.13.4",
     "eslint": "^9.20.1",
     "neostandard": "^0.12.1"
