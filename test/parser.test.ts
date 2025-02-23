@@ -77,7 +77,12 @@ test('parser handles complex expressions', () => {
     left: {
       type: 'IndexAccess',
       position: 4,
-      index: 0
+      index: 0,
+      input: {
+        type: 'PropertyAccess',
+        position: 0,
+        property: 'foo'
+      }
     },
     right: {
       type: 'Optional',
@@ -85,7 +90,12 @@ test('parser handles complex expressions', () => {
       expression: {
         type: 'PropertyAccess',
         position: 7,
-        property: 'baz'
+        property: 'baz',
+        input: {
+          type: 'PropertyAccess',
+          position: 7,
+          property: 'bar'
+        }
       }
     }
   })
