@@ -37,21 +37,6 @@ test('generates array access', () => {
   )
 })
 
-test('generates wildcard', () => {
-  const parser = new JQParser('.*')
-  const generator = new JQCodeGenerator()
-  const fn = generator.generate(parser.parse())
-
-  assert.deepEqual(
-    fn({ a: 1, b: 2 }),
-    [1, 2]
-  )
-  assert.deepEqual(
-    fn([{ a: 1 }, { b: 2 }]),
-    [1, 2]
-  )
-})
-
 test('generates pipe', () => {
   const parser = new JQParser('.foo | .bar')
   const generator = new JQCodeGenerator()
@@ -85,35 +70,6 @@ test('generates complex expressions', () => {
     fn({ foo: [{}] }),
     undefined
   )
-})
-
-test.skip('generates complex expressions with wildcard', () => {
-  const parser = new JQParser('.foo[0] | .*')
-  const generator = new JQCodeGenerator()
-  const fn = generator.generate(parser.parse())
-
-  assert.deepEqual(
-    fn({ foo: [{ a: 1 }, { a: 2 }] }),
-    [1, 2]
-  )
-  assert.deepEqual(
-    fn({ foo: [{}] }),
-    []
-  )
-})
-
-test.skip('generate the example from the README', () => {
-  const parser = new JQParser('.users.* | .name.first')
-  const generator = new JQCodeGenerator()
-  const fn = generator.generate(parser.parse())
-  const data = {
-    users: [
-      { name: { first: 'John', last: 'Doe' }, age: 30 },
-      { name: { first: 'Jane', last: 'Smith' }, age: 25 }
-    ]
-  }
-
-  assert.deepEqual(fn(data), ['John', 'Jane'])
 })
 
 test('generate the example from the README', () => {

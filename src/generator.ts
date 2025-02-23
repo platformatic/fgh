@@ -4,7 +4,6 @@ import type {
   ASTNode,
   PropertyAccessNode,
   IndexAccessNode,
-  WildcardNode,
   PipeNode,
   OptionalNode,
   SequenceNode,
@@ -22,8 +21,6 @@ export class JQCodeGenerator implements CodeGenerator {
         return this.generateIndexAccess(node)
       case 'ArrayIteration':
         return this.generateArrayIteration(node)
-      case 'Wildcard':
-        return this.generateWildcard(node)
       case 'Pipe':
         return this.generatePipe(node)
       case 'Optional':
@@ -67,14 +64,6 @@ export class JQCodeGenerator implements CodeGenerator {
       return `iterateArray(${inputCode})`
     }
     return 'iterateArray(input)'
-  }
-
-  private generateWildcard (node: WildcardNode): string {
-    if (node.input) {
-      const inputCode = this.generateNode(node.input)
-      return `getWildcardValues(${inputCode})`
-    }
-    return 'getWildcardValues(input)'
   }
 
   private generateSequence (node: SequenceNode): string {
@@ -189,26 +178,6 @@ const iterateArray = (input) => {
     if (arrays.length > 0) {
       return arrays[0];
     }
-  }
-  
-  return undefined;
-};
-
-const getWildcardValues = (input) => {
-  if (isNullOrUndefined(input)) return undefined;
-  
-  if (Array.isArray(input)) {
-    const results = input.flatMap(item => 
-      item && typeof item === 'object' ? 
-        Object.values(item) : 
-        item
-    );
-    return flattenResult(results);
-  }
-  
-  if (typeof input === 'object') {
-    const values = Object.values(input);
-    return flattenResult(values);
   }
   
   return undefined;

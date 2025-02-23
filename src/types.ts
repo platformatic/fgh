@@ -45,7 +45,6 @@ export type NodeType =
   | 'PropertyAccess'
   | 'IndexAccess'
   | 'ArrayIteration'
-  | 'Wildcard'
   | 'Pipe'
   | 'Optional'
   | 'Sequence'
@@ -68,11 +67,6 @@ export interface PropertyAccessNode extends BaseNode {
 export interface IndexAccessNode extends BaseNode {
   type: 'IndexAccess';
   index: number;
-  input?: ASTNode;
-}
-
-export interface WildcardNode extends BaseNode {
-  type: 'Wildcard';
   input?: ASTNode;
 }
 
@@ -102,7 +96,6 @@ export type ASTNode =
   | IdentityNode
   | PropertyAccessNode
   | IndexAccessNode
-  | WildcardNode
   | PipeNode
   | OptionalNode
   | SequenceNode

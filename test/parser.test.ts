@@ -29,12 +29,6 @@ test('parser handles array access', () => {
   })
 })
 
-test('parser handles wildcard', () => {
-  const parser = new JQParser('.*')
-  const ast = parser.parse()
-  assert.deepEqual(ast, { type: 'Wildcard', position: 0 })
-})
-
 test('parser handles pipe', () => {
   const parser = new JQParser('.foo | .bar')
   const ast = parser.parse()

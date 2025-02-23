@@ -79,12 +79,6 @@ export class JQParser {
           return { type: 'Identity', position: dotPos }
         }
 
-        // Handle wildcard
-        if (this.currentToken.type === '*') {
-          this.advance()
-          return { type: 'Wildcard', position: dotPos }
-        }
-
         // Handle property access
         if (this.currentToken.type === 'IDENT') {
           const property = this.currentToken.value
@@ -168,13 +162,6 @@ export class JQParser {
             type: 'PropertyAccess',
             position: this.basePos,
             property,
-            input: expr
-          }
-        } else if (nextTokenType === '*') {
-          this.advance()
-          expr = {
-            type: 'Wildcard',
-            position: this.basePos,
             input: expr
           }
         }
