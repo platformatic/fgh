@@ -112,32 +112,25 @@ const getNestedValue = (obj, props, optional = false) => {
 };
 
 const flattenResult = (result) => {
-  console.log('flattenResult input:', result);
   if (isNullOrUndefined(result)) return undefined;
   if (!Array.isArray(result)) return result;
   if (result.length === 0) return undefined;
-  console.log('flattenResult output:', result);
   return result;
 };
 
 const handlePipe = (input, leftFn, rightFn) => {
-  console.log('handlePipe input:', input);
   const leftResult = leftFn(input);
-  console.log('handlePipe leftResult:', leftResult);
   if (isNullOrUndefined(leftResult)) return undefined;
   
   const leftArray = ensureArray(leftResult);
-  console.log('handlePipe leftArray:', leftArray);
   const results = leftArray
     .map(item => rightFn(item))
     .filter(x => !isNullOrUndefined(x));
   
-  console.log('handlePipe results:', results);
   return results.length === 0 ? undefined : results;
 };
 
 const accessProperty = (obj, prop, optional = false) => {
-  console.log('accessProperty input:', obj, prop, optional);
   if (isNullOrUndefined(obj)) return undefined;
   
   if (Array.isArray(obj)) {
@@ -153,7 +146,6 @@ const accessProperty = (obj, prop, optional = false) => {
         return value;
       })
       .filter(x => !isNullOrUndefined(x));
-    console.log('accessProperty array results:', results);
     return results.length === 0 ? undefined : results;
   }
   
@@ -164,12 +156,10 @@ const accessProperty = (obj, prop, optional = false) => {
     if (isNullOrUndefined(value) || typeof value !== 'object') return undefined;
     value = optional ? value?.[p] : value[p];
   }
-  console.log('accessProperty object result:', value);
   return value;
 };
 
 const accessIndex = (obj, idx) => {
-  console.log('accessIndex input:', obj, idx);
   if (isNullOrUndefined(obj)) return undefined;
   
   if (Array.isArray(obj)) {
@@ -177,11 +167,9 @@ const accessIndex = (obj, idx) => {
       const results = obj
         .map(item => Array.isArray(item) ? item[idx] : undefined)
         .filter(x => !isNullOrUndefined(x));
-      console.log('accessIndex array results:', results);
       return results.length === 0 ? undefined : results;
     }
     const result = idx >= 0 && idx < obj.length ? obj[idx] : undefined;
-    console.log('accessIndex result:', result);
     return result;
   }
   
@@ -190,7 +178,6 @@ const accessIndex = (obj, idx) => {
     if (arrays.length > 0) {
       const arr = arrays[0];
       const result = idx >= 0 && idx < arr.length ? arr[idx] : undefined;
-      console.log('accessIndex object result:', result);
       return result;
     }
   }
@@ -199,11 +186,9 @@ const accessIndex = (obj, idx) => {
 };
 
 const iterateArray = (input) => {
-  console.log('iterateArray input:', input);
   if (isNullOrUndefined(input)) return undefined;
   
   if (Array.isArray(input)) {
-    console.log('iterateArray array result:', input);
     return input;
   }
   
@@ -211,7 +196,6 @@ const iterateArray = (input) => {
     const values = Object.values(input);
     const arrays = values.filter(Array.isArray);
     if (arrays.length > 0) {
-      console.log('iterateArray object result:', arrays[0]);
       return arrays[0];
     }
   }
@@ -220,7 +204,6 @@ const iterateArray = (input) => {
 };
 
 const getWildcardValues = (input) => {
-  console.log('getWildcardValues input:', input);
   if (isNullOrUndefined(input)) return undefined;
   
   if (Array.isArray(input)) {
@@ -240,9 +223,7 @@ const getWildcardValues = (input) => {
   return undefined;
 };
 
-console.log('Generated code input:', input);
 const result = ${body};
-console.log('Final result:', result);
 return flattenResult(result);
 `
     return new Function('input', code)
