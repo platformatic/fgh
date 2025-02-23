@@ -63,6 +63,63 @@ export class JQParser {
     return left
   }
 
+  private parsePrimary (): ASTNode {
+    if (!this.currentToken) {
+      throw new ParseError('Unexpected end of input', -1)
+    }
+
+    const tokenType = this.currentToken.type
+    switch (tokenType) {
+      case 'DOT': {
+        const dotPos = this.basePos === 0 ? this.currentToken.position : this.basePos
+        this.advance()
+
+        // Just return Identity if no token follows
+        if (!this.currentToken) {
+          return { type: 'Identity', position: dotPos }
+        }
+
+        // Handle wildcard
+        if (this.currentToken.type === '*') {
+          this.advance()
+          return { type: 'Wildcard', position: dotPos }
+        }
+
+        // Handle property access
+        if (this.currentToken.type === 'IDENT') {
+          const property = this.currentToken.value
+          this.advance()
+          return {
+            type: 'PropertyAccess',
+            position: dotPos,
+            property
+          }
+        }
+
+        // If no valid token follows the dot, it's an identity
+        return { type: 'Identity', position: dotPos }
+      }
+
+      case '[': {
+        const pos = this.basePos === 0 ? this.currentToken.position : this.basePos
+        this.advance()
+        const index = parseInt(this.expect('NUM').value, 10)
+        this.expect(']')
+        return {
+          type: 'IndexAccess',
+          position: pos,
+          index
+        }
+      }
+
+      default:
+        throw new ParseError(
+          `Unexpected token: ${this.currentToken.value}`,
+          this.currentToken.position
+        )
+    }
+  }
+
   private parseChain (): ASTNode {
     let expr = this.parsePrimary()
 
@@ -74,20 +131,27 @@ export class JQParser {
         expr = {
           type: 'Optional',
           position: this.basePos,
-          expression: {
-            ...expr,
-            position: this.basePos
-          }
+          expression: expr
         }
-      } else if (tokenType === '[') {
+      } else if (tokenType === '[' || tokenType === '[]') {
         const pos = this.basePos === 0 ? this.currentToken.position : this.basePos
-        this.advance()
-        const index = parseInt(this.expect('NUM').value, 10)
-        this.expect(']')
-        expr = {
-          type: 'IndexAccess',
-          position: pos,
-          index
+        if (tokenType === '[]') {
+          this.advance()
+          expr = {
+            type: 'ArrayIteration',
+            position: pos,
+            input: expr
+          }
+        } else {
+          this.advance()
+          const index = parseInt(this.expect('NUM').value, 10)
+          this.expect(']')
+          expr = {
+            type: 'IndexAccess',
+            position: pos,
+            index,
+            input: expr
+          }
         }
       } else if (tokenType === 'DOT') {
         this.advance()
@@ -103,13 +167,15 @@ export class JQParser {
           expr = {
             type: 'PropertyAccess',
             position: this.basePos,
-            property
+            property,
+            input: expr
           }
         } else if (nextTokenType === '*') {
           this.advance()
           expr = {
             type: 'Wildcard',
-            position: this.basePos
+            position: this.basePos,
+            input: expr
           }
         }
       } else {
@@ -118,48 +184,5 @@ export class JQParser {
     }
 
     return expr
-  }
-
-  private parsePrimary (): ASTNode {
-    if (!this.currentToken) {
-      throw new ParseError('Unexpected end of input', -1)
-    }
-
-    const tokenType = this.currentToken.type
-    switch (tokenType) {
-      case 'DOT': {
-        const dotPos = this.basePos === 0 ? this.currentToken.position : this.basePos
-        this.advance()
-
-        if (!this.currentToken ||
-            !(this.currentToken.type === 'IDENT' ||
-              this.currentToken.type === '*')) {
-          return { type: 'Identity', position: dotPos }
-        }
-
-        if (this.currentToken.type === '*') {
-          this.advance()
-          return { type: 'Wildcard', position: dotPos }
-        }
-
-        const property = this.currentToken.value
-        this.advance()
-        return { type: 'PropertyAccess', position: dotPos, property }
-      }
-
-      case '[': {
-        const pos = this.basePos === 0 ? this.currentToken.position : this.basePos
-        this.advance()
-        const index = parseInt(this.expect('NUM').value, 10)
-        this.expect(']')
-        return { type: 'IndexAccess', position: pos, index }
-      }
-
-      default:
-        throw new ParseError(
-          `Unexpected token: ${this.currentToken.value}`,
-          this.currentToken.position
-        )
-    }
   }
 }

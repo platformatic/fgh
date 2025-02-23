@@ -22,6 +22,7 @@ export class JQLexer implements Lexer {
 
     const char = this.input[this.position]
     const startPos = this.position
+    let pos
 
     switch (char) {
       case '.':
@@ -29,6 +30,15 @@ export class JQLexer implements Lexer {
         return { type: 'DOT', value: '.', position: startPos }
       case '[':
         this.position++
+        // Check if next non-whitespace character is ]
+        pos = this.position
+        while (pos < this.input.length && this.isWhitespace(this.input[pos])) {
+          pos++
+        }
+        if (pos < this.input.length && this.input[pos] === ']') {
+          this.position = pos + 1
+          return { type: '[]', value: '[]', position: startPos }
+        }
         return { type: '[', value: '[', position: startPos }
       case ']':
         this.position++

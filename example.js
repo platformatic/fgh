@@ -9,7 +9,7 @@ const data = {
 }
 
 // Compile a reusable function
-const getFirstNames = fgh.compile('.users | .name.first')
+const getFirstNames = fgh.compile('.users[] | .name.first')
 
 // Use the compiled function
 console.log(getFirstNames(data)) // ['John', 'Jane']

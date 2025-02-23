@@ -1,4 +1,3 @@
-/* eslint no-new-func: "off" */
 import { JQParser } from './parser.ts'
 import { JQCodeGenerator } from './generator.ts'
 import type { JQFunction } from './types.ts'
@@ -18,9 +17,9 @@ export function compile (expression: string): JQFunction {
   const generator = new JQCodeGenerator()
 
   const ast = parser.parse()
-  const code = generator.generate(ast)
+  const fn = generator.generate(ast)
 
-  return new Function(`return ${code}`)() as JQFunction
+  return fn as JQFunction
 }
 
 /**
