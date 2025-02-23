@@ -130,7 +130,7 @@ test('generate the example from the README', () => {
   assert.deepEqual(fn(data), ['John', 'Jane'])
 })
 
-test.skip('generate the example from the README', () => {
+test('generate the example from the README', () => {
   const parser = new JQParser('.users[0].name.last')
   const generator = new JQCodeGenerator()
   const fn = generator.generate(parser.parse())

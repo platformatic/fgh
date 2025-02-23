@@ -45,6 +45,11 @@ export class JQCodeGenerator implements CodeGenerator {
       current = (current as PropertyAccessNode).input
     }
 
+    if (current && current.type === 'IndexAccess') {
+      const indexCode = this.generateIndexAccess(current)
+      return `accessProperty(${indexCode}, '${properties.join('.')}')`
+    }
+
     return `accessProperty(input, '${properties.join('.')}')`
   }
 
@@ -103,17 +108,13 @@ const isNullOrUndefined = (x) => x === null || x === undefined;
 const ensureArray = (x) => Array.isArray(x) ? x : [x];
 
 const getNestedValue = (obj, props, optional = false) => {
+  if (isNullOrUndefined(obj)) return undefined;
+  
   let value = obj;
   for (const prop of props) {
     if (isNullOrUndefined(value)) return undefined;
     if (typeof value !== 'object') return undefined;
     value = optional ? value?.[prop] : value[prop];
-    if (value && typeof value === 'object' && !Array.isArray(value)) {
-      const remaining = props.slice(props.indexOf(prop) + 1);
-      if (remaining.length > 0) {
-        return getNestedValue(value, remaining, optional);
-      }
-    }
   }
   return value;
 };
@@ -122,6 +123,7 @@ const flattenResult = (result) => {
   if (isNullOrUndefined(result)) return undefined;
   if (!Array.isArray(result)) return result;
   if (result.length === 0) return undefined;
+  if (result.length === 1 && !Array.isArray(result[0])) return result[0];
   return result;
 };
 
@@ -134,7 +136,7 @@ const handlePipe = (input, leftFn, rightFn) => {
     .map(item => rightFn(item))
     .filter(x => !isNullOrUndefined(x));
   
-  return results.length === 0 ? undefined : results;
+  return flattenResult(results);
 };
 
 const accessProperty = (obj, prop, optional = false) => {
@@ -142,28 +144,12 @@ const accessProperty = (obj, prop, optional = false) => {
   
   if (Array.isArray(obj)) {
     const results = obj
-      .map(item => {
-        if (isNullOrUndefined(item) || typeof item !== 'object') return undefined;
-        const props = prop.split('.');
-        let value = item;
-        for (const p of props) {
-          if (isNullOrUndefined(value) || typeof value !== 'object') return undefined;
-          value = optional ? value?.[p] : value[p];
-        }
-        return value;
-      })
+      .map(item => getNestedValue(item, prop.split('.'), optional))
       .filter(x => !isNullOrUndefined(x));
-    return results.length === 0 ? undefined : results;
+    return flattenResult(results);
   }
   
-  if (typeof obj !== 'object') return undefined;
-  const props = prop.split('.');
-  let value = obj;
-  for (const p of props) {
-    if (isNullOrUndefined(value) || typeof value !== 'object') return undefined;
-    value = optional ? value?.[p] : value[p];
-  }
-  return value;
+  return getNestedValue(obj, prop.split('.'), optional);
 };
 
 const accessIndex = (obj, idx) => {
@@ -174,18 +160,16 @@ const accessIndex = (obj, idx) => {
       const results = obj
         .map(item => Array.isArray(item) ? item[idx] : undefined)
         .filter(x => !isNullOrUndefined(x));
-      return results.length === 0 ? undefined : results;
+      return flattenResult(results);
     }
-    const result = idx >= 0 && idx < obj.length ? obj[idx] : undefined;
-    return result;
+    return idx >= 0 && idx < obj.length ? obj[idx] : undefined;
   }
   
   if (typeof obj === 'object') {
     const arrays = Object.values(obj).filter(Array.isArray);
     if (arrays.length > 0) {
       const arr = arrays[0];
-      const result = idx >= 0 && idx < arr.length ? arr[idx] : undefined;
-      return result;
+      return idx >= 0 && idx < arr.length ? arr[idx] : undefined;
     }
   }
   
@@ -219,12 +203,12 @@ const getWildcardValues = (input) => {
         Object.values(item) : 
         item
     );
-    return results.length === 0 ? undefined : results;
+    return flattenResult(results);
   }
   
   if (typeof input === 'object') {
     const values = Object.values(input);
-    return values.length === 0 ? undefined : values;
+    return flattenResult(values);
   }
   
   return undefined;
