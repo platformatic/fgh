@@ -105,7 +105,11 @@ export class JQParser {
         this.advance()
         const index = parseInt(this.expect('NUM').value, 10)
         this.expect(']')
-        return { type: 'IndexAccess', position: pos, index }
+        return {
+          type: 'IndexAccess',
+          position: pos,
+          index
+        }
       }
 
       default:

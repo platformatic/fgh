@@ -30,22 +30,22 @@ export class JQCodeGenerator implements CodeGenerator {
         return this.generateOptional(node)
       case 'Sequence':
         return this.generateSequence(node)
-      default:
-        throw new Error(`Unknown node type: ${(node as ASTNode).type}`)
+      default: {
+        throw new Error(`Unknown node type: ${node}`)
+      }
     }
   }
 
   private generatePropertyAccess (node: PropertyAccessNode): string {
-    const props = []
-    let current: PropertyAccessNode | undefined = node
-    // Collect all chained property accesses
-    while (current) {
-      props.unshift(current.property)
-      current = current.input?.type === 'PropertyAccess' ? current.input : undefined
+    const properties: string[] = [node.property]
+    let current = node.input
+
+    while (current && current.type === 'PropertyAccess') {
+      properties.unshift((current as PropertyAccessNode).property)
+      current = (current as PropertyAccessNode).input
     }
-    // Build the full property path
-    const propertyPath = props.join('.')
-    return `accessProperty(input, '${propertyPath}')`
+
+    return `accessProperty(input, '${properties.join('.')}')`
   }
 
   private generateIndexAccess (node: IndexAccessNode): string {
@@ -56,16 +56,24 @@ export class JQCodeGenerator implements CodeGenerator {
     return `accessIndex(input, ${node.index})`
   }
 
-  private generateArrayIteration (_node: ArrayIterationNode): string {
+  private generateArrayIteration (node: ArrayIterationNode): string {
+    if (node.input) {
+      const inputCode = this.generateNode(node.input)
+      return `iterateArray(${inputCode})`
+    }
     return 'iterateArray(input)'
   }
 
-  private generateWildcard (_node: WildcardNode): string {
+  private generateWildcard (node: WildcardNode): string {
+    if (node.input) {
+      const inputCode = this.generateNode(node.input)
+      return `getWildcardValues(${inputCode})`
+    }
     return 'getWildcardValues(input)'
   }
 
   private generateSequence (node: SequenceNode): string {
-    return `[${node.expressions.map(expr => this.generateNode(expr as ASTNode)).join(', ')}]`
+    return `[${node.expressions.map(expr => this.generateNode(expr)).join(', ')}]`
   }
 
   private static wrapInFunction (expr: string): string {
@@ -80,7 +88,7 @@ export class JQCodeGenerator implements CodeGenerator {
 
   private generateOptional (node: OptionalNode): string {
     if (node.expression.type === 'PropertyAccess') {
-      const propNode = node.expression as PropertyAccessNode
+      const propNode = node.expression
       return `accessProperty(input, '${propNode.property}', true)`
     }
     const exprCode = this.generateNode(node.expression)
@@ -100,7 +108,6 @@ const getNestedValue = (obj, props, optional = false) => {
     if (isNullOrUndefined(value)) return undefined;
     if (typeof value !== 'object') return undefined;
     value = optional ? value?.[prop] : value[prop];
-    // After accessing the first level, we need to handle nested objects
     if (value && typeof value === 'object' && !Array.isArray(value)) {
       const remaining = props.slice(props.indexOf(prop) + 1);
       if (remaining.length > 0) {
