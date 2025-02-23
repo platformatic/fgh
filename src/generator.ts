@@ -1,7 +1,7 @@
+/* eslint no-new-func: "off" */
 import type {
   CodeGenerator,
   ASTNode,
-  IdentityNode,
   PropertyAccessNode,
   IndexAccessNode,
   WildcardNode,
@@ -12,7 +12,7 @@ import type {
 } from './types.ts'
 
 export class JQCodeGenerator implements CodeGenerator {
-  private generateNode(node: ASTNode): string {
+  private generateNode (node: ASTNode): string {
     switch (node.type) {
       case 'Identity':
         return 'input'
@@ -35,20 +35,20 @@ export class JQCodeGenerator implements CodeGenerator {
     }
   }
 
-  private generatePropertyAccess(node: PropertyAccessNode): string {
-    const props = [];
-    let current: PropertyAccessNode | undefined = node;
+  private generatePropertyAccess (node: PropertyAccessNode): string {
+    const props = []
+    let current: PropertyAccessNode | undefined = node
     // Collect all chained property accesses
     while (current) {
-      props.unshift(current.property);
-      current = current.input?.type === 'PropertyAccess' ? current.input : undefined;
+      props.unshift(current.property)
+      current = current.input?.type === 'PropertyAccess' ? current.input : undefined
     }
     // Build the full property path
-    const propertyPath = props.join('.');
-    return `accessProperty(input, '${propertyPath}')`;
+    const propertyPath = props.join('.')
+    return `accessProperty(input, '${propertyPath}')`
   }
 
-  private generateIndexAccess(node: IndexAccessNode): string {
+  private generateIndexAccess (node: IndexAccessNode): string {
     if (node.input) {
       const inputCode = this.generateNode(node.input)
       return `accessIndex(${inputCode}, ${node.index})`
@@ -56,29 +56,29 @@ export class JQCodeGenerator implements CodeGenerator {
     return `accessIndex(input, ${node.index})`
   }
 
-  private generateArrayIteration(_node: ArrayIterationNode): string {
-    return `iterateArray(input)`
+  private generateArrayIteration (_node: ArrayIterationNode): string {
+    return 'iterateArray(input)'
   }
 
-  private generateWildcard(_node: WildcardNode): string {
-    return `getWildcardValues(input)`
+  private generateWildcard (_node: WildcardNode): string {
+    return 'getWildcardValues(input)'
   }
 
-  private generateSequence(node: SequenceNode): string {
+  private generateSequence (node: SequenceNode): string {
     return `[${node.expressions.map(expr => this.generateNode(expr as ASTNode)).join(', ')}]`
   }
 
-  private static wrapInFunction(expr: string): string {
+  private static wrapInFunction (expr: string): string {
     return `((input) => ${expr})`
   }
 
-  private generatePipe(node: PipeNode): string {
+  private generatePipe (node: PipeNode): string {
     const leftCode = this.generateNode(node.left)
     const rightCode = this.generateNode(node.right)
     return `handlePipe(input, ${JQCodeGenerator.wrapInFunction(leftCode)}, ${JQCodeGenerator.wrapInFunction(rightCode)})`
   }
 
-  private generateOptional(node: OptionalNode): string {
+  private generateOptional (node: OptionalNode): string {
     if (node.expression.type === 'PropertyAccess') {
       const propNode = node.expression as PropertyAccessNode
       return `accessProperty(input, '${propNode.property}', true)`
@@ -87,7 +87,7 @@ export class JQCodeGenerator implements CodeGenerator {
     return `(isNullOrUndefined(input) ? undefined : ${exprCode})`
   }
 
-  generate(ast: ASTNode): Function {
+  generate (ast: ASTNode): Function {
     const body = this.generateNode(ast)
     const code = `
 const isNullOrUndefined = (x) => x === null || x === undefined;

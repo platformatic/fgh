@@ -62,7 +62,8 @@ export class JQParser {
 
     return left
   }
-private parsePrimary(): ASTNode {
+
+  private parsePrimary (): ASTNode {
     if (!this.currentToken) {
       throw new ParseError('Unexpected end of input', -1)
     }
@@ -113,8 +114,9 @@ private parsePrimary(): ASTNode {
           this.currentToken.position
         )
     }
-}
-private parseChain(): ASTNode {
+  }
+
+  private parseChain (): ASTNode {
     let expr = this.parsePrimary()
 
     while (this.currentToken) {
@@ -178,6 +180,5 @@ private parseChain(): ASTNode {
     }
 
     return expr
-}
-
+  }
 }

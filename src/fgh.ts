@@ -1,4 +1,3 @@
-/* eslint no-new-func: "off" */
 import { JQParser } from './parser.ts'
 import { JQCodeGenerator } from './generator.ts'
 import type { JQFunction } from './types.ts'
