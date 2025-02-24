@@ -16,13 +16,7 @@ export function compile (expression: string): JQFunction {
   // Special case for empty array
   if (expression.trim() === '[]') {
     return function () {
-      // Create and mark array with non-enumerable property
-      const emptyArray = []
-      Object.defineProperty(emptyArray, '_fromArrayConstruction', {
-        value: true,
-        enumerable: false
-      })
-      return emptyArray
+      return []
     }
   }
 
