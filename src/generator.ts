@@ -44,15 +44,70 @@ export class JQCodeGenerator implements CodeGenerator {
   private generatePropertyAccess (node: PropertyAccessNode): string {
     const properties: string[] = [node.property]
     let current = node.input
+    let hasArrayIteration = false
+
+    // Check if there's an array iteration in the chain
+    if (current && current.type === 'ArrayIteration') {
+      hasArrayIteration = true
+    }
 
     while (current && current.type === 'PropertyAccess') {
       properties.unshift((current as PropertyAccessNode).property)
       current = (current as PropertyAccessNode).input
+
+      // Check for array iteration in parent nodes
+      if (current && current.type === 'ArrayIteration') {
+        hasArrayIteration = true
+      }
     }
 
     if (current && current.type === 'IndexAccess') {
       const indexCode = this.generateIndexAccess(current)
       return `accessProperty(${indexCode}, '${properties.join('.')}')`
+    }
+
+    // If we have an ArrayIteration in the property access chain, we need special handling
+    if (hasArrayIteration) {
+      const inputCode = current ? this.generateNode(current) : 'input'
+      const joined = properties.join('.')
+
+      return `(() => {
+        const inputVal = ${inputCode};
+        if (isNullOrUndefined(inputVal)) return undefined;
+        
+        // Find all properties
+        const propResults = [];
+        const propStack = [inputVal];
+        
+        // Process the property path
+        while (propStack.length > 0) {
+          const currentItem = propStack.pop();
+          
+          if (Array.isArray(currentItem)) {
+            // For arrays, push each element to process individually
+            propStack.push(...currentItem.filter(item => item !== null && item !== undefined));
+          } 
+          else if (typeof currentItem === 'object' && currentItem !== null) {
+            // Access the property from the object
+            const propValue = getNestedValue(currentItem, '${joined}'.split('.'));
+            if (!isNullOrUndefined(propValue)) {
+              if (Array.isArray(propValue)) {
+                propResults.push(...propValue);
+              } else {
+                propResults.push(propValue);
+              }
+            }
+          }
+        }
+        
+        // Mark as construction to preserve in later operations
+        if (propResults.length > 0) {
+          Object.defineProperty(propResults, '_fromArrayConstruction', { value: true });
+          return propResults;
+        }
+        
+        return undefined;
+      })()`
     }
 
     return `accessProperty(input, '${properties.join('.')}')`
@@ -69,13 +124,91 @@ export class JQCodeGenerator implements CodeGenerator {
   private generateArrayIteration (node: ArrayIterationNode): string {
     if (node.input) {
       const inputCode = this.generateNode(node.input)
-      return `iterateArray(${inputCode})`
+      // Need to preserve array for correct handling in comma operator
+      return `((input) => {
+        const result = iterateArray(${inputCode});
+        if (Array.isArray(result)) {
+          Object.defineProperty(result, "_fromArrayConstruction", { value: true });
+        }
+        return result;
+      })(input)`
     }
-    return 'iterateArray(input)'
+    return `((input) => {
+      const result = iterateArray(input);
+      if (Array.isArray(result)) {
+        Object.defineProperty(result, "_fromArrayConstruction", { value: true });
+      }
+      return result;
+    })(input)`
   }
 
   private generateSequence (node: SequenceNode): string {
-    return `[${node.expressions.map(expr => this.generateNode(expr)).join(', ')}]`
+    // Create an array with all expression results,
+    // flatten array items as needed, and mark it as an array construction
+    // so it's preserved by flattenResult
+    const expressions = node.expressions.map(expr => this.generateNode(expr))
+
+    // Check if all expressions are IndexAccess nodes. If so, we have array index syntax like [1,2,3]
+    const allIndexAccess = node.expressions.every(expr => expr.type === 'IndexAccess')
+
+    if (allIndexAccess && node.expressions.length > 0 && (node.expressions[0] as IndexAccessNode).input) {
+      // This is a comma-separated list of array indices like .array[1,2,3]
+      // Generate more efficient special-case code
+      return `(() => {
+        const target = ${this.generateNode((node.expressions[0] as IndexAccessNode).input!)};
+        if (isNullOrUndefined(target)) return [];
+        
+        const results = [];
+        ${node.expressions.map(expr => {
+          const index = (expr as IndexAccessNode).index
+          return `
+          // Handle index ${index}
+          {
+            const idx = ${index};
+            const value = accessIndex(target, idx);
+            if (!isNullOrUndefined(value)) results.push(value);
+          }`
+        }).join('')}
+        
+        // Mark as array construction result
+        Object.defineProperty(results, "_fromArrayConstruction", { value: true });
+        return results;
+      })()`
+    }
+
+    // General sequence handling (improved to better handle arrays and preserve sequence structure)
+    return `(() => {
+      const sequenceResults = [];
+      
+      ${expressions.map((expr, i) => `
+        // Process expression ${i + 1}
+        const result${i} = ${expr};
+        
+        // Handle possible array results
+        if (Array.isArray(result${i})) {
+          // Special case for array with _fromArrayConstruction property - these are generated from other operations
+          if (result${i}._fromArrayConstruction) {
+            // Add each element individually
+            sequenceResults.push(...result${i});
+          } 
+          // Regular arrays should be spread as well
+          else {
+            sequenceResults.push(...result${i});
+          }
+        } 
+        // Add any non-undefined single values
+        else if (result${i} !== undefined) {
+          sequenceResults.push(result${i});
+        }
+      `).join('')}
+      
+      // Mark the array as a sequence to preserve through other operations
+      if (sequenceResults.length > 0) {
+        Object.defineProperty(sequenceResults, "_fromArrayConstruction", { value: true });
+      }
+      
+      return sequenceResults;
+    })()`
   }
 
   private static wrapInFunction (expr: string): string {
@@ -150,7 +283,10 @@ export class JQCodeGenerator implements CodeGenerator {
     const code = `
 const isNullOrUndefined = (x) => x === null || x === undefined;
 
-const ensureArray = (x) => Array.isArray(x) ? x : [x];
+const ensureArray = (x) => {
+  if (Array.isArray(x)) return x;
+  return [x];
+};
 
 const getNestedValue = (obj, props, optional = false) => {
   if (isNullOrUndefined(obj)) return undefined;
@@ -158,17 +294,46 @@ const getNestedValue = (obj, props, optional = false) => {
   let value = obj;
   for (const prop of props) {
     if (isNullOrUndefined(value)) return undefined;
+    
+    // Special handling for values - could be arrays as well
+    if (Array.isArray(value)) {
+      // For arrays, we map the property access over all elements
+      const results = [];
+      for (const item of value) {
+        if (typeof item === 'object' && item !== null) {
+          const itemValue = optional ? item?.[prop] : item[prop];
+          if (!isNullOrUndefined(itemValue)) {
+            if (Array.isArray(itemValue)) {
+              results.push(...itemValue);
+            } else {
+              results.push(itemValue);
+            }
+          }
+        }
+      }
+      
+      if (results.length > 0) {
+        // Mark as array construction to preserve
+        Object.defineProperty(results, '_fromArrayConstruction', { value: true });
+        return results;
+      }
+      return undefined;
+    }
+    
+    // For objects, access normally
     if (typeof value !== 'object') return undefined;
     value = optional ? value?.[prop] : value[prop];
   }
+  
   return value;
 };
 
 const flattenResult = (result) => {
+  // Handle non-array cases
   if (isNullOrUndefined(result)) return undefined;
   if (!Array.isArray(result)) return result;
   
-  // Special case for empty array literals, preserve them
+  // Special case for empty arrays
   if (result.length === 0) {
     // Empty arrays from array construction should be preserved
     if (result._fromArrayConstruction) {
@@ -178,43 +343,102 @@ const flattenResult = (result) => {
     return undefined;
   }
   
-  if (result.length === 1 && !Array.isArray(result[0])) return result[0];
-  
-  // For non-empty arrays, return a clean copy if they're from array construction
+  // Critical: preserve arrays that are marked as construction results
+  // This is essential for the comma operator to work properly
   if (result._fromArrayConstruction) {
     return [...result];
   }
   
+  // Single-element arrays should be simplified unless they're from array construction
+  if (result.length === 1 && !Array.isArray(result[0])) {
+    return result[0];
+  }
+  
+  // Return the array as is for all other cases
   return result;
 };
 
 const handlePipe = (input, leftFn, rightFn) => {
+  // Get the result of the left function
   const leftResult = leftFn(input);
   if (isNullOrUndefined(leftResult)) return undefined;
   
+  // Ensure we have an array to iterate over
   const leftArray = ensureArray(leftResult);
-  const results = leftArray
-    .map(item => rightFn(item))
-    .filter(x => !isNullOrUndefined(x));
+  const results = [];
   
-  // Check if we're dealing with multiple arrays and need to flatten them
-  if (results.length > 0 && results.every(Array.isArray)) {
-    return results.flat();
+  // Process each item from the left result
+  for (const item of leftArray) {
+    // Apply the right function to each item
+    const rightResult = rightFn(item);
+    
+    // Skip undefined results
+    if (isNullOrUndefined(rightResult)) continue;
+    
+    // Handle arrays from the right function
+    if (Array.isArray(rightResult)) {
+      // Arrays marked as construction results should be spread
+      if (rightResult._fromArrayConstruction) {
+        results.push(...rightResult);
+      }
+      // Normal arrays should be spread too
+      else {
+        results.push(...rightResult);
+      }
+    }
+    // Single values added directly
+    else {
+      results.push(rightResult);
+    }
   }
   
-  return flattenResult(results);
+  // Make sure the final results array is preserved
+  Object.defineProperty(results, '_fromArrayConstruction', { value: true });
+  
+  // Return undefined for empty results, otherwise the array
+  return results.length === 0 ? undefined : results;
 };
 
 const accessProperty = (obj, prop, optional = false) => {
   if (isNullOrUndefined(obj)) return undefined;
   
+  // Special case for array elements - critical for array iteration with property access
   if (Array.isArray(obj)) {
-    const results = obj
-      .map(item => getNestedValue(item, prop.split('.'), optional))
-      .filter(x => !isNullOrUndefined(x));
-    return flattenResult(results);
+    // Create a collector for all the values
+    const results = [];
+    
+    // Process each item in the array
+    for (const item of obj) {
+      // Skip non-objects
+      if (isNullOrUndefined(item) || typeof item !== 'object') continue;
+      
+      // Get the property value
+      const value = getNestedValue(item, prop.split('.'), optional);
+      
+      // Only add non-null values
+      if (!isNullOrUndefined(value)) {
+        // Handle nested arrays
+        if (Array.isArray(value)) {
+          // Push each item
+          results.push(...value);
+        } else {
+          // Push the single value
+          results.push(value);
+        }
+      }
+    }
+    
+    // If we found any values, return them as a special array that won't be flattened
+    if (results.length > 0) {
+      // Mark the array so it will be preserved through future operations
+      Object.defineProperty(results, '_fromArrayConstruction', { value: true });
+      return results;
+    }
+    
+    return undefined;
   }
   
+  // Regular property access on an object
   return getNestedValue(obj, prop.split('.'), optional);
 };
 
@@ -228,6 +452,13 @@ const accessIndex = (obj, idx) => {
         .filter(x => !isNullOrUndefined(x));
       return flattenResult(results);
     }
+    
+    // Handle negative indices to access from the end of the array
+    if (idx < 0) {
+      const actualIdx = obj.length + idx;
+      return actualIdx >= 0 && actualIdx < obj.length ? obj[actualIdx] : undefined;
+    }
+    
     return idx >= 0 && idx < obj.length ? obj[idx] : undefined;
   }
   
@@ -235,6 +466,13 @@ const accessIndex = (obj, idx) => {
     const arrays = Object.values(obj).filter(Array.isArray);
     if (arrays.length > 0) {
       const arr = arrays[0];
+      
+      // Handle negative indices for nested arrays too
+      if (idx < 0) {
+        const actualIdx = arr.length + idx;
+        return actualIdx >= 0 && actualIdx < arr.length ? arr[actualIdx] : undefined;
+      }
+      
       return idx >= 0 && idx < arr.length ? arr[idx] : undefined;
     }
   }
@@ -246,11 +484,19 @@ const iterateArray = (input) => {
   if (isNullOrUndefined(input)) return undefined;
   
   if (Array.isArray(input)) {
-    return input;
+    // Make sure to preserve the array structure
+    const result = [...input];
+    // Mark the array to preserve it as a sequence
+    Object.defineProperty(result, '_fromArrayConstruction', { value: true });
+    return result;
   }
   
   if (typeof input === 'object') {
-    return Object.values(input);
+    // Get object values
+    const result = Object.values(input);
+    // Mark the array to preserve it as a sequence
+    Object.defineProperty(result, '_fromArrayConstruction', { value: true });
+    return result;
   }
   
   return undefined;
@@ -264,7 +510,8 @@ const accessSlice = (input, start, end) => {
   const endIdx = end !== null ? end : undefined;
   
   if (Array.isArray(input)) {
-    return input.slice(startIdx, endIdx);
+    const result = input.slice(startIdx, endIdx);
+    return result;
   }
   
   if (typeof input === 'string') {
@@ -279,20 +526,30 @@ const constructArray = (input, elementFns) => {
   
   const result = [];
   
+  // Process each element function
   for (const elementFn of elementFns) {
+    // Apply the element function to the input
     const value = elementFn(input);
     
+    // Handle different types of values
     if (Array.isArray(value)) {
-      // If element is an array (like from array iteration), flatten it into the result
-      result.push(...value);
-    } else if (!isNullOrUndefined(value)) {
-      // Add non-null values to the result
+      // If the array is already a construction, preserve its structure by spreading
+      if (value._fromArrayConstruction) {
+        result.push(...value);
+      } 
+      // Other arrays should also be flattened
+      else {
+        result.push(...value);
+      }
+    } 
+    // Add single non-null values directly
+    else if (!isNullOrUndefined(value)) {
       result.push(value);
     }
   }
   
-  // Mark the array as an explicit array construction result
-  result._fromArrayConstruction = true;
+  // Mark the resulting array as a construction result so it's preserved
+  Object.defineProperty(result, '_fromArrayConstruction', { value: true });
   
   return result;
 };

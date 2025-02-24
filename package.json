@@ -25,7 +25,9 @@
     "jq",
     "typescript",
     "json",
-    "filter"
+    "filter",
+    "comma operator",
+    "sequence"
   ],
   "author": "Matteo Collina <hello@matteocollina.com>",
   "license": "MIT",
