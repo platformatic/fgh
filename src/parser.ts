@@ -63,89 +63,6 @@ export class JQParser {
     return left
   }
 
-  private parseObjectConstruction (): ASTNode {
-    if (!this.currentToken || this.currentToken.type !== '{' as TokenType) {
-      throw new ParseError('Expected {', this.currentToken?.position ?? -1)
-    }
-
-    const pos = this.basePos === 0 ? this.currentToken.position : this.basePos
-    this.advance() // Consume {
-
-    const fields: any[] = []
-
-    // Parse object fields until we hit closing brace
-    while (this.currentToken && this.currentToken.type !== '}' as TokenType) {
-      // Parse a field
-      const fieldPos = this.currentToken.position
-
-      let key: string | ASTNode
-      let isDynamic = false
-
-      // Handle dynamic key: {(.user): .titles}
-      if (this.currentToken.type === '(' as TokenType) {
-        this.advance() // Consume (
-        key = this.parseExpression()
-        isDynamic = true
-        this.expect(')') // Expect closing parenthesis
-      } else {
-        // Regular identifier key
-        if (this.currentToken.type !== 'IDENT' as TokenType) {
-          throw new ParseError(
-            `Expected identifier or dynamic key, got ${this.currentToken.type}`,
-            this.currentToken.position
-          )
-        }
-        key = this.currentToken.value
-        this.advance()
-      }
-
-      let value: ASTNode
-
-      // If we have a colon, parse the value expression
-      if (this.currentToken && this.currentToken.type === ':' as TokenType) {
-        this.advance() // Consume :
-        value = this.parseExpression()
-      } else {
-        // Handle shorthand syntax: { user } -> { user: .user }
-        if (typeof key === 'string') {
-          value = {
-            type: 'PropertyAccess',
-            position: fieldPos,
-            property: key
-          }
-        } else {
-          throw new ParseError(
-            'Expected : after dynamic key',
-            this.currentToken?.position ?? -1
-          )
-        }
-      }
-
-      // Add the field to our list
-      fields.push({
-        type: 'ObjectField',
-        position: fieldPos,
-        key,
-        value,
-        isDynamic
-      })
-
-      // If next token is a comma, consume it
-      if (this.currentToken && this.currentToken.type === ',' as TokenType) {
-        this.advance()
-      }
-    }
-
-    // Consume the closing brace
-    this.expect('}')
-
-    return {
-      type: 'ObjectConstruction',
-      position: pos,
-      fields
-    }
-  }
-
   private parsePrimary (): ASTNode {
     if (!this.currentToken) {
       throw new ParseError('Unexpected end of input', -1)
@@ -187,10 +104,6 @@ export class JQParser {
           position: pos,
           index
         }
-      }
-
-      case '{' as TokenType: {
-        return this.parseObjectConstruction()
       }
 
       default:

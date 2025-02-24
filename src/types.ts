@@ -24,11 +24,6 @@ export type TokenType =
   | '*'
   | ':'
   | '-'
-  | '{'
-  | '}'
-  | ','
-  | '('
-  | ')'
   | 'EOF'
 
 export interface Token {
@@ -56,8 +51,6 @@ export type NodeType =
   | 'Optional'
   | 'Sequence'
   | 'Slice'
-  | 'ObjectConstruction'
-  | 'ObjectField'
 
 export interface BaseNode {
   type: NodeType;
@@ -109,18 +102,6 @@ export interface SliceNode extends BaseNode {
   input?: ASTNode;
 }
 
-export interface ObjectFieldNode extends BaseNode {
-  type: 'ObjectField';
-  key: string | ASTNode; // String for static keys, ASTNode for dynamic (.property) keys
-  value: ASTNode;
-  isDynamic: boolean;
-}
-
-export interface ObjectConstructionNode extends BaseNode {
-  type: 'ObjectConstruction';
-  fields: ObjectFieldNode[];
-}
-
 export type ASTNode =
   | IdentityNode
   | PropertyAccessNode
@@ -130,8 +111,6 @@ export type ASTNode =
   | SequenceNode
   | ArrayIterationNode
   | SliceNode
-  | ObjectConstructionNode
-  | ObjectFieldNode
 
 export interface Parser {
   parse(): ASTNode;
