@@ -46,17 +46,6 @@ export function compile (expression: string): JQFunction {
  * const result = query('.name', {name: 'John'});
  */
 export function query (expression: string, input: unknown): unknown {
-  // Direct special case for empty array expression
-  if (expression.trim() === '[]') {
-    // Create an array and mark it with a non-enumerable property
-    const emptyArray = []
-    Object.defineProperty(emptyArray, '_fromArrayConstruction', {
-      value: true,
-      enumerable: false
-    })
-    return emptyArray
-  }
-
   const fn = compile(expression)
   return fn(input)
 }
