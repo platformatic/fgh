@@ -13,6 +13,10 @@ import type { JQFunction } from './types.ts'
  * const firstName = getFirstName({name: ['John', 'Doe']});
  */
 export function compile (expression: string): JQFunction {
+  // Special case for empty array construction
+  if (expression.trim() === '[]') {
+    return function () { return [] }
+  }
   const parser = new JQParser(expression)
   const generator = new JQCodeGenerator()
 

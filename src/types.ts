@@ -58,6 +58,7 @@ export type NodeType =
   | 'Slice'
   | 'ObjectConstruction'
   | 'ObjectField'
+  | 'ArrayConstruction'
 
 export interface BaseNode {
   type: NodeType;
@@ -121,6 +122,11 @@ export interface ObjectConstructionNode extends BaseNode {
   fields: ObjectFieldNode[];
 }
 
+export interface ArrayConstructionNode extends BaseNode {
+  type: 'ArrayConstruction';
+  elements: ASTNode[];
+}
+
 export type ASTNode =
   | IdentityNode
   | PropertyAccessNode
@@ -132,6 +138,7 @@ export type ASTNode =
   | SliceNode
   | ObjectConstructionNode
   | ObjectFieldNode
+  | ArrayConstructionNode
 
 export interface Parser {
   parse(): ASTNode;
@@ -159,6 +166,11 @@ export class ExecutionError extends JQError {
 }
 
 export type JQFunction = (input: unknown) => unknown
+
+// Interface for arrays with marker property
+export interface MarkedArray<T> extends Array<T> {
+  _fromArrayConstruction?: boolean
+}
 
 export interface CompileOptions {
   cache?: boolean;
