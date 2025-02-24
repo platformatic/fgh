@@ -138,13 +138,65 @@ export class JQParser {
           }
         } else {
           this.advance()
-          const index = parseInt(this.expect('NUM').value, 10)
-          this.expect(']')
-          expr = {
-            type: 'IndexAccess',
-            position: pos,
-            index,
-            input: expr
+
+          // Handle both slices and index access
+          if (this.currentToken?.type === ':') {
+            // Handle slices starting with colon [:n]
+            this.advance()
+            let end = null
+            if (this.currentToken?.type === 'NUM') {
+              end = parseInt(this.currentToken.value, 10)
+              this.advance()
+            }
+            this.expect(']')
+            expr = {
+              type: 'Slice',
+              position: pos,
+              start: null,
+              end
+            }
+          } else if (this.currentToken?.type === 'NUM' || this.currentToken?.type === '-') {
+            // Parse first number or negative
+            let num: number
+            if (this.currentToken.type === '-') {
+              this.advance()
+              num = -parseInt(this.expect('NUM').value, 10)
+            } else {
+              num = parseInt(this.currentToken.value, 10)
+              this.advance()
+            }
+
+            // Check if it's a slice or regular index
+            if (this.currentToken?.type === ':') {
+              // It's a slice
+              this.advance()
+              let end = null
+              if (this.currentToken?.type === 'NUM') {
+                end = parseInt(this.currentToken.value, 10)
+                this.advance()
+              }
+              this.expect(']')
+              expr = {
+                type: 'Slice',
+                position: pos,
+                start: num,
+                end
+              }
+            } else {
+              // It's a regular index
+              this.expect(']')
+              expr = {
+                type: 'IndexAccess',
+                position: pos,
+                index: num,
+                input: expr
+              }
+            }
+          } else {
+            throw new ParseError(
+              `Expected number, minus, or colon after [, got ${this.currentToken?.type ?? 'EOF'}`,
+              this.currentToken?.position ?? -1
+            )
           }
         }
       } else if (tokenType === 'DOT') {
