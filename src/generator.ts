@@ -127,23 +127,23 @@ export class JQCodeGenerator implements CodeGenerator {
     // Handle special case of empty array
     if (!node.elements || node.elements.length === 0) {
       // Create empty array with non-enumerable marker property
-      return 'Object.defineProperty([], "_fromArrayConstruction", { value: true, enumerable: false })';
+      return 'Object.defineProperty([], "_fromArrayConstruction", { value: true, enumerable: false })'
     }
-    
+
     const elements = node.elements.map((element: ASTNode) => {
       const elementCode = this.generateNode(element)
       return JQCodeGenerator.wrapInFunction(elementCode)
     }).join(', ')
-    
+
     return `constructArray(input, [${elements}])`
   }
 
   generate (ast: ASTNode): Function {
     // Special case for empty array construction
     if (ast.type === 'ArrayConstruction' && (!ast.elements || ast.elements.length === 0)) {
-      return function() { return []; }
+      return function () { return [] }
     }
-    
+
     const body = this.generateNode(ast)
     const code = `
 const isNullOrUndefined = (x) => x === null || x === undefined;

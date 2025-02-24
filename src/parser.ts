@@ -17,21 +17,21 @@ export class JQParser {
     // Special case for empty array construction: []
     if (this.currentToken?.type === '[') {
       // Peek at the next token
-      const nextToken = this.lexer.nextToken() 
+      const nextToken = this.lexer.nextToken()
 
       // Revert peek
       if (nextToken) {
         (this.lexer as any).position -= nextToken.value?.length || 0
       }
-      
+
       // If it's a closing bracket, we have an empty array []
-      if (nextToken?.type === ']') {
+      if (nextToken?.type === ']' as TokenType) {
         const pos = this.currentToken.position
-        
+
         // Consume the tokens
         this.advance() // Consume [
         this.advance() // Consume ]
-        
+
         // Return the empty array construction node
         return {
           type: 'ArrayConstruction',
@@ -39,14 +39,14 @@ export class JQParser {
           elements: []
         }
       }
-      
+
       // For non-empty arrays, check if it's an array construction
       const peekType = nextToken?.type
       if (peekType === 'DOT' || peekType === ']') {
         return this.parseArrayConstruction()
       }
     }
-    
+
     // Handle other expressions
     const node = this.parseExpression()
 
@@ -108,7 +108,7 @@ export class JQParser {
     const elements: ASTNode[] = []
 
     // Handle empty array case
-    if (this.currentToken && this.currentToken.type === ']') {
+    if (this.currentToken && this.currentToken.type === ']' as TokenType) {
       this.advance() // Consume ]
       return {
         type: 'ArrayConstruction',
@@ -118,39 +118,39 @@ export class JQParser {
     }
 
     // Parse array elements until we hit closing bracket
-    while (this.currentToken && this.currentToken.type !== ']') {
+    while (this.currentToken && this.currentToken.type !== ']' as TokenType) {
       // Parse an element
-      if (this.currentToken.type === 'DOT') {
+      if (this.currentToken.type === 'DOT' as TokenType) {
         // Property access or identity (.user or .)
         const dotPos = this.currentToken.position
         this.advance() // Consume dot
-        
+
         if (!this.currentToken) {
           // Just a dot (.)
-          elements.push({ 
-            type: 'Identity', 
-            position: dotPos 
+          elements.push({
+            type: 'Identity',
+            position: dotPos
           })
-        } else if (this.currentToken.type === 'IDENT') {
+        } else if (this.currentToken.type === 'IDENT' as TokenType) {
           // Property access (.user)
           const property = this.currentToken.value
           this.advance() // Consume identifier
-          
+
           let node: ASTNode = {
             type: 'PropertyAccess',
             position: dotPos,
             property
           }
-          
+
           // Check for nested property access (.user.name)
-          while (this.currentToken?.type === 'DOT') {
+          while (this.currentToken?.type === 'DOT' as TokenType) {
             this.advance() // Consume dot
-            if (this.currentToken?.type !== 'IDENT') {
+            if (this.currentToken?.type !== 'IDENT' as TokenType) {
               break
             }
             const nestedProperty = this.currentToken.value
             this.advance() // Consume identifier
-            
+
             node = {
               type: 'PropertyAccess',
               position: dotPos,
@@ -158,9 +158,9 @@ export class JQParser {
               input: node
             }
           }
-          
+
           // Check for array iteration (.projects[])
-          if (this.currentToken?.type === '[]') {
+          if (this.currentToken?.type === '[]' as TokenType) {
             this.advance() // Consume []
             node = {
               type: 'ArrayIteration',
@@ -168,13 +168,13 @@ export class JQParser {
               input: node
             }
           }
-          
+
           elements.push(node)
         } else {
           // Just a dot
-          elements.push({ 
-            type: 'Identity', 
-            position: dotPos 
+          elements.push({
+            type: 'Identity',
+            position: dotPos
           })
         }
       } else {
@@ -184,9 +184,9 @@ export class JQParser {
       }
 
       // If next token is a comma, consume it
-      if (this.currentToken?.type === ',') {
+      if (this.currentToken?.type === ',' as TokenType) {
         this.advance()
-      } else if (this.currentToken?.type !== ']') {
+      } else if (this.currentToken?.type !== ']' as TokenType) {
         throw new ParseError(
           `Expected comma or closing bracket, got ${this.currentToken?.type ?? 'EOF'}`,
           this.currentToken?.position ?? -1
@@ -215,7 +215,7 @@ export class JQParser {
     const fields: any[] = []
 
     // Parse object fields until we hit closing brace
-    while (this.currentToken && this.currentToken.type !== '}') {
+    while (this.currentToken && this.currentToken.type !== '}' as TokenType) {
       // Parse a field
       const fieldPos = this.currentToken.position
 
@@ -223,14 +223,14 @@ export class JQParser {
       let isDynamic = false
 
       // Handle dynamic key: {(.user): .titles}
-      if (this.currentToken.type === '(') {
+      if (this.currentToken.type === '(' as TokenType) {
         this.advance() // Consume (
         key = this.parseExpression()
         isDynamic = true
         this.expect(')') // Expect closing parenthesis
       } else {
         // Regular identifier key
-        if (this.currentToken.type !== 'IDENT') {
+        if (this.currentToken.type !== 'IDENT' as TokenType) {
           throw new ParseError(
             `Expected identifier or dynamic key, got ${this.currentToken.type}`,
             this.currentToken.position
@@ -243,7 +243,7 @@ export class JQParser {
       let value: ASTNode
 
       // If we have a colon, parse the value expression
-      if (this.currentToken && this.currentToken.type === ':') {
+      if (this.currentToken && this.currentToken.type === ':' as TokenType) {
         this.advance() // Consume :
         value = this.parseExpression()
       } else {
@@ -272,7 +272,7 @@ export class JQParser {
       })
 
       // If next token is a comma, consume it
-      if (this.currentToken && this.currentToken.type === ',') {
+      if (this.currentToken && this.currentToken.type === ',' as TokenType) {
         this.advance()
       }
     }
@@ -304,7 +304,7 @@ export class JQParser {
         }
 
         // Handle property access
-        if (this.currentToken.type === 'IDENT') {
+        if (this.currentToken.type === 'IDENT' as TokenType) {
           const property = this.currentToken.value
           this.advance()
           return {
@@ -321,32 +321,32 @@ export class JQParser {
       case '[': {
         // Handle array construction, array access, and slices
         const pos = this.basePos === 0 ? this.currentToken.position : this.basePos
-        
+
         // Peek at the next token to determine what type of construct this is
         const nextToken = this.lexer.nextToken()
         if (nextToken) {
           (this.lexer as any).position -= nextToken.value?.length || 0
         }
-        
+
         // If it's a dot or closing bracket, it's an array construction
-        if (nextToken?.type === 'DOT' || nextToken?.type === ']') {
+        if (nextToken?.type === 'DOT' || nextToken?.type === ']' as TokenType) {
           return this.parseArrayConstruction()
         }
-        
+
         // Otherwise process as index access or slice
         this.advance() // Consume [
-        
+
         // Handle index access
-        if (this.currentToken?.type === 'NUM') {
+        if (this.currentToken?.type === 'NUM' as TokenType) {
           const numValue = parseInt(this.currentToken.value, 10)
           this.advance() // Consume number
-          
+
           // Check if it's a slice (number:number) or just index access
-          if (this.currentToken?.type === ':') {
+          if (this.currentToken?.type === ':' as TokenType) {
             // It's a slice with start specified
             this.advance() // Consume :
             let end = null
-            if (this.currentToken?.type === 'NUM') {
+            if (this.currentToken?.type === 'NUM' as TokenType) {
               end = parseInt(this.currentToken.value, 10)
               this.advance()
             }
@@ -366,11 +366,11 @@ export class JQParser {
               index: numValue
             }
           }
-        } else if (this.currentToken?.type === ':') {
+        } else if (this.currentToken?.type === ':' as TokenType) {
           // It's a slice with implicit start [:n]
           this.advance() // Consume :
           let end = null
-          if (this.currentToken?.type === 'NUM') {
+          if (this.currentToken?.type === 'NUM' as TokenType) {
             end = parseInt(this.currentToken.value, 10)
             this.advance()
           }
@@ -381,16 +381,16 @@ export class JQParser {
             start: null,
             end
           }
-        } else if (this.currentToken?.type === '-') {
+        } else if (this.currentToken?.type === '-' as TokenType) {
           // It's a negative index or slice
           this.advance() // Consume -
           const num = -parseInt(this.expect('NUM').value, 10)
-          
-          if (this.currentToken?.type === ':') {
+
+          if (this.currentToken?.type === ':' as TokenType) {
             // It's a slice with negative start
             this.advance() // Consume :
             let end = null
-            if (this.currentToken?.type === 'NUM') {
+            if (this.currentToken?.type === 'NUM' as TokenType) {
               end = parseInt(this.currentToken.value, 10)
               this.advance()
             }
@@ -411,7 +411,7 @@ export class JQParser {
             }
           }
         }
-        
+
         // If we got here, it's an invalid token sequence
         throw new ParseError(
           `Expected number, minus, or colon after [, got ${this.currentToken?.type ?? 'EOF'}`,
@@ -466,11 +466,11 @@ export class JQParser {
           this.advance()
 
           // Handle both slices and index access
-          if (this.currentToken?.type === ':') {
+          if (this.currentToken?.type === ':' as TokenType) {
             // Handle slices starting with colon [:n]
             this.advance()
             let end = null
-            if (this.currentToken?.type === 'NUM') {
+            if (this.currentToken?.type === 'NUM' as TokenType) {
               end = parseInt(this.currentToken.value, 10)
               this.advance()
             }
@@ -481,10 +481,10 @@ export class JQParser {
               start: null,
               end
             }
-          } else if (this.currentToken?.type === 'NUM' || this.currentToken?.type === '-') {
+          } else if (this.currentToken?.type === 'NUM' as TokenType || this.currentToken?.type === '-' as TokenType) {
             // Parse first number or negative
             let num: number
-            if (this.currentToken.type === '-') {
+            if (this.currentToken.type === '-' as TokenType) {
               this.advance()
               num = -parseInt(this.expect('NUM').value, 10)
             } else {
@@ -493,11 +493,11 @@ export class JQParser {
             }
 
             // Check if it's a slice or regular index
-            if (this.currentToken?.type === ':') {
+            if (this.currentToken?.type === ':' as TokenType) {
               // It's a slice
               this.advance()
               let end = null
-              if (this.currentToken?.type === 'NUM') {
+              if (this.currentToken?.type === 'NUM' as TokenType) {
                 end = parseInt(this.currentToken.value, 10)
                 this.advance()
               }
@@ -525,7 +525,7 @@ export class JQParser {
             )
           }
         }
-      } else if (tokenType === 'DOT') {
+      } else if (tokenType === 'DOT' as TokenType) {
         this.advance()
 
         if (!this.currentToken) {
@@ -533,7 +533,7 @@ export class JQParser {
         }
 
         const nextTokenType = this.currentToken.type
-        if (nextTokenType === 'IDENT') {
+        if (nextTokenType === 'IDENT' as TokenType) {
           const property = this.currentToken.value
           this.advance()
           expr = {

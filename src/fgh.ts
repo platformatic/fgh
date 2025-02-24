@@ -15,17 +15,17 @@ import type { JQFunction } from './types.ts'
 export function compile (expression: string): JQFunction {
   // Special case for empty array
   if (expression.trim() === '[]') {
-    return function() { 
+    return function () {
       // Create and mark array with non-enumerable property
-      const emptyArray = [];
-      Object.defineProperty(emptyArray, '_fromArrayConstruction', { 
-        value: true, 
-        enumerable: false 
-      });
-      return emptyArray;
+      const emptyArray = []
+      Object.defineProperty(emptyArray, '_fromArrayConstruction', {
+        value: true,
+        enumerable: false
+      })
+      return emptyArray
     }
   }
-  
+
   const parser = new JQParser(expression)
   const generator = new JQCodeGenerator()
 
@@ -49,14 +49,14 @@ export function query (expression: string, input: unknown): unknown {
   // Direct special case for empty array expression
   if (expression.trim() === '[]') {
     // Create an array and mark it with a non-enumerable property
-    const emptyArray = [];
-    Object.defineProperty(emptyArray, '_fromArrayConstruction', { 
-      value: true, 
-      enumerable: false 
-    });
-    return emptyArray;
+    const emptyArray = []
+    Object.defineProperty(emptyArray, '_fromArrayConstruction', {
+      value: true,
+      enumerable: false
+    })
+    return emptyArray
   }
-  
+
   const fn = compile(expression)
   return fn(input)
 }
