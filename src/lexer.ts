@@ -58,6 +58,21 @@ export class JQLexer implements Lexer {
       case '-':
         this.position++
         return { type: '-', value: '-', position: startPos }
+      case '{':
+        this.position++
+        return { type: '{', value: '{', position: startPos }
+      case '}':
+        this.position++
+        return { type: '}', value: '}', position: startPos }
+      case ',':
+        this.position++
+        return { type: ',', value: ',', position: startPos }
+      case '(':
+        this.position++
+        return { type: '(', value: '(', position: startPos }
+      case ')':
+        this.position++
+        return { type: ')', value: ')', position: startPos }
     }
 
     if (this.isDigit(char)) {

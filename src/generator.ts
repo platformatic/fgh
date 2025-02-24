@@ -29,6 +29,10 @@ export class JQCodeGenerator implements CodeGenerator {
         return this.generateSequence(node)
       case 'Slice':
         return this.generateSlice(node)
+      case 'ObjectConstruction':
+        return this.generateObjectConstruction(node)
+      case 'ObjectField':
+        return this.generateObjectField(node)
       default: {
         throw new Error(`Unknown node type: ${node}`)
       }
@@ -80,6 +84,24 @@ export class JQCodeGenerator implements CodeGenerator {
     const leftCode = this.generateNode(node.left)
     const rightCode = this.generateNode(node.right)
     return `handlePipe(input, ${JQCodeGenerator.wrapInFunction(leftCode)}, ${JQCodeGenerator.wrapInFunction(rightCode)})`
+  }
+
+  private generateObjectConstruction (node: any): string {
+    const fields = node.fields.map((field: any) => this.generateObjectField(field)).join(', ');
+    return `constructObject(input, [${fields}])`;
+  }
+
+  private generateObjectField (node: any): string {
+    const valueCode = this.generateNode(node.value);
+    
+    if (node.isDynamic) {
+      // Dynamic key: {(.user): .titles}
+      const keyCode = this.generateNode(node.key);
+      return `{ isDynamic: true, key: ${JQCodeGenerator.wrapInFunction(keyCode)}, value: ${JQCodeGenerator.wrapInFunction(valueCode)} }`;
+    } else {
+      // Static key: { user: .name }
+      return `{ isDynamic: false, key: '${node.key}', value: ${JQCodeGenerator.wrapInFunction(valueCode)} }`;
+    }
   }
 
   private generateSlice (node: any): string {
@@ -134,6 +156,11 @@ const handlePipe = (input, leftFn, rightFn) => {
   const results = leftArray
     .map(item => rightFn(item))
     .filter(x => !isNullOrUndefined(x));
+  
+  // Check if we're dealing with multiple arrays and need to flatten them
+  if (results.length > 0 && results.every(Array.isArray)) {
+    return results.flat();
+  }
   
   return flattenResult(results);
 };
@@ -205,6 +232,71 @@ const accessSlice = (input, start, end) => {
   }
   
   return undefined;
+};
+
+const constructObject = (input, fields) => {
+  if (isNullOrUndefined(input)) return undefined;
+  
+  // Handle array input for object construction: { user, title: .titles[] }
+  // This creates an array of objects by iterating over array elements in the fields
+  const hasArrayField = fields.some(field => {
+    const fieldValue = field.value(input);
+    return Array.isArray(fieldValue) && !field.isDynamic;
+  });
+  
+  if (hasArrayField) {
+    // First, find the array field and its length
+    let arrayField;
+    let arrayLength = 0;
+    
+    for (const field of fields) {
+      const fieldValue = field.value(input);
+      if (Array.isArray(fieldValue) && !field.isDynamic) {
+        arrayField = field;
+        arrayLength = fieldValue.length;
+        break;
+      }
+    }
+    
+    // Create an array of objects
+    const result = [];
+    
+    for (let i = 0; i < arrayLength; i++) {
+      const obj = {};
+      
+      for (const field of fields) {
+        const fieldValue = field.value(input);
+        
+        if (field === arrayField) {
+          obj[field.key] = fieldValue[i];
+        } else {
+          obj[field.key] = fieldValue;
+        }
+      }
+      
+      result.push(obj);
+    }
+    
+    return result;
+  } else {
+    // Regular object construction
+    const result = {};
+    
+    for (const field of fields) {
+      if (field.isDynamic) {
+        // Dynamic key: {(.user): .titles}
+        const dynamicKey = field.key(input);
+        if (!isNullOrUndefined(dynamicKey)) {
+          result[dynamicKey] = field.value(input);
+        }
+      } else {
+        // Static key
+        result[field.key] = field.value(input);
+      }
+    }
+    
+    return result;
+  }
 };
 
 const result = ${body};
