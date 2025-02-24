@@ -22,6 +22,8 @@ export type TokenType =
   | '|'
   | '?'
   | '*'
+  | ':'
+  | '-'
   | 'EOF'
 
 export interface Token {
@@ -48,6 +50,7 @@ export type NodeType =
   | 'Pipe'
   | 'Optional'
   | 'Sequence'
+  | 'Slice'
 
 export interface BaseNode {
   type: NodeType;
@@ -92,6 +95,13 @@ export interface ArrayIterationNode extends BaseNode {
   input?: ASTNode;
 }
 
+export interface SliceNode extends BaseNode {
+  type: 'Slice';
+  start: number | null;
+  end: number | null;
+  input?: ASTNode;
+}
+
 export type ASTNode =
   | IdentityNode
   | PropertyAccessNode
@@ -100,6 +110,7 @@ export type ASTNode =
   | OptionalNode
   | SequenceNode
   | ArrayIterationNode
+  | SliceNode
 
 export interface Parser {
   parse(): ASTNode;

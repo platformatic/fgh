@@ -140,7 +140,7 @@ export class JQParser {
           this.advance()
 
           // Handle both slices and index access
-          if (this.currentToken?.type === ':') {
+          if (this.currentToken?.type === ':' as TokenType) {
             // Handle slices starting with colon [:n]
             this.advance()
             let end = null
@@ -158,7 +158,7 @@ export class JQParser {
           } else if (this.currentToken?.type === 'NUM' || this.currentToken?.type === '-') {
             // Parse first number or negative
             let num: number
-            if (this.currentToken.type === '-') {
+            if (this.currentToken.type === '-' as TokenType) {
               this.advance()
               num = -parseInt(this.expect('NUM').value, 10)
             } else {
@@ -167,7 +167,7 @@ export class JQParser {
             }
 
             // Check if it's a slice or regular index
-            if (this.currentToken?.type === ':') {
+            if (this.currentToken?.type === ':' as TokenType) {
               // It's a slice
               this.advance()
               let end = null
