@@ -7,8 +7,7 @@ import type {
   PipeNode,
   OptionalNode,
   SequenceNode,
-  ArrayIterationNode,
-  MarkedArray
+  ArrayIterationNode
 } from './types.ts'
 
 export class JQCodeGenerator implements CodeGenerator {
@@ -143,7 +142,7 @@ export class JQCodeGenerator implements CodeGenerator {
     // Special case for empty array construction
     if (ast.type === 'ArrayConstruction' && (!ast.elements || ast.elements.length === 0)) {
       return function () {
-        return []; // Simply return a clean empty array
+        return [] // Simply return a clean empty array
       }
     }
 
