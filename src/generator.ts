@@ -151,16 +151,16 @@ export class JQCodeGenerator implements CodeGenerator {
     // Check if all expressions are IndexAccess nodes. If so, we have array index syntax like [1,2,3]
     const allIndexAccess = node.expressions.every(expr => expr.type === 'IndexAccess')
 
-    if (allIndexAccess && node.expressions.length > 0 && node.expressions[0].input) {
+    if (allIndexAccess && node.expressions.length > 0 && (node.expressions[0] as IndexAccessNode).input) {
       // This is a comma-separated list of array indices like .array[1,2,3]
       // Generate more efficient special-case code
       return `(() => {
-        const target = ${this.generateNode(node.expressions[0].input)};
+        const target = ${this.generateNode((node.expressions[0] as IndexAccessNode).input!)};
         if (isNullOrUndefined(target)) return [];
         
         const results = [];
         ${node.expressions.map(expr => {
-          const index = (expr as any).index
+          const index = (expr as IndexAccessNode).index
           return `
           // Handle index ${index}
           {

@@ -139,12 +139,12 @@ export class JQParser {
       }
 
       // Handle comma operator for sequence expressions
-    } else if (this.currentToken && this.currentToken.type === ',') {
+    } else if (this.currentToken && this.currentToken.type === ',' as TokenType) {
       // Create a sequence node with the current expression as the first element
       const expressions: ASTNode[] = [left]
 
       // Continue parsing expressions separated by commas
-      while (this.currentToken && this.currentToken.type === ',') {
+      while (this.currentToken && this.currentToken.type === ',' as TokenType) {
         this.advance() // Consume comma
         const next = this.parseChain()
         expressions.push(next)
@@ -190,14 +190,14 @@ export class JQParser {
     const indices: number[] = []
 
     // Parse until we hit the closing bracket
-    while (this.currentToken && this.currentToken.type !== ']') {
+    while (this.currentToken && this.currentToken.type !== ']' as TokenType) {
       // Parse an index (number or negative number)
-      if (this.currentToken.type === 'NUM') {
+      if (this.currentToken.type === 'NUM' as TokenType) {
         indices.push(parseInt(this.currentToken.value, 10))
         this.advance() // Consume number
-      } else if (this.currentToken.type === '-') {
+      } else if (this.currentToken.type === '-' as TokenType) {
         this.advance() // Consume minus
-        if (this.currentToken?.type !== 'NUM') {
+        if (this.currentToken?.type !== 'NUM' as TokenType) {
           throw new ParseError(
             `Expected number after minus sign, got ${this.currentToken?.type ?? 'EOF'}`,
             this.currentToken?.position ?? -1
@@ -213,9 +213,9 @@ export class JQParser {
       }
 
       // If we have a comma, consume it and continue
-      if (this.currentToken?.type === ',') {
+      if (this.currentToken?.type === ',' as TokenType) {
         this.advance() // Consume comma
-      } else if (this.currentToken?.type !== ']') {
+      } else if (this.currentToken?.type !== ']' as TokenType) {
         throw new ParseError(
           `Expected comma or closing bracket, got ${this.currentToken?.type ?? 'EOF'}`,
           this.currentToken?.position ?? -1
@@ -224,7 +224,7 @@ export class JQParser {
     }
 
     // Consume the closing bracket
-    if (!this.currentToken || this.currentToken.type !== ']') {
+    if (!this.currentToken || this.currentToken.type !== ']' as TokenType) {
       throw new ParseError(
         `Expected closing bracket, got ${this.currentToken?.type ?? 'EOF'}`,
         this.currentToken?.position ?? -1
