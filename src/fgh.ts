@@ -17,7 +17,6 @@ export function compile (expression: string): JQFunction {
   if (expression.trim() === '[]') {
     return function () { return [] }
   }
-
   const parser = new JQParser(expression)
   const generator = new JQCodeGenerator()
 

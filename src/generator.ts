@@ -7,7 +7,8 @@ import type {
   PipeNode,
   OptionalNode,
   SequenceNode,
-  ArrayIterationNode
+  ArrayIterationNode,
+  MarkedArray
 } from './types.ts'
 
 export class JQCodeGenerator implements CodeGenerator {
@@ -126,7 +127,8 @@ export class JQCodeGenerator implements CodeGenerator {
   private generateArrayConstruction (node: any): string {
     // Handle special case of empty array
     if (!node.elements || node.elements.length === 0) {
-      return '[]' // Simply return an empty array
+      // Return an empty array that will be preserved by flattenResult
+      return 'Object.defineProperty([], "_fromArrayConstruction", { value: true })'
     }
 
     const elements = node.elements.map((element: ASTNode) => {
@@ -141,11 +143,7 @@ export class JQCodeGenerator implements CodeGenerator {
     // Special case for empty array construction
     if (ast.type === 'ArrayConstruction' && (!ast.elements || ast.elements.length === 0)) {
       return function () {
-        // Create an empty array with the marker property
-        const emptyArray = []
-        // Mark it as a direct array construction result (enumerable so it can be detected)
-        emptyArray._isArrayConstructionResult = true
-        return emptyArray
+        return []; // Simply return a clean empty array
       }
     }
 
@@ -171,24 +169,20 @@ const flattenResult = (result) => {
   if (isNullOrUndefined(result)) return undefined;
   if (!Array.isArray(result)) return result;
   
-  // For empty arrays, we need to handle special cases
+  // Special case for empty array literals, preserve them
   if (result.length === 0) {
-    // If this is a direct array construction from the '[]' expression
-    // we need to return an empty array, not undefined 
-    if (result._isArrayConstructionResult === true) {
-      // Create a new clean array without the property
+    // Empty arrays from array construction should be preserved
+    if (result._fromArrayConstruction) {
       return [];
     }
-    // For other empty arrays (not from explicit array construction)
-    // maintain backward compatibility and return undefined
+    // Otherwise maintain backward compatibility and return undefined
     return undefined;
   }
   
   if (result.length === 1 && !Array.isArray(result[0])) return result[0];
   
-  // For non-empty arrays, strip the marker property before returning
-  if (result._isArrayConstructionResult === true) {
-    // Create a clean copy without the marker property
+  // For non-empty arrays, return a clean copy if they're from array construction
+  if (result._fromArrayConstruction) {
     return [...result];
   }
   
@@ -299,7 +293,7 @@ const constructArray = (input, elementFns) => {
   }
   
   // Mark the array as an explicit array construction result
-  result._isArrayConstructionResult = true;
+  result._fromArrayConstruction = true;
   
   return result;
 };

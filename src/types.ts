@@ -167,6 +167,11 @@ export class ExecutionError extends JQError {
 
 export type JQFunction = (input: unknown) => unknown
 
+// Interface for arrays with marker property
+export interface MarkedArray<T> extends Array<T> {
+  _fromArrayConstruction?: boolean
+}
+
 export interface CompileOptions {
   cache?: boolean;
 }
