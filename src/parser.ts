@@ -64,7 +64,7 @@ export class JQParser {
   }
 
   private parseObjectConstruction (): ASTNode {
-    if (!this.currentToken || this.currentToken.type !== '{') {
+    if (!this.currentToken || this.currentToken.type !== '{' as TokenType) {
       throw new ParseError('Expected {', this.currentToken?.position ?? -1)
     }
 
@@ -74,7 +74,7 @@ export class JQParser {
     const fields: any[] = []
 
     // Parse object fields until we hit closing brace
-    while (this.currentToken && this.currentToken.type !== '}') {
+    while (this.currentToken && this.currentToken.type !== '}' as TokenType) {
       // Parse a field
       const fieldPos = this.currentToken.position
 
@@ -82,14 +82,14 @@ export class JQParser {
       let isDynamic = false
 
       // Handle dynamic key: {(.user): .titles}
-      if (this.currentToken.type === '(') {
+      if (this.currentToken.type === '(' as TokenType) {
         this.advance() // Consume (
         key = this.parseExpression()
         isDynamic = true
         this.expect(')') // Expect closing parenthesis
       } else {
         // Regular identifier key
-        if (this.currentToken.type !== 'IDENT') {
+        if (this.currentToken.type !== 'IDENT' as TokenType) {
           throw new ParseError(
             `Expected identifier or dynamic key, got ${this.currentToken.type}`,
             this.currentToken.position
@@ -102,7 +102,7 @@ export class JQParser {
       let value: ASTNode
 
       // If we have a colon, parse the value expression
-      if (this.currentToken && this.currentToken.type === ':') {
+      if (this.currentToken && this.currentToken.type === ':' as TokenType) {
         this.advance() // Consume :
         value = this.parseExpression()
       } else {
@@ -131,7 +131,7 @@ export class JQParser {
       })
 
       // If next token is a comma, consume it
-      if (this.currentToken && this.currentToken.type === ',') {
+      if (this.currentToken && this.currentToken.type === ',' as TokenType) {
         this.advance()
       }
     }
@@ -189,7 +189,7 @@ export class JQParser {
         }
       }
 
-      case '{': {
+      case '{' as TokenType: {
         return this.parseObjectConstruction()
       }
 
