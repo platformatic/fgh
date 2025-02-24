@@ -33,6 +33,8 @@ export class JQCodeGenerator implements CodeGenerator {
         return this.generateObjectConstruction(node)
       case 'ObjectField':
         return this.generateObjectField(node)
+      case 'ArrayConstruction':
+        return this.generateArrayConstruction(node)
       default: {
         throw new Error(`Unknown node type: ${node}`)
       }
@@ -121,7 +123,27 @@ export class JQCodeGenerator implements CodeGenerator {
     return `(isNullOrUndefined(input) ? undefined : ${exprCode})`
   }
 
+  private generateArrayConstruction (node: any): string {
+    // Handle special case of empty array
+    if (!node.elements || node.elements.length === 0) {
+      // Create empty array with non-enumerable marker property
+      return 'Object.defineProperty([], "_fromArrayConstruction", { value: true, enumerable: false })';
+    }
+    
+    const elements = node.elements.map((element: ASTNode) => {
+      const elementCode = this.generateNode(element)
+      return JQCodeGenerator.wrapInFunction(elementCode)
+    }).join(', ')
+    
+    return `constructArray(input, [${elements}])`
+  }
+
   generate (ast: ASTNode): Function {
+    // Special case for empty array construction
+    if (ast.type === 'ArrayConstruction' && (!ast.elements || ast.elements.length === 0)) {
+      return function() { return []; }
+    }
+    
     const body = this.generateNode(ast)
     const code = `
 const isNullOrUndefined = (x) => x === null || x === undefined;
@@ -143,7 +165,19 @@ const getNestedValue = (obj, props, optional = false) => {
 const flattenResult = (result) => {
   if (isNullOrUndefined(result)) return undefined;
   if (!Array.isArray(result)) return result;
-  if (result.length === 0) return undefined;
+  
+  // Special case for direct array construction - preserve empty arrays
+  // But keep the existing behavior for other paths
+  if (result.length === 0) {
+    // If this came from a direct array construction node, preserve the empty array
+    // Check for the non-enumerable property
+    if (Object.getOwnPropertyDescriptor(result, '_fromArrayConstruction')) {
+      return result;
+    }
+    // Otherwise maintain backward compatibility
+    return undefined;
+  }
+  
   if (result.length === 1 && !Array.isArray(result[0])) return result[0];
   return result;
 };
@@ -232,6 +266,34 @@ const accessSlice = (input, start, end) => {
   }
   
   return undefined;
+};
+
+const constructArray = (input, elementFns) => {
+  if (isNullOrUndefined(input)) return [];
+  
+  const result = [];
+  
+  for (const elementFn of elementFns) {
+    const value = elementFn(input);
+    
+    if (Array.isArray(value)) {
+      // If element is an array (like from array iteration), flatten it into the result
+      result.push(...value);
+    } else if (!isNullOrUndefined(value)) {
+      // Add non-null values to the result
+      result.push(value);
+    }
+  }
+  
+  // Mark this array as coming from array construction
+  // Use non-enumerable property so it doesn't show up in comparisons
+  Object.defineProperty(result, '_fromArrayConstruction', {
+    value: true,
+    enumerable: false,
+    configurable: true
+  });
+  
+  return result;
 };
 
 const constructObject = (input, fields) => {

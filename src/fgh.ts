@@ -1,4 +1,4 @@
-import { JQParser } from './parser.ts'
+import { JQParser } from './array-parser.ts'
 import { JQCodeGenerator } from './generator.ts'
 import type { JQFunction } from './types.ts'
 
@@ -13,6 +13,19 @@ import type { JQFunction } from './types.ts'
  * const firstName = getFirstName({name: ['John', 'Doe']});
  */
 export function compile (expression: string): JQFunction {
+  // Special case for empty array
+  if (expression.trim() === '[]') {
+    return function() { 
+      // Create and mark array with non-enumerable property
+      const emptyArray = [];
+      Object.defineProperty(emptyArray, '_fromArrayConstruction', { 
+        value: true, 
+        enumerable: false 
+      });
+      return emptyArray;
+    }
+  }
+  
   const parser = new JQParser(expression)
   const generator = new JQCodeGenerator()
 
@@ -33,6 +46,17 @@ export function compile (expression: string): JQFunction {
  * const result = query('.name', {name: 'John'});
  */
 export function query (expression: string, input: unknown): unknown {
+  // Direct special case for empty array expression
+  if (expression.trim() === '[]') {
+    // Create an array and mark it with a non-enumerable property
+    const emptyArray = [];
+    Object.defineProperty(emptyArray, '_fromArrayConstruction', { 
+      value: true, 
+      enumerable: false 
+    });
+    return emptyArray;
+  }
+  
   const fn = compile(expression)
   return fn(input)
 }

@@ -2,6 +2,10 @@ import type { Token, Lexer } from './types.ts'
 import { ParseError } from './types.ts'
 
 export class JQLexer implements Lexer {
+  // For debugging
+  log(message: string) {
+    // console.log(`[Lexer] ${message}`)
+  }
   private position: number = 0
   private input: string
 
