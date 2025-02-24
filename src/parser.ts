@@ -1,4 +1,4 @@
-// src/parser.ts
+// src/parser.ts - Includes support for array construction [.prop1, .prop2[]]
 import { ParseError } from './types.ts'
 import type { Token, TokenType, Lexer, ASTNode } from './types.ts'
 import { JQLexer } from './lexer.ts'
@@ -14,6 +14,40 @@ export class JQParser {
   }
 
   parse (): ASTNode {
+    // Special case for empty array construction: []
+    if (this.currentToken?.type === '[') {
+      // Peek at the next token
+      const nextToken = this.lexer.nextToken() 
+
+      // Revert peek
+      if (nextToken) {
+        (this.lexer as any).position -= nextToken.value?.length || 0
+      }
+      
+      // If it's a closing bracket, we have an empty array []
+      if (nextToken?.type === ']') {
+        const pos = this.currentToken.position
+        
+        // Consume the tokens
+        this.advance() // Consume [
+        this.advance() // Consume ]
+        
+        // Return the empty array construction node
+        return {
+          type: 'ArrayConstruction',
+          position: pos,
+          elements: []
+        }
+      }
+      
+      // For non-empty arrays, check if it's an array construction
+      const peekType = nextToken?.type
+      if (peekType === 'DOT' || peekType === ']') {
+        return this.parseArrayConstruction()
+      }
+    }
+    
+    // Handle other expressions
     const node = this.parseExpression()
 
     if (this.currentToken !== null) {
@@ -63,8 +97,115 @@ export class JQParser {
     return left
   }
 
+  private parseArrayConstruction (): ASTNode {
+    if (!this.currentToken || this.currentToken.type !== '[') {
+      throw new ParseError('Expected [', this.currentToken?.position ?? -1)
+    }
+
+    const pos = this.basePos === 0 ? this.currentToken.position : this.basePos
+    this.advance() // Consume [
+
+    const elements: ASTNode[] = []
+
+    // Handle empty array case
+    if (this.currentToken && this.currentToken.type === ']') {
+      this.advance() // Consume ]
+      return {
+        type: 'ArrayConstruction',
+        position: pos,
+        elements
+      }
+    }
+
+    // Parse array elements until we hit closing bracket
+    while (this.currentToken && this.currentToken.type !== ']') {
+      // Parse an element
+      if (this.currentToken.type === 'DOT') {
+        // Property access or identity (.user or .)
+        const dotPos = this.currentToken.position
+        this.advance() // Consume dot
+        
+        if (!this.currentToken) {
+          // Just a dot (.)
+          elements.push({ 
+            type: 'Identity', 
+            position: dotPos 
+          })
+        } else if (this.currentToken.type === 'IDENT') {
+          // Property access (.user)
+          const property = this.currentToken.value
+          this.advance() // Consume identifier
+          
+          let node: ASTNode = {
+            type: 'PropertyAccess',
+            position: dotPos,
+            property
+          }
+          
+          // Check for nested property access (.user.name)
+          while (this.currentToken?.type === 'DOT') {
+            this.advance() // Consume dot
+            if (this.currentToken?.type !== 'IDENT') {
+              break
+            }
+            const nestedProperty = this.currentToken.value
+            this.advance() // Consume identifier
+            
+            node = {
+              type: 'PropertyAccess',
+              position: dotPos,
+              property: nestedProperty,
+              input: node
+            }
+          }
+          
+          // Check for array iteration (.projects[])
+          if (this.currentToken?.type === '[]') {
+            this.advance() // Consume []
+            node = {
+              type: 'ArrayIteration',
+              position: dotPos,
+              input: node
+            }
+          }
+          
+          elements.push(node)
+        } else {
+          // Just a dot
+          elements.push({ 
+            type: 'Identity', 
+            position: dotPos 
+          })
+        }
+      } else {
+        // Other expressions
+        const element = this.parseExpression()
+        elements.push(element)
+      }
+
+      // If next token is a comma, consume it
+      if (this.currentToken?.type === ',') {
+        this.advance()
+      } else if (this.currentToken?.type !== ']') {
+        throw new ParseError(
+          `Expected comma or closing bracket, got ${this.currentToken?.type ?? 'EOF'}`,
+          this.currentToken?.position ?? -1
+        )
+      }
+    }
+
+    // Consume the closing bracket
+    this.expect(']')
+
+    return {
+      type: 'ArrayConstruction',
+      position: pos,
+      elements
+    }
+  }
+
   private parseObjectConstruction (): ASTNode {
-    if (!this.currentToken || this.currentToken.type !== '{' as TokenType) {
+    if (!this.currentToken || this.currentToken.type !== '{') {
       throw new ParseError('Expected {', this.currentToken?.position ?? -1)
     }
 
@@ -74,7 +215,7 @@ export class JQParser {
     const fields: any[] = []
 
     // Parse object fields until we hit closing brace
-    while (this.currentToken && this.currentToken.type !== '}' as TokenType) {
+    while (this.currentToken && this.currentToken.type !== '}') {
       // Parse a field
       const fieldPos = this.currentToken.position
 
@@ -82,14 +223,14 @@ export class JQParser {
       let isDynamic = false
 
       // Handle dynamic key: {(.user): .titles}
-      if (this.currentToken.type === '(' as TokenType) {
+      if (this.currentToken.type === '(') {
         this.advance() // Consume (
         key = this.parseExpression()
         isDynamic = true
         this.expect(')') // Expect closing parenthesis
       } else {
         // Regular identifier key
-        if (this.currentToken.type !== 'IDENT' as TokenType) {
+        if (this.currentToken.type !== 'IDENT') {
           throw new ParseError(
             `Expected identifier or dynamic key, got ${this.currentToken.type}`,
             this.currentToken.position
@@ -102,7 +243,7 @@ export class JQParser {
       let value: ASTNode
 
       // If we have a colon, parse the value expression
-      if (this.currentToken && this.currentToken.type === ':' as TokenType) {
+      if (this.currentToken && this.currentToken.type === ':') {
         this.advance() // Consume :
         value = this.parseExpression()
       } else {
@@ -131,7 +272,7 @@ export class JQParser {
       })
 
       // If next token is a comma, consume it
-      if (this.currentToken && this.currentToken.type === ',' as TokenType) {
+      if (this.currentToken && this.currentToken.type === ',') {
         this.advance()
       }
     }
@@ -150,9 +291,6 @@ export class JQParser {
     if (!this.currentToken) {
       throw new ParseError('Unexpected end of input', -1)
     }
-
-    // Debug logging
-    // console.log(`Parsing primary token: ${this.currentToken.type} at position ${this.currentToken.position}`)
 
     const tokenType = this.currentToken.type
     switch (tokenType) {
@@ -181,73 +319,117 @@ export class JQParser {
       }
 
       case '[': {
+        // Handle array construction, array access, and slices
         const pos = this.basePos === 0 ? this.currentToken.position : this.basePos
-        this.advance() // Consume the '['
         
-        // If we're at the end of input, throw an error
-        if (!this.currentToken) {
-          throw new ParseError('Unexpected end of input after [', -1)
+        // Peek at the next token to determine what type of construct this is
+        const nextToken = this.lexer.nextToken()
+        if (nextToken) {
+          (this.lexer as any).position -= nextToken.value?.length || 0
         }
         
-        // Handle empty arrays
-        if (this.currentToken.type === ']') {
-          this.advance() // Consume ]
-          return {
-            type: 'ArrayConstruction',
-            position: pos,
-            elements: []
-          }
+        // If it's a dot or closing bracket, it's an array construction
+        if (nextToken?.type === 'DOT' || nextToken?.type === ']') {
+          return this.parseArrayConstruction()
         }
         
-        // Try to determine if this is an array construction or an index access
-        if (this.currentToken.type === 'NUM') {
-          // This is most likely an index access [0]
-          const numPos = this.currentToken.position
-          const num = parseInt(this.currentToken.value, 10)
+        // Otherwise process as index access or slice
+        this.advance() // Consume [
+        
+        // Handle index access
+        if (this.currentToken?.type === 'NUM') {
+          const numValue = parseInt(this.currentToken.value, 10)
           this.advance() // Consume number
           
-          // Check what follows the number
-          if (this.currentToken && this.currentToken.type === ']') {
-            // It's an index access
-            this.advance() // Consume ]
+          // Check if it's a slice (number:number) or just index access
+          if (this.currentToken?.type === ':') {
+            // It's a slice with start specified
+            this.advance() // Consume :
+            let end = null
+            if (this.currentToken?.type === 'NUM') {
+              end = parseInt(this.currentToken.value, 10)
+              this.advance()
+            }
+            this.expect(']')
+            return {
+              type: 'Slice',
+              position: pos,
+              start: numValue,
+              end
+            }
+          } else {
+            // It's a regular index access
+            this.expect(']')
+            return {
+              type: 'IndexAccess',
+              position: pos,
+              index: numValue
+            }
+          }
+        } else if (this.currentToken?.type === ':') {
+          // It's a slice with implicit start [:n]
+          this.advance() // Consume :
+          let end = null
+          if (this.currentToken?.type === 'NUM') {
+            end = parseInt(this.currentToken.value, 10)
+            this.advance()
+          }
+          this.expect(']')
+          return {
+            type: 'Slice',
+            position: pos,
+            start: null,
+            end
+          }
+        } else if (this.currentToken?.type === '-') {
+          // It's a negative index or slice
+          this.advance() // Consume -
+          const num = -parseInt(this.expect('NUM').value, 10)
+          
+          if (this.currentToken?.type === ':') {
+            // It's a slice with negative start
+            this.advance() // Consume :
+            let end = null
+            if (this.currentToken?.type === 'NUM') {
+              end = parseInt(this.currentToken.value, 10)
+              this.advance()
+            }
+            this.expect(']')
+            return {
+              type: 'Slice',
+              position: pos,
+              start: num,
+              end
+            }
+          } else {
+            // It's a negative index
+            this.expect(']')
             return {
               type: 'IndexAccess',
               position: pos,
               index: num
             }
-          } else if (this.currentToken && this.currentToken.type === ':') {
-            // It's a slice - restore to number and handle in parseChain
-            this.currentToken = {
-              type: 'NUM',
-              value: num.toString(),
-              position: numPos
-            }
-          } else {
-            // It's an array construction with a number as first element
-            // Restore to beginning of array and let parseArrayConstruction handle it
-            this.currentToken = {
-              type: '[',
-              value: '[',
-              position: pos
-            }
-            return this.parseArrayConstruction()
           }
         }
         
-        // It's not a simple index access - try array construction
-        // Return to beginning of array marker
-        this.currentToken = {
-          type: '[',
-          value: '[',
-          position: pos
-        }
-        
-        // Parse as array construction
-        return this.parseArrayConstruction()
+        // If we got here, it's an invalid token sequence
+        throw new ParseError(
+          `Expected number, minus, or colon after [, got ${this.currentToken?.type ?? 'EOF'}`,
+          this.currentToken?.position ?? -1
+        )
       }
 
-      case '{' as TokenType: {
+      case '{': {
         return this.parseObjectConstruction()
+      }
+
+      case '[]': {
+        const pos = this.basePos === 0 ? this.currentToken.position : this.basePos
+        this.advance() // Consume []
+        return {
+          type: 'ArrayIteration',
+          position: pos
+        }
       }
 
       default:
@@ -255,76 +437,6 @@ export class JQParser {
           `Unexpected token: ${this.currentToken.value}`,
           this.currentToken.position
         )
-    }
-  }
-
-  private parseArrayConstruction (): ASTNode {
-    if (!this.currentToken || this.currentToken.type !== '[') {
-      throw new ParseError('Expected [', this.currentToken?.position ?? -1)
-    }
-
-    const pos = this.basePos === 0 ? this.currentToken.position : this.basePos
-    this.advance() // Consume [
-
-    const elements: ASTNode[] = []
-
-    // Handle empty array case
-    if (this.currentToken && this.currentToken.type === ']') {
-      this.advance() // Consume ]
-      return {
-        type: 'ArrayConstruction',
-        position: pos,
-        elements
-      }
-    }
-
-    // Parse array elements until we hit closing bracket
-    while (this.currentToken && this.currentToken.type !== ']') {
-      if (this.currentToken.type === 'DOT') {
-        // Parse property access or identity
-        const dotPos = this.currentToken.position
-        this.advance() // Consume the dot
-
-        if (!this.currentToken) {
-          // Just a dot by itself is the identity
-          elements.push({ type: 'Identity', position: dotPos })
-        } else if (this.currentToken.type === 'IDENT') {
-          // Property access
-          const property = this.currentToken.value
-          this.advance() // Consume the identifier
-          elements.push({
-            type: 'PropertyAccess',
-            position: dotPos,
-            property
-          })
-        } else {
-          // Just a dot is the identity
-          elements.push({ type: 'Identity', position: dotPos })
-        }
-      } else {
-        // Parse other expressions
-        const element = this.parseExpression()
-        elements.push(element)
-      }
-
-      // If next token is a comma, consume it
-      if (this.currentToken && this.currentToken.type === ',' as TokenType) {
-        this.advance()
-      } else if (this.currentToken && this.currentToken.type !== ']') {
-        throw new ParseError(
-          `Expected comma or closing bracket, got ${this.currentToken.type}`,
-          this.currentToken.position
-        )
-      }
-    }
-
-    // Consume the closing bracket
-    this.expect(']')
-
-    return {
-      type: 'ArrayConstruction',
-      position: pos,
-      elements
     }
   }
 
@@ -354,7 +466,7 @@ export class JQParser {
           this.advance()
 
           // Handle both slices and index access
-          if (this.currentToken?.type === ':' as TokenType) {
+          if (this.currentToken?.type === ':') {
             // Handle slices starting with colon [:n]
             this.advance()
             let end = null
@@ -372,7 +484,7 @@ export class JQParser {
           } else if (this.currentToken?.type === 'NUM' || this.currentToken?.type === '-') {
             // Parse first number or negative
             let num: number
-            if (this.currentToken.type === '-' as TokenType) {
+            if (this.currentToken.type === '-') {
               this.advance()
               num = -parseInt(this.expect('NUM').value, 10)
             } else {
@@ -381,7 +493,7 @@ export class JQParser {
             }
 
             // Check if it's a slice or regular index
-            if (this.currentToken?.type === ':' as TokenType) {
+            if (this.currentToken?.type === ':') {
               // It's a slice
               this.advance()
               let end = null

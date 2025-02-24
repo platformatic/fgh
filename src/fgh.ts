@@ -1,4 +1,4 @@
-import { JQParser } from './array-parser.ts'
+import { JQParser } from './parser.ts'
 import { JQCodeGenerator } from './generator.ts'
 import type { JQFunction } from './types.ts'
 
