@@ -60,6 +60,58 @@ test('lexer throws on invalid characters', () => {
   )
 })
 
+test('lexer handles array slices', () => {
+  // Test explicit start and end
+  let lexer = new JQLexer('.[2:4]')
+  let expected = [
+    { type: 'DOT', value: '.', position: 0 },
+    { type: '[', value: '[', position: 1 },
+    { type: 'NUM', value: '2', position: 2 },
+    { type: ':', value: ':', position: 3 },
+    { type: 'NUM', value: '4', position: 4 },
+    { type: ']', value: ']', position: 5 }
+  ]
+
+  for (const exp of expected) {
+    const token = lexer.nextToken()
+    assert.deepEqual(token, exp)
+  }
+  assert.equal(lexer.nextToken(), null)
+
+  // Test implicit start
+  lexer = new JQLexer('.[:3]')
+  expected = [
+    { type: 'DOT', value: '.', position: 0 },
+    { type: '[', value: '[', position: 1 },
+    { type: ':', value: ':', position: 2 },
+    { type: 'NUM', value: '3', position: 3 },
+    { type: ']', value: ']', position: 4 }
+  ]
+
+  for (const exp of expected) {
+    const token = lexer.nextToken()
+    assert.deepEqual(token, exp)
+  }
+  assert.equal(lexer.nextToken(), null)
+
+  // Test negative index
+  lexer = new JQLexer('.[-2:]')
+  expected = [
+    { type: 'DOT', value: '.', position: 0 },
+    { type: '[', value: '[', position: 1 },
+    { type: '-', value: '-', position: 2 },
+    { type: 'NUM', value: '2', position: 3 },
+    { type: ':', value: ':', position: 4 },
+    { type: ']', value: ']', position: 5 }
+  ]
+
+  for (const exp of expected) {
+    const token = lexer.nextToken()
+    assert.deepEqual(token, exp)
+  }
+  assert.equal(lexer.nextToken(), null)
+})
+
 test('lexer handles complex expressions', () => {
   const lexer = new JQLexer('.foo[0] | .bar.baz ? .*')
   const expected = [

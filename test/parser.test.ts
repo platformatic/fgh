@@ -108,3 +108,35 @@ test('parser throws on incomplete input', () => {
     ParseError
   )
 })
+
+test('parser handles array and string slices', () => {
+  // Test explicit start and end
+  let parser = new JQParser('.[2:4]')
+  let ast = parser.parse()
+  assert.deepEqual(ast, {
+    type: 'Slice',
+    position: 1,
+    start: 2,
+    end: 4
+  })
+
+  // Test implicit start
+  parser = new JQParser('.[:3]')
+  ast = parser.parse()
+  assert.deepEqual(ast, {
+    type: 'Slice',
+    position: 1,
+    start: null,
+    end: 3
+  })
+
+  // Test negative index and implicit end
+  parser = new JQParser('.[-2:]')
+  ast = parser.parse()
+  assert.deepEqual(ast, {
+    type: 'Slice',
+    position: 1,
+    start: -2,
+    end: null
+  })
+})

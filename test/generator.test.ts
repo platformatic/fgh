@@ -99,3 +99,29 @@ test('generate the example from the README', () => {
 
   assert.deepEqual(fn(data), 'Doe')
 })
+
+test('generates array and string slices', () => {
+  // Test slice with explicit start and end on array
+  let parser = new JQParser('.[2:4]')
+  let generator = new JQCodeGenerator()
+  let fn = generator.generate(parser.parse())
+  assert.deepEqual(fn(['a', 'b', 'c', 'd', 'e']), ['c', 'd'])
+
+  // Test slice with explicit start and end on string
+  parser = new JQParser('.[2:4]')
+  generator = new JQCodeGenerator()
+  fn = generator.generate(parser.parse())
+  assert.equal(fn('abcdefghi'), 'cd')
+
+  // Test slice with implicit start on array
+  parser = new JQParser('.[:3]')
+  generator = new JQCodeGenerator()
+  fn = generator.generate(parser.parse())
+  assert.deepEqual(fn(['a', 'b', 'c', 'd', 'e']), ['a', 'b', 'c'])
+
+  // Test slice with negative start and implicit end on array
+  parser = new JQParser('.[-2:]')
+  generator = new JQCodeGenerator()
+  fn = generator.generate(parser.parse())
+  assert.deepEqual(fn(['a', 'b', 'c', 'd', 'e']), ['d', 'e'])
+})

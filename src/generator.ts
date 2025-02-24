@@ -27,6 +27,8 @@ export class JQCodeGenerator implements CodeGenerator {
         return this.generateOptional(node)
       case 'Sequence':
         return this.generateSequence(node)
+      case 'Slice':
+        return this.generateSlice(node)
       default: {
         throw new Error(`Unknown node type: ${node}`)
       }
@@ -78,6 +80,14 @@ export class JQCodeGenerator implements CodeGenerator {
     const leftCode = this.generateNode(node.left)
     const rightCode = this.generateNode(node.right)
     return `handlePipe(input, ${JQCodeGenerator.wrapInFunction(leftCode)}, ${JQCodeGenerator.wrapInFunction(rightCode)})`
+  }
+
+  private generateSlice (node: any): string {
+    if (node.input) {
+      const inputCode = this.generateNode(node.input)
+      return `accessSlice(${inputCode}, ${node.start}, ${node.end})`
+    }
+    return `accessSlice(input, ${node.start}, ${node.end})`
   }
 
   private generateOptional (node: OptionalNode): string {
@@ -178,6 +188,24 @@ const iterateArray = (input) => {
     if (arrays.length > 0) {
       return arrays[0];
     }
+  }
+  
+  return undefined;
+};
+
+const accessSlice = (input, start, end) => {
+  if (isNullOrUndefined(input)) return undefined;
+  
+  // Convert null start/end to undefined for array slice operator
+  const startIdx = start !== null ? start : undefined;
+  const endIdx = end !== null ? end : undefined;
+  
+  if (Array.isArray(input)) {
+    return input.slice(startIdx, endIdx);
+  }
+  
+  if (typeof input === 'string') {
+    return input.slice(startIdx, endIdx);
   }
   
   return undefined;
