@@ -36,9 +36,9 @@ test('complex object construction', () => {
       { id: 2, name: 'Bob', roles: ['user'] }
     ]
   }
-  
+
   const result = query('.users[] | { id, name, role: .roles[] }', input)
-  
+
   assert.deepEqual(result, [
     { id: 1, name: 'Alice', role: 'admin' },
     { id: 1, name: 'Alice', role: 'user' },

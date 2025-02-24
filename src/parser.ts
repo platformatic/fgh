@@ -78,8 +78,8 @@ export class JQParser {
       // Parse a field
       const fieldPos = this.currentToken.position
 
-      let key: string | ASTNode;
-      let isDynamic = false;
+      let key: string | ASTNode
+      let isDynamic = false
 
       // Handle dynamic key: {(.user): .titles}
       if (this.currentToken.type === '(') {
@@ -99,7 +99,7 @@ export class JQParser {
         this.advance()
       }
 
-      let value: ASTNode;
+      let value: ASTNode
 
       // If we have a colon, parse the value expression
       if (this.currentToken && this.currentToken.type === ':') {

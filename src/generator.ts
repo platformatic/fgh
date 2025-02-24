@@ -87,20 +87,20 @@ export class JQCodeGenerator implements CodeGenerator {
   }
 
   private generateObjectConstruction (node: any): string {
-    const fields = node.fields.map((field: any) => this.generateObjectField(field)).join(', ');
-    return `constructObject(input, [${fields}])`;
+    const fields = node.fields.map((field: any) => this.generateObjectField(field)).join(', ')
+    return `constructObject(input, [${fields}])`
   }
 
   private generateObjectField (node: any): string {
-    const valueCode = this.generateNode(node.value);
-    
+    const valueCode = this.generateNode(node.value)
+
     if (node.isDynamic) {
       // Dynamic key: {(.user): .titles}
-      const keyCode = this.generateNode(node.key);
-      return `{ isDynamic: true, key: ${JQCodeGenerator.wrapInFunction(keyCode)}, value: ${JQCodeGenerator.wrapInFunction(valueCode)} }`;
+      const keyCode = this.generateNode(node.key)
+      return `{ isDynamic: true, key: ${JQCodeGenerator.wrapInFunction(keyCode)}, value: ${JQCodeGenerator.wrapInFunction(valueCode)} }`
     } else {
       // Static key: { user: .name }
-      return `{ isDynamic: false, key: '${node.key}', value: ${JQCodeGenerator.wrapInFunction(valueCode)} }`;
+      return `{ isDynamic: false, key: '${node.key}', value: ${JQCodeGenerator.wrapInFunction(valueCode)} }`
     }
   }
 
