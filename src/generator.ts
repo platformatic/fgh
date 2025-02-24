@@ -183,11 +183,7 @@ const iterateArray = (input) => {
   }
   
   if (typeof input === 'object') {
-    const values = Object.values(input);
-    const arrays = values.filter(Array.isArray);
-    if (arrays.length > 0) {
-      return arrays[0];
-    }
+    return Object.values(input);
   }
   
   return undefined;

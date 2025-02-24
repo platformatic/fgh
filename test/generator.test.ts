@@ -125,3 +125,11 @@ test('generates array and string slices', () => {
   fn = generator.generate(parser.parse())
   assert.deepEqual(fn(['a', 'b', 'c', 'd', 'e']), ['d', 'e'])
 })
+
+test('.[] outputs all the values', () => {
+  const parser = new JQParser('.[]')
+  const generator = new JQCodeGenerator()
+  const fn = generator.generate(parser.parse())
+
+  assert.deepEqual(fn({ a: 1, b: 2 }), [1, 2])
+})
