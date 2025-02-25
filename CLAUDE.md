@@ -21,3 +21,4 @@
 - Avoid tight coupling between components
 - Follow neostandard ESLint rules
 - Keep functions small and focused on a single responsibility
+- never add special cases for specific inputs

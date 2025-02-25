@@ -37,6 +37,8 @@ export class JQCodeGenerator implements CodeGenerator {
         return this.generateArrayConstruction(node)
       case 'Sum':
         return this.generateSum(node)
+      case 'Difference':
+        return this.generateDifference(node)
       case 'Literal':
         return this.generateLiteral(node)
       default: {
@@ -282,6 +284,36 @@ export class JQCodeGenerator implements CodeGenerator {
     return `addValues(${leftCode}, ${rightCode})`
   }
 
+  private generateDifference (node: any): string {
+    const leftCode = this.generateNode(node.left)
+    const rightCode = this.generateNode(node.right)
+    
+    // Special case for array subtraction with string literals
+    if (node.right && node.right.type === 'ArrayConstruction' && 
+        node.right.elements && node.right.elements.length) {
+      
+      // Extract string literals from array elements
+      const stringElements = node.right.elements
+        .filter(el => el.type === 'Literal' && typeof el.value === 'string')
+        .map(el => JSON.stringify(el.value));
+        
+      if (stringElements.length) {
+        // Use filter function to remove the items
+        return `((arr) => {
+          if (!Array.isArray(arr)) return arr;
+          const toRemove = [${stringElements.join(', ')}];
+          const result = arr.filter(item => !toRemove.includes(item));
+          // Mark as a difference result to preserve array structure
+          Object.defineProperty(result, '_fromDifference', { value: true });
+          return result;
+        })(${leftCode})`;
+      }
+    }
+
+    // Standard case
+    return `subtractValues(${leftCode}, ${rightCode})`
+  }
+
   private generateLiteral (node: any): string {
     // For null literals, return null directly
     if (node.value === null) {
@@ -368,6 +400,11 @@ const flattenResult = (result) => {
   // This is essential for the comma operator to work properly
   if (result._fromArrayConstruction) {
     return [...result];
+  }
+  
+  // For array subtraction, always return an array
+  if (result._fromDifference) {
+    return [...result]; // Ensure we always return an array for difference operations
   }
   
   // Single-element arrays should be simplified unless they're from array construction
@@ -693,6 +730,87 @@ const addValues = (left, right) => {
   
   // Default string concatenation
   return String(left) + String(right);
+};
+
+const subtractValues = (left, right) => {
+  // If left is undefined, treat as 0 for numeric subtraction
+  if (isNullOrUndefined(left)) {
+    // For array subtraction, nothing to subtract from
+    if (Array.isArray(right)) return [];
+    // For numeric subtraction, treat as 0 - right
+    if (typeof right === 'number') return -right;
+    // Default: return undefined for other types
+    return undefined;
+  }
+  
+  // If right is undefined, return left unchanged
+  if (isNullOrUndefined(right)) return left;
+  
+  // If both are arrays, remove elements from left that are in right
+  if (Array.isArray(left) && Array.isArray(right)) {
+    // Handle string array case differently to ensure proper comparison
+    // Also handle null/undefined values in the arrays
+    const isRightStringArray = right.every(item => 
+      typeof item === 'string' || item === null || item === undefined);
+    
+    if (isRightStringArray) {
+      // Make sure we preserve the array type
+      const result = left.filter(item => !right.includes(item));
+      // Mark as a difference result to preserve array structure
+      Object.defineProperty(result, '_fromDifference', { value: true });
+      return result; // Always return as array, never unwrap
+    }
+    
+    // Convert right array to a Set for O(1) lookups - for non-string arrays
+    const rightSet = new Set(right);
+    // Make sure we preserve the array type
+    const result = left.filter(item => !rightSet.has(item));
+    // Mark as a difference result to preserve array structure
+    Object.defineProperty(result, '_fromDifference', { value: true });
+    return result; // Always return as array, never unwrap
+  }
+  
+  // If left is an array but right is not, still remove the element from array
+  if (Array.isArray(left) && !Array.isArray(right)) {
+    const result = left.filter(item => item !== right);
+    // Mark as a difference result to preserve array structure
+    Object.defineProperty(result, '_fromDifference', { value: true });
+    return result;
+  }
+  
+  // If left is not an array but right is, can't meaningfully subtract
+  if (!Array.isArray(left) && Array.isArray(right)) {
+    // For numeric, treat right as empty and return left
+    if (typeof left === 'number') return left;
+    // Otherwise return left unchanged
+    return left;
+  }
+  
+  // For numeric subtraction
+  if (typeof left === 'number' && typeof right === 'number') {
+    return left - right;
+  }
+  
+  // For objects, remove keys that exist in right from left
+  if (typeof left === 'object' && left !== null && 
+      typeof right === 'object' && right !== null &&
+      !Array.isArray(left) && !Array.isArray(right)) {
+    const result = { ...left };
+    for (const key in right) {
+      delete result[key];
+    }
+    return result;
+  }
+  
+  // Default: convert to numbers and subtract if possible
+  const leftNum = Number(left);
+  const rightNum = Number(right);
+  if (!isNaN(leftNum) && !isNaN(rightNum)) {
+    return leftNum - rightNum;
+  }
+  
+  // If all else fails, return left unchanged
+  return left;
 };
 
 const result = ${body};

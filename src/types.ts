@@ -19,6 +19,7 @@ export type TokenType =
   | '[]'
   | ']'
   | 'NUM'
+  | 'STRING'
   | '|'
   | '?'
   | '*'
@@ -61,6 +62,7 @@ export type NodeType =
   | 'ObjectField'
   | 'ArrayConstruction'
   | 'Sum'
+  | 'Difference'
   | 'Literal'
 
 export interface BaseNode {
@@ -136,6 +138,12 @@ export interface SumNode extends BaseNode {
   right: ASTNode;
 }
 
+export interface DifferenceNode extends BaseNode {
+  type: 'Difference';
+  left: ASTNode;
+  right: ASTNode;
+}
+
 export interface LiteralNode extends BaseNode {
   type: 'Literal';
   value: number | string | boolean | null;
@@ -154,6 +162,7 @@ export type ASTNode =
   | ObjectFieldNode
   | ArrayConstructionNode
   | SumNode
+  | DifferenceNode
   | LiteralNode
 
 export interface Parser {
