@@ -29,6 +29,7 @@ export type TokenType =
   | ','
   | '('
   | ')'
+  | '+'
   | 'EOF'
 
 export interface Token {
@@ -59,6 +60,8 @@ export type NodeType =
   | 'ObjectConstruction'
   | 'ObjectField'
   | 'ArrayConstruction'
+  | 'Sum'
+  | 'Literal'
 
 export interface BaseNode {
   type: NodeType;
@@ -127,6 +130,17 @@ export interface ArrayConstructionNode extends BaseNode {
   elements: ASTNode[];
 }
 
+export interface SumNode extends BaseNode {
+  type: 'Sum';
+  left: ASTNode;
+  right: ASTNode;
+}
+
+export interface LiteralNode extends BaseNode {
+  type: 'Literal';
+  value: number | string | boolean | null;
+}
+
 export type ASTNode =
   | IdentityNode
   | PropertyAccessNode
@@ -139,6 +153,8 @@ export type ASTNode =
   | ObjectConstructionNode
   | ObjectFieldNode
   | ArrayConstructionNode
+  | SumNode
+  | LiteralNode
 
 export interface Parser {
   parse(): ASTNode;

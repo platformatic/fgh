@@ -35,6 +35,10 @@ export class JQCodeGenerator implements CodeGenerator {
         return this.generateObjectField(node)
       case 'ArrayConstruction':
         return this.generateArrayConstruction(node)
+      case 'Sum':
+        return this.generateSum(node)
+      case 'Literal':
+        return this.generateLiteral(node)
       default: {
         throw new Error(`Unknown node type: ${node}`)
       }
@@ -223,7 +227,7 @@ export class JQCodeGenerator implements CodeGenerator {
 
   private generateObjectConstruction (node: any): string {
     const fields = node.fields.map((field: any) => this.generateObjectField(field)).join(', ')
-    return `constructObject(input, [${fields}])`
+    return `(input === null ? constructObject(null, [${fields}]) : constructObject(input, [${fields}]))`
   }
 
   private generateObjectField (node: any): string {
@@ -269,6 +273,23 @@ export class JQCodeGenerator implements CodeGenerator {
     }).join(', ')
 
     return `constructArray(input, [${elements}])`
+  }
+
+  private generateSum (node: any): string {
+    const leftCode = this.generateNode(node.left)
+    const rightCode = this.generateNode(node.right)
+
+    return `addValues(${leftCode}, ${rightCode})`
+  }
+
+  private generateLiteral (node: any): string {
+    // For null literals, return null directly
+    if (node.value === null) {
+      return 'null'
+    }
+
+    // Return the literal value directly
+    return JSON.stringify(node.value)
   }
 
   generate (ast: ASTNode): Function {
@@ -555,6 +576,26 @@ const constructArray = (input, elementFns) => {
 };
 
 const constructObject = (input, fields) => {
+  // Special case for null input with object construction - just create the object
+  if (input === null) {
+    const result = {};
+    
+    for (const field of fields) {
+      if (field.isDynamic) {
+        // Dynamic key: {(.user): .titles}
+        const dynamicKey = field.key(input);
+        if (!isNullOrUndefined(dynamicKey)) {
+          result[dynamicKey] = field.value(input);
+        }
+      } else {
+        // Static key
+        result[field.key] = field.value(input);
+      }
+    }
+    
+    return result;
+  }
+  
   if (isNullOrUndefined(input)) return undefined;
   
   // Handle array input for object construction: { user, title: .titles[] }
@@ -617,6 +658,41 @@ const constructObject = (input, fields) => {
     
     return result;
   }
+};
+
+const addValues = (left, right) => {
+  // If either value is undefined, use the other one (handles null + val cases)
+  if (isNullOrUndefined(left)) return right;
+  if (isNullOrUndefined(right)) return left;
+  
+  // If both are arrays, concatenate them
+  if (Array.isArray(left) && Array.isArray(right)) {
+    return [...left, ...right];
+  }
+  
+  // If both are objects, merge them with right taking precedence for duplicate keys
+  if (typeof left === 'object' && left !== null && 
+      typeof right === 'object' && right !== null && 
+      !Array.isArray(left) && !Array.isArray(right)) {
+    return { ...left, ...right };
+  }
+  
+  // If one is an array and the other isn't, convert the non-array to an array and concatenate
+  if (Array.isArray(left) && !Array.isArray(right)) {
+    return [...left, right];
+  }
+  
+  if (!Array.isArray(left) && Array.isArray(right)) {
+    return [left, ...right];
+  }
+  
+  // For numeric addition
+  if (typeof left === 'number' && typeof right === 'number') {
+    return left + right;
+  }
+  
+  // Default string concatenation
+  return String(left) + String(right);
 };
 
 const result = ${body};

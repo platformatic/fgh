@@ -137,3 +137,20 @@ test('lexer handles complex expressions', () => {
 
   assert.equal(lexer.nextToken(), null)
 })
+
+test('lexer handles plus operator', () => {
+  const lexer = new JQLexer('.a + 1')
+  const expected = [
+    { type: 'DOT', value: '.', position: 0 },
+    { type: 'IDENT', value: 'a', position: 1 },
+    { type: '+', value: '+', position: 3 },
+    { type: 'NUM', value: '1', position: 5 }
+  ]
+
+  for (const exp of expected) {
+    const token = lexer.nextToken()
+    assert.deepEqual(token, exp)
+  }
+
+  assert.equal(lexer.nextToken(), null)
+})

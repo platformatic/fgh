@@ -133,3 +133,37 @@ test('.[] outputs all the values', () => {
 
   assert.deepEqual(fn({ a: 1, b: 2 }), [1, 2])
 })
+
+test('generates plus operator with numeric values', () => {
+  const parser = new JQParser('.a + 1')
+  const generator = new JQCodeGenerator()
+  const fn = generator.generate(parser.parse())
+
+  assert.equal(fn({ a: 7 }), 8)
+  assert.equal(fn({}), 1) // When .a is undefined, the result should be 1
+})
+
+test('generates plus operator with arrays', () => {
+  const parser = new JQParser('.a + .b')
+  const generator = new JQCodeGenerator()
+  const fn = generator.generate(parser.parse())
+
+  assert.deepEqual(fn({ a: [1, 2], b: [3, 4] }), [1, 2, 3, 4])
+})
+
+test('generates plus operator with null values', () => {
+  // Test with property + literal null
+  const parser = new JQParser('.a + null')
+  const generator = new JQCodeGenerator()
+  const fn = generator.generate(parser.parse())
+
+  assert.equal(fn({ a: 1 }), 1)
+})
+
+test('generates plus operator with objects', () => {
+  const parser = new JQParser('{a: 1} + {b: 2}')
+  const generator = new JQCodeGenerator()
+  const fn = generator.generate(parser.parse())
+
+  assert.deepEqual(fn(null), { a: 1, b: 2 })
+})
