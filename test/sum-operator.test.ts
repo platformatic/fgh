@@ -1,4 +1,4 @@
-// Test for sum operator
+// Test for sum/difference operators
 
 import { test } from 'node:test'
 import assert from 'node:assert'
@@ -45,5 +45,37 @@ test('sum operator', async (t) => {
       query('1 + .a', { a: [1, 2] }),
       [1, 1, 2]
     )
+  })
+})
+
+test('difference operator', async (t) => {
+  await t.test('should subtract numeric values', () => {
+    assert.equal(query('4 - 3', {}), 1)
+    assert.equal(query('4 - .a', { a: 3 }), 1)
+    assert.equal(query('.a - 1', { a: 7 }), 6)
+  })
+
+  await t.test('should subtract arrays (remove elements)', () => {
+    // Test with array literal subtraction
+    assert.deepEqual(
+      query('. - ["xml", "yaml"]', ['xml', 'yaml', 'json']),
+      ['json']
+    )
+
+    assert.deepEqual(
+      query('.languages - ["xml"]', { languages: ['xml', 'yaml', 'json'] }),
+      ['yaml', 'json']
+    )
+  })
+
+  await t.test('should handle chained operations', () => {
+    assert.equal(query('.a + .b - .c', { a: 5, b: 10, c: 7 }), 8)
+    assert.equal(query('10 - 2 - 3', {}), 5)
+  })
+
+  await t.test('should handle null or undefined values', () => {
+    assert.equal(query('.missing - 5', {}), -5)
+    assert.equal(query('10 - .missing', {}), 10)
+    assert.equal(query('null - 5', {}), -5)
   })
 })

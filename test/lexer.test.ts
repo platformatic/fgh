@@ -154,3 +154,21 @@ test('lexer handles plus operator', () => {
 
   assert.equal(lexer.nextToken(), null)
 })
+
+test('lexer handles string literals', () => {
+  const lexer = new JQLexer('["xml", "yaml"]')
+  const expected = [
+    { type: '[', value: '[', position: 0 },
+    { type: 'STRING', value: 'xml', position: 1 },
+    { type: ',', value: ',', position: 6 },
+    { type: 'STRING', value: 'yaml', position: 8 },
+    { type: ']', value: ']', position: 14 }
+  ]
+
+  for (const exp of expected) {
+    const token = lexer.nextToken()
+    assert.deepEqual(token, exp)
+  }
+
+  assert.equal(lexer.nextToken(), null)
+})
