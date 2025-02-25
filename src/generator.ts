@@ -90,8 +90,13 @@ export class JQCodeGenerator implements CodeGenerator {
           const currentItem = propStack.pop();
           
           if (Array.isArray(currentItem)) {
-            // For arrays, push each element to process individually
-            propStack.push(...currentItem.filter(item => item !== null && item !== undefined));
+            // For arrays, process each element in order
+            // Important: reverse the array to maintain original order when using stack
+            const arrayElements = [...currentItem].filter(item => item !== null && item !== undefined);
+            // Add in reverse order to maintain original order when popping from stack
+            for (let i = arrayElements.length - 1; i >= 0; i--) {
+              propStack.push(arrayElements[i]);
+            }
           } 
           else if (typeof currentItem === 'object' && currentItem !== null) {
             // Access the property from the object
@@ -182,7 +187,7 @@ export class JQCodeGenerator implements CodeGenerator {
       })()`
     }
 
-    // General sequence handling (improved to better handle arrays and preserve sequence structure)
+    // Enhanced sequence handling with careful array spread and preservation of structure
     return `(() => {
       const sequenceResults = [];
       
@@ -190,25 +195,24 @@ export class JQCodeGenerator implements CodeGenerator {
         // Process expression ${i + 1}
         const result${i} = ${expr};
         
-        // Handle possible array results
+        // Handle arrays correctly while preserving their elements
         if (Array.isArray(result${i})) {
-          // Special case for array with _fromArrayConstruction property - these are generated from other operations
+          // For arrays from array iteration and property access, always spread
           if (result${i}._fromArrayConstruction) {
-            // Add each element individually
             sequenceResults.push(...result${i});
-          } 
-          // Regular arrays should be spread as well
+          }
+          // For regular arrays, also spread them to maintain consistency
           else {
             sequenceResults.push(...result${i});
           }
-        } 
-        // Add any non-undefined single values
+        }
+        // Don't lose non-array values either
         else if (result${i} !== undefined) {
           sequenceResults.push(result${i});
         }
       `).join('')}
       
-      // Mark the array as a sequence to preserve through other operations
+      // Always mark the result array as a construction to preserve its structure
       if (sequenceResults.length > 0) {
         Object.defineProperty(sequenceResults, "_fromArrayConstruction", { value: true });
       }
@@ -396,7 +400,7 @@ const flattenResult = (result) => {
   }
   
   // Critical: preserve arrays that are marked as construction results
-  // This is essential for the comma operator to work properly
+  // This is essential for the comma operator and array iteration to work properly
   if (result._fromArrayConstruction) {
     return [...result];
   }
