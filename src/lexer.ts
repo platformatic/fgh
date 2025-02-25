@@ -155,10 +155,10 @@ export class JQLexer implements Lexer {
   private readString (quote: string): Token {
     const startPos = this.position
     this.position++ // Skip the opening quote
-    
+
     let value = ''
     let escaped = false
-    
+
     while (this.hasMoreTokens() && (escaped || this.input[this.position] !== quote)) {
       if (escaped) {
         // Handle escape sequences
@@ -178,17 +178,17 @@ export class JQLexer implements Lexer {
       } else {
         value += this.input[this.position]
       }
-      
+
       this.position++
     }
-    
+
     if (!this.hasMoreTokens() || this.input[this.position] !== quote) {
       // Improved error message with context and proper position information
       throw new ParseError(`Unterminated string literal starting at position ${startPos} in '${this.input.substring(Math.max(0, startPos - 5), startPos)}${this.input.substring(startPos, Math.min(this.input.length, startPos + 10))}...'`, startPos)
     }
-    
+
     this.position++ // Skip the closing quote
-    
+
     return { type: 'STRING', value, position: startPos }
   }
 }

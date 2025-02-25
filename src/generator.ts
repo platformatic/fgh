@@ -287,16 +287,15 @@ export class JQCodeGenerator implements CodeGenerator {
   private generateDifference (node: any): string {
     const leftCode = this.generateNode(node.left)
     const rightCode = this.generateNode(node.right)
-    
+
     // Special case for array subtraction with string literals
-    if (node.right && node.right.type === 'ArrayConstruction' && 
+    if (node.right && node.right.type === 'ArrayConstruction' &&
         node.right.elements && node.right.elements.length) {
-      
       // Extract string literals from array elements
       const stringElements = node.right.elements
         .filter(el => el.type === 'Literal' && typeof el.value === 'string')
-        .map(el => JSON.stringify(el.value));
-        
+        .map(el => JSON.stringify(el.value))
+
       if (stringElements.length) {
         // Use filter function to remove the items
         return `((arr) => {
@@ -306,7 +305,7 @@ export class JQCodeGenerator implements CodeGenerator {
           // Mark as a difference result to preserve array structure
           Object.defineProperty(result, '_fromDifference', { value: true });
           return result;
-        })(${leftCode})`;
+        })(${leftCode})`
       }
     }
 

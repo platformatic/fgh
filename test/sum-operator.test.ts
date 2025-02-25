@@ -61,7 +61,7 @@ test('difference operator', async (t) => {
       query('. - ["xml", "yaml"]', ['xml', 'yaml', 'json']),
       ['json']
     )
-    
+
     assert.deepEqual(
       query('.languages - ["xml"]', { languages: ['xml', 'yaml', 'json'] }),
       ['yaml', 'json']
