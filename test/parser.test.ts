@@ -140,3 +140,54 @@ test('parser handles array and string slices', () => {
     end: null
   })
 })
+
+test('parser handles plus operator with property and number', () => {
+  const parser = new JQParser('.a + 1')
+  const ast = parser.parse()
+  assert.deepEqual(ast, {
+    type: 'Sum',
+    position: 0,
+    left: {
+      type: 'PropertyAccess',
+      position: 0,
+      property: 'a'
+    },
+    right: {
+      type: 'Literal',
+      position: 5,
+      value: 1
+    }
+  })
+})
+
+test('parser handles plus operator with properties', () => {
+  const parser = new JQParser('.a + .b')
+  const ast = parser.parse()
+  assert.deepEqual(ast, {
+    type: 'Sum',
+    position: 0,
+    left: {
+      type: 'PropertyAccess',
+      position: 0,
+      property: 'a'
+    },
+    right: {
+      type: 'PropertyAccess',
+      position: 5,
+      property: 'b'
+    }
+  })
+})
+
+test('parser handles plus operator with objects', () => {
+  const parser = new JQParser('{a: 1} + {b: 2}')
+  const ast = parser.parse()
+  // First check the structure is correct
+  assert.equal(ast.type, 'Sum')
+  assert.equal(ast.left.type, 'ObjectConstruction')
+  assert.equal(ast.right.type, 'ObjectConstruction')
+  assert.equal(ast.left.fields[0].key, 'a')
+  assert.equal(ast.left.fields[0].value.value, 1)
+  assert.equal(ast.right.fields[0].key, 'b')
+  assert.equal(ast.right.fields[0].value.value, 2)
+})

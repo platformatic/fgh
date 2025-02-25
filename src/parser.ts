@@ -122,9 +122,9 @@ export class JQParser {
 
   private parseExpression (): ASTNode {
     const startPos = this.currentToken?.position ?? 0
-    let left = this.parseChain()
+    let left = this.parseSum()
 
-    // Handle pipe operator first
+    // Handle pipe operator
     if (this.currentToken && this.currentToken.type === '|') {
       this.advance()
       // After pipe, right side nodes should be at position startPos + 7
@@ -174,6 +174,48 @@ export class JQParser {
     }
 
     return left
+  }
+
+  private parseSum (): ASTNode {
+    const startPos = this.currentToken?.position ?? 0
+    let left = this.parseChain()
+
+    // Handle the plus operator (potentially multiple in a chain)
+    while (this.currentToken && this.currentToken.type === '+') {
+      this.advance() // Consume the + operator
+      const right = this.parseChain()
+
+      left = {
+        type: 'Sum',
+        position: startPos,
+        left,
+        right
+      }
+    }
+
+    return left
+  }
+
+  private parseLiteral (): ASTNode {
+    if (!this.currentToken) {
+      throw new ParseError('Unexpected end of input', -1)
+    }
+
+    if (this.currentToken.type === 'NUM') {
+      const value = parseInt(this.currentToken.value, 10)
+      const position = this.currentToken.position
+      this.advance() // Consume the number
+      return {
+        type: 'Literal',
+        position,
+        value
+      }
+    }
+
+    throw new ParseError(
+      `Expected literal value, got ${this.currentToken.type}`,
+      this.currentToken.position
+    )
   }
 
   private parseArrayIndices (): ASTNode {
@@ -451,6 +493,7 @@ export class JQParser {
     }
 
     const tokenType = this.currentToken.type
+    const tokenValue = this.currentToken.value
     switch (tokenType) {
       case 'DOT': {
         const dotPos = this.basePos === 0 ? this.currentToken.position : this.basePos
@@ -474,6 +517,18 @@ export class JQParser {
 
         // If no valid token follows the dot, it's an identity
         return { type: 'Identity', position: dotPos }
+      }
+
+      case 'NUM': {
+        // Handle numeric literals
+        const value = parseInt(this.currentToken.value, 10)
+        const position = this.currentToken.position
+        this.advance() // Consume the number
+        return {
+          type: 'Literal',
+          position,
+          value
+        }
       }
 
       case '(': {
@@ -673,6 +728,33 @@ export class JQParser {
           type: 'ArrayIteration',
           position: pos
         }
+      }
+
+      case 'IDENT': {
+        // Handle null, true, false literals
+        if (tokenValue === 'null') {
+          this.advance() // Consume null
+          return {
+            type: 'Literal',
+            position: this.currentToken ? this.currentToken.position - 4 : 0,
+            value: null
+          }
+        } else if (tokenValue === 'true') {
+          this.advance() // Consume true
+          return {
+            type: 'Literal',
+            position: this.currentToken ? this.currentToken.position - 4 : 0,
+            value: true
+          }
+        } else if (tokenValue === 'false') {
+          this.advance() // Consume false
+          return {
+            type: 'Literal',
+            position: this.currentToken ? this.currentToken.position - 5 : 0,
+            value: false
+          }
+        }
+        // Fall through to default for other identifiers
       }
 
       default:
