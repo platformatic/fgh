@@ -64,6 +64,7 @@ export type NodeType =
   | 'Sum'
   | 'Difference'
   | 'Literal'
+  | 'RecursiveDescent'
 
 export interface BaseNode {
   type: NodeType;
@@ -149,6 +150,10 @@ export interface LiteralNode extends BaseNode {
   value: number | string | boolean | null;
 }
 
+export interface RecursiveDescentNode extends BaseNode {
+  type: 'RecursiveDescent';
+}
+
 export type ASTNode =
   | IdentityNode
   | PropertyAccessNode
@@ -164,6 +169,7 @@ export type ASTNode =
   | SumNode
   | DifferenceNode
   | LiteralNode
+  | RecursiveDescentNode
 
 export interface Parser {
   parse(): ASTNode;

@@ -697,7 +697,13 @@ export class JQParser {
     switch (tokenType) {
       case 'DOT': {
         const dotPos = this.basePos === 0 ? this.currentToken.position : this.basePos
+        const dotValue = this.currentToken.value
         this.advance()
+
+        // Check if it's the recursive descent operator (..)
+        if (dotValue === '..') {
+          return { type: 'RecursiveDescent', position: dotPos }
+        }
 
         // Just return Identity if no token follows
         if (!this.currentToken) {

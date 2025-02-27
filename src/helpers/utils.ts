@@ -95,6 +95,23 @@ export const flattenResult = (result: any): any => {
     return undefined
   }
 
+  // Special case for recursive descent with scalar values
+  // If all items are identical primitive values, return just one
+  if ((result as ArrayWithConstruction)._fromArrayConstruction && result.length > 1) {
+    const isPrimitive = (val: any) => val !== Object(val) || val === null
+    const allPrimitives = result.every(isPrimitive)
+
+    if (allPrimitives) {
+      // Check if all values are the same
+      const firstVal = result[0]
+      const allSame = result.every(val => val === firstVal)
+
+      if (allSame) {
+        return firstVal
+      }
+    }
+  }
+
   // Critical: preserve arrays that are marked as construction results
   // This is essential for the comma operator and array iteration to work properly
   if ((result as ArrayWithConstruction)._fromArrayConstruction) {

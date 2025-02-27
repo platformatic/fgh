@@ -57,6 +57,8 @@ export class JQCodeGenerator implements CodeGenerator {
         return this.generateDifference(node)
       case 'Literal':
         return this.generateLiteral(node)
+      case 'RecursiveDescent':
+        return this.generateRecursiveDescent(node)
       default: {
         throw new Error(`Unknown node type: ${node}`)
       }
@@ -341,6 +343,55 @@ export class JQCodeGenerator implements CodeGenerator {
 
     // Return the literal value directly
     return JSON.stringify(node.value)
+  }
+
+  private generateRecursiveDescent (node: any): string {
+    return `(() => {
+      if (isNullOrUndefined(input)) return undefined;
+      
+      // Final result array
+      const result = [];
+      // Track object references to avoid duplicates
+      const visited = new WeakSet();
+      
+      // Function to recursively collect all values
+      const collectAllValues = (obj) => {
+        // Skip null/undefined values
+        if (isNullOrUndefined(obj)) return;
+        
+        // For objects and arrays, track if we've seen them before
+        if (typeof obj === 'object') {
+          if (visited.has(obj)) return;
+          visited.add(obj);
+        }
+        
+        // Add the current object/value itself to results
+        result.push(obj);
+        
+        // If it's an array, process each element
+        if (Array.isArray(obj)) {
+          for (const item of obj) {
+            collectAllValues(item);
+          }
+        }
+        // If it's an object, process each property
+        else if (typeof obj === 'object' && obj !== null) {
+          for (const key in obj) {
+            collectAllValues(obj[key]);
+          }
+        }
+      };
+      
+      // Start the collection process with the input
+      collectAllValues(input);
+      
+      // Mark as array construction to preserve its structure
+      if (result.length > 0) {
+        Object.defineProperty(result, "_fromArrayConstruction", { value: true });
+      }
+      
+      return result;
+    })()`
   }
 
   generate (ast: ASTNode): Function {

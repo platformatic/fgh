@@ -32,6 +32,11 @@ export class JQLexer implements Lexer {
     switch (char) {
       case '.':
         this.position++
+        // Check for recursive descent operator ..
+        if (this.hasMoreTokens() && this.input[this.position] === '.') {
+          this.position++
+          return { type: 'DOT', value: '..', position: startPos }
+        }
         return { type: 'DOT', value: '.', position: startPos }
       case '[':
         this.position++
