@@ -10,7 +10,11 @@
     "prepublishOnly": "rm -rf dist && tsc",
     "lint": "eslint .",
     "lint:fix": "eslint --fix .",
-    "test": "node --no-warnings --experimental-strip-types --test"
+    "test": "node --no-warnings --experimental-strip-types --test",
+    "benchmark": "node --no-warnings benchmarks/benchmark.ts",
+    "benchmark:report": "node --no-warnings benchmarks/runner.js",
+    "benchmark:sample": "node --no-warnings benchmarks/generate-sample.js && node --no-warnings benchmarks/update-docs.js",
+    "benchmark:docs": "node --no-warnings benchmarks/runner.js && node --no-warnings benchmarks/update-docs.js"
   },
   "pre-commit": [
     "test",
@@ -39,6 +43,7 @@
     "@fastify/pre-commit": "^2.2.0",
     "@types/node": "^22.13.4",
     "eslint": "^9.20.1",
+    "mitata": "^1.0.34",
     "neostandard": "^0.12.1"
   }
 }
