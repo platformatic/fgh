@@ -65,10 +65,6 @@ query('7 - 2', null)
 // Removing elements from an array
 query('[1, 2, 3, 4] - [2, 4]', null)
 // => [1, 3]
-
-// Removing keys from an object
-query('{"a": 1, "b": 2, "c": 3} - ["a", "c"]', null)
-// => {"b": 2}
 ```
 
 ## License
