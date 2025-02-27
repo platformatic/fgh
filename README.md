@@ -67,6 +67,25 @@ query('[1, 2, 3, 4] - [2, 4]', null)
 // => [1, 3]
 ```
 
+## Performance
+
+FGH is designed for performance, particularly when compiling expressions that will be used multiple times.
+
+For detailed performance benchmarks and comparisons between pre-compiled functions and one-off queries, see the [benchmarks](./benchmarks) directory.
+
+To run benchmarks yourself:
+
+```bash
+# Run basic benchmark
+npm run benchmark
+
+# Run benchmark with detailed reporting
+npm run benchmark:report
+
+# Run benchmark and update documentation
+npm run benchmark:docs
+```
+
 ## License
 
 MIT

@@ -130,3 +130,5 @@ dist
 .pnp.*
 
 repomix-output.txt
+
+benchmarks/results/
