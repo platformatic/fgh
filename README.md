@@ -18,6 +18,10 @@ A typescript implementation of the [JQ language](http://jqlang.org/).
 - Addition Operator (`+`): Adds numbers, concatenates strings and arrays, or merges objects
 - Subtraction Operator (`-`): Subtracts numbers or removes elements from arrays and objects
 
+### Map Filters
+- Map (`map(f)`): Applies filter `f` to each value of input array or object and outputs an array of all values
+- Map Values (`map_values(f)`): Applies filter `f` to each value, taking only the first result for each input value
+
 ## Examples
 
 ### Comma Operator
@@ -65,6 +69,35 @@ query('7 - 2', null)
 // Removing elements from an array
 query('[1, 2, 3, 4] - [2, 4]', null)
 // => [1, 3]
+```
+
+### Map and Map_values Filters
+The `map` and `map_values` filters apply a filter to each element of an array or value in an object:
+
+```javascript
+// Apply a filter to each element of an array
+query('map(.+1)', [1, 2, 3])
+// => [2, 3, 4]
+
+// Apply a filter that produces multiple values per input (map collects all results)
+query('map(., .)', [1, 2])
+// => [1, 1, 2, 2]
+
+// Apply a filter that produces multiple values per input (map_values takes only the first result)
+query('map_values(., .)', [1, 2])
+// => [1, 2]
+
+// Apply a filter to values of an object (map always returns an array)
+query('map(.+1)', {"a": 1, "b": 2, "c": 3})
+// => [2, 3, 4]
+
+// Apply a filter to values of an object (map_values maintains the object structure)
+query('map_values(.+1)', {"a": 1, "b": 2, "c": 3})
+// => {"a": 2, "b": 3, "c": 4}
+
+// Using map_values with a filter that produces no values for some keys (those keys are dropped)
+query('map_values(empty)', {"a": 1, "b": 2, "c": 3})
+// => {}
 ```
 
 ## Performance

@@ -59,6 +59,12 @@ export class JQCodeGenerator implements CodeGenerator {
         return this.generateLiteral(node)
       case 'RecursiveDescent':
         return this.generateRecursiveDescent(node)
+      case 'MapFilter':
+        return this.generateMapFilter(node)
+      case 'MapValuesFilter':
+        return this.generateMapValuesFilter(node)
+      case 'Conditional':
+        return this.generateConditional(node)
       default: {
         throw new Error(`Unknown node type: ${node}`)
       }
@@ -391,6 +397,121 @@ export class JQCodeGenerator implements CodeGenerator {
       }
       
       return result;
+    })()`
+  }
+
+  private generateMapFilter (node: any): string {
+    const filterCode = this.generateNode(node.filter)
+    const filterFn = JQCodeGenerator.wrapInFunction(filterCode)
+
+    return `(() => {
+      if (isNullOrUndefined(input)) return [];
+      
+      const result = [];
+      const inputValues = Array.isArray(input) ? input : Object.values(input);
+      
+      for (const item of inputValues) {
+        // Apply the filter function to each item
+        const filterResult = ${filterFn}(item);
+        
+        // Skip undefined/null results
+        if (isNullOrUndefined(filterResult)) continue;
+        
+        // Handle array results - add all elements
+        if (Array.isArray(filterResult)) {
+          result.push(...filterResult);
+        } else {
+          // Add single value
+          result.push(filterResult);
+        }
+      }
+      
+      // Mark as array construction to preserve its structure
+      Object.defineProperty(result, "_fromArrayConstruction", { value: true });
+      
+      return result;
+    })()`
+  }
+
+  private generateMapValuesFilter (node: any): string {
+    const filterCode = this.generateNode(node.filter)
+    const filterFn = JQCodeGenerator.wrapInFunction(filterCode)
+
+    return `(() => {
+      if (isNullOrUndefined(input)) return [];
+      
+      // Handle array inputs
+      if (Array.isArray(input)) {
+        const result = [];
+        
+        for (const item of input) {
+          // Apply the filter function to each item
+          const filterResult = ${filterFn}(item);
+          
+          // Skip undefined/null results
+          if (isNullOrUndefined(filterResult)) continue;
+          
+          // For map_values, only take the first value from the filter result
+          if (Array.isArray(filterResult)) {
+            if (filterResult.length > 0) {
+              result.push(filterResult[0]);
+            }
+          } else {
+            // Add single value
+            result.push(filterResult);
+          }
+        }
+        
+        // Mark as array construction to preserve its structure
+        Object.defineProperty(result, "_fromArrayConstruction", { value: true });
+        
+        return result;
+      }
+      
+      // Handle object inputs
+      if (typeof input === 'object' && input !== null) {
+        const result = {};
+        
+        for (const key in input) {
+          // Apply the filter function to each value
+          const filterResult = ${filterFn}(input[key]);
+          
+          // Skip undefined/null results
+          if (isNullOrUndefined(filterResult)) continue;
+          
+          // For map_values, only take the first value from the filter result
+          if (Array.isArray(filterResult)) {
+            if (filterResult.length > 0) {
+              result[key] = filterResult[0];
+            }
+          } else {
+            // Add single value
+            result[key] = filterResult;
+          }
+        }
+        
+        return Object.keys(result).length > 0 ? result : {};
+      }
+      
+      return [];
+    })()`
+  }
+
+  private generateConditional (node: any): string {
+    const conditionCode = this.generateNode(node.condition)
+    const thenCode = this.generateNode(node.thenBranch)
+    const elseCode = node.elseBranch ? this.generateNode(node.elseBranch) : 'undefined'
+
+    return `(() => {
+      // Evaluate condition
+      const conditionResult = ${conditionCode};
+      
+      // Check if condition is truthy
+      if (conditionResult && conditionResult !== null) {
+        return ${thenCode};
+      } else {
+        return ${elseCode};
+      }
     })()`
   }
 

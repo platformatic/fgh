@@ -695,6 +695,71 @@ export class JQParser {
     const tokenType = this.currentToken.type
     const tokenValue = this.currentToken.value
     switch (tokenType) {
+      case 'MAP': {
+        const pos = this.currentToken.position
+        this.advance() // Consume 'map'
+
+        this.expect('(')
+        const filter = this.parseExpression()
+        this.expect(')')
+
+        return {
+          type: 'MapFilter',
+          position: pos,
+          filter
+        }
+      }
+
+      case 'MAP_VALUES': {
+        const pos = this.currentToken.position
+        this.advance() // Consume 'map_values'
+
+        this.expect('(')
+        const filter = this.parseExpression()
+        this.expect(')')
+
+        return {
+          type: 'MapValuesFilter',
+          position: pos,
+          filter
+        }
+      }
+
+      case 'EMPTY': {
+        const pos = this.currentToken.position
+        this.advance() // Consume 'empty'
+        return {
+          type: 'Literal',
+          position: pos,
+          value: null // Use null to represent empty
+        }
+      }
+
+      case 'IF': {
+        const pos = this.currentToken.position
+        this.advance() // Consume 'if'
+
+        const condition = this.parseExpression()
+
+        this.expect('THEN')
+        const thenBranch = this.parseExpression()
+
+        let elseBranch
+        if (this.currentToken && this.currentToken.type === 'ELSE') {
+          this.advance() // Consume 'else'
+          elseBranch = this.parseExpression()
+        }
+
+        this.expect('END')
+
+        return {
+          type: 'Conditional',
+          position: pos,
+          condition,
+          thenBranch,
+          elseBranch
+        }
+      }
       case 'DOT': {
         const dotPos = this.basePos === 0 ? this.currentToken.position : this.basePos
         const dotValue = this.currentToken.value

@@ -138,6 +138,12 @@ export class JQLexer implements Lexer {
       this.position++
     }
 
+    // Check for keywords
+    const keywords = ['map', 'map_values', 'empty', 'if', 'then', 'else', 'end']
+    if (keywords.includes(value)) {
+      return { type: value.toUpperCase() as any, value, position: startPos }
+    }
+
     return { type: 'IDENT', value, position: startPos }
   }
 
