@@ -10,6 +10,22 @@ import type {
   ArrayIterationNode
 } from './types.ts'
 
+import {
+  isNullOrUndefined,
+  ensureArray,
+  getNestedValue,
+  flattenResult,
+  accessProperty,
+  accessIndex,
+  accessSlice,
+  iterateArray,
+  handlePipe,
+  constructArray,
+  constructObject,
+  addValues,
+  subtractValues
+} from './helpers/index.ts'
+
 export class JQCodeGenerator implements CodeGenerator {
   private generateNode (node: ASTNode): string {
     switch (node.type) {
@@ -336,489 +352,48 @@ export class JQCodeGenerator implements CodeGenerator {
     }
 
     const body = this.generateNode(ast)
+
+    // Create a function that uses the helper functions
     const code = `
-const isNullOrUndefined = (x) => x === null || x === undefined;
-
-const ensureArray = (x) => {
-  if (Array.isArray(x)) return x;
-  return [x];
-};
-
-const getNestedValue = (obj, props, optional = false) => {
-  if (isNullOrUndefined(obj)) return undefined;
-  
-  let value = obj;
-  for (const prop of props) {
-    if (isNullOrUndefined(value)) return undefined;
-    
-    // Special handling for values - could be arrays as well
-    if (Array.isArray(value)) {
-      // For arrays, we map the property access over all elements
-      const results = [];
-      for (const item of value) {
-        if (typeof item === 'object' && item !== null) {
-          const itemValue = optional ? item?.[prop] : item[prop];
-          if (!isNullOrUndefined(itemValue)) {
-            if (Array.isArray(itemValue)) {
-              results.push(...itemValue);
-            } else {
-              results.push(itemValue);
-            }
-          }
-        }
-      }
-      
-      if (results.length > 0) {
-        // Mark as array construction to preserve
-        Object.defineProperty(results, '_fromArrayConstruction', { value: true });
-        return results;
-      }
-      return undefined;
-    }
-    
-    // For objects, access normally
-    if (typeof value !== 'object') return undefined;
-    value = optional ? value?.[prop] : value[prop];
-  }
-  
-  return value;
-};
-
-const flattenResult = (result) => {
-  // Handle non-array cases
-  if (isNullOrUndefined(result)) return undefined;
-  if (!Array.isArray(result)) return result;
-  
-  // Special case for empty arrays
-  if (result.length === 0) {
-    // Empty arrays from array construction should be preserved
-    if (result._fromArrayConstruction) {
-      return [];
-    }
-    // Otherwise maintain backward compatibility and return undefined
-    return undefined;
-  }
-  
-  // Critical: preserve arrays that are marked as construction results
-  // This is essential for the comma operator and array iteration to work properly
-  if (result._fromArrayConstruction) {
-    return [...result];
-  }
-  
-  // For array subtraction, always return an array
-  if (result._fromDifference) {
-    return [...result]; // Ensure we always return an array for difference operations
-  }
-  
-  // Single-element arrays should be simplified unless they're from array construction
-  if (result.length === 1 && !Array.isArray(result[0])) {
-    return result[0];
-  }
-  
-  // Return the array as is for all other cases
-  return result;
-};
-
-const handlePipe = (input, leftFn, rightFn) => {
-  // Get the result of the left function
-  const leftResult = leftFn(input);
-  if (isNullOrUndefined(leftResult)) return undefined;
-  
-  // Ensure we have an array to iterate over
-  const leftArray = ensureArray(leftResult);
-  const results = [];
-  
-  // Process each item from the left result
-  for (const item of leftArray) {
-    // Apply the right function to each item
-    const rightResult = rightFn(item);
-    
-    // Skip undefined results
-    if (isNullOrUndefined(rightResult)) continue;
-    
-    // Handle arrays from the right function
-    if (Array.isArray(rightResult)) {
-      // Arrays marked as construction results should be spread
-      if (rightResult._fromArrayConstruction) {
-        results.push(...rightResult);
-      }
-      // Normal arrays should be spread too
-      else {
-        results.push(...rightResult);
-      }
-    }
-    // Single values added directly
-    else {
-      results.push(rightResult);
-    }
-  }
-  
-  // Make sure the final results array is preserved
-  Object.defineProperty(results, '_fromArrayConstruction', { value: true });
-  
-  // Return undefined for empty results, otherwise the array
-  return results.length === 0 ? undefined : results;
-};
-
-const accessProperty = (obj, prop, optional = false) => {
-  if (isNullOrUndefined(obj)) return undefined;
-  
-  // Special case for array elements - critical for array iteration with property access
-  if (Array.isArray(obj)) {
-    // Create a collector for all the values
-    const results = [];
-    
-    // Process each item in the array
-    for (const item of obj) {
-      // Skip non-objects
-      if (isNullOrUndefined(item) || typeof item !== 'object') continue;
-      
-      // Get the property value
-      const value = getNestedValue(item, prop.split('.'), optional);
-      
-      // Only add non-null values
-      if (!isNullOrUndefined(value)) {
-        // Handle nested arrays
-        if (Array.isArray(value)) {
-          // Push each item
-          results.push(...value);
-        } else {
-          // Push the single value
-          results.push(value);
-        }
-      }
-    }
-    
-    // If we found any values, return them as a special array that won't be flattened
-    if (results.length > 0) {
-      // Mark the array so it will be preserved through future operations
-      Object.defineProperty(results, '_fromArrayConstruction', { value: true });
-      return results;
-    }
-    
-    return undefined;
-  }
-  
-  // Regular property access on an object
-  return getNestedValue(obj, prop.split('.'), optional);
-};
-
-const accessIndex = (obj, idx) => {
-  if (isNullOrUndefined(obj)) return undefined;
-  
-  if (Array.isArray(obj)) {
-    if (obj.some(Array.isArray)) {
-      const results = obj
-        .map(item => Array.isArray(item) ? item[idx] : undefined)
-        .filter(x => !isNullOrUndefined(x));
-      return flattenResult(results);
-    }
-    
-    // Handle negative indices to access from the end of the array
-    if (idx < 0) {
-      const actualIdx = obj.length + idx;
-      return actualIdx >= 0 && actualIdx < obj.length ? obj[actualIdx] : undefined;
-    }
-    
-    return idx >= 0 && idx < obj.length ? obj[idx] : undefined;
-  }
-  
-  if (typeof obj === 'object') {
-    const arrays = Object.values(obj).filter(Array.isArray);
-    if (arrays.length > 0) {
-      const arr = arrays[0];
-      
-      // Handle negative indices for nested arrays too
-      if (idx < 0) {
-        const actualIdx = arr.length + idx;
-        return actualIdx >= 0 && actualIdx < arr.length ? arr[actualIdx] : undefined;
-      }
-      
-      return idx >= 0 && idx < arr.length ? arr[idx] : undefined;
-    }
-  }
-  
-  return undefined;
-};
-
-const iterateArray = (input) => {
-  if (isNullOrUndefined(input)) return undefined;
-  
-  if (Array.isArray(input)) {
-    // Make sure to preserve the array structure
-    const result = [...input];
-    // Mark the array to preserve it as a sequence
-    Object.defineProperty(result, '_fromArrayConstruction', { value: true });
-    return result;
-  }
-  
-  if (typeof input === 'object') {
-    // Get object values
-    const result = Object.values(input);
-    // Mark the array to preserve it as a sequence
-    Object.defineProperty(result, '_fromArrayConstruction', { value: true });
-    return result;
-  }
-  
-  return undefined;
-};
-
-const accessSlice = (input, start, end) => {
-  if (isNullOrUndefined(input)) return undefined;
-  
-  // Convert null start/end to undefined for array slice operator
-  const startIdx = start !== null ? start : undefined;
-  const endIdx = end !== null ? end : undefined;
-  
-  if (Array.isArray(input)) {
-    const result = input.slice(startIdx, endIdx);
-    return result;
-  }
-  
-  if (typeof input === 'string') {
-    return input.slice(startIdx, endIdx);
-  }
-  
-  return undefined;
-};
-
-const constructArray = (input, elementFns) => {
-  if (isNullOrUndefined(input)) return [];
-  
-  const result = [];
-  
-  // Process each element function
-  for (const elementFn of elementFns) {
-    // Apply the element function to the input
-    const value = elementFn(input);
-    
-    // Handle different types of values
-    if (Array.isArray(value)) {
-      // If the array is already a construction, preserve its structure by spreading
-      if (value._fromArrayConstruction) {
-        result.push(...value);
-      } 
-      // Other arrays should also be flattened
-      else {
-        result.push(...value);
-      }
-    } 
-    // Add single non-null values directly
-    else if (!isNullOrUndefined(value)) {
-      result.push(value);
-    }
-  }
-  
-  // Mark the resulting array as a construction result so it's preserved
-  Object.defineProperty(result, '_fromArrayConstruction', { value: true });
-  
-  return result;
-};
-
-const constructObject = (input, fields) => {
-  // Special case for null input with object construction - just create the object
-  if (input === null) {
-    const result = {};
-    
-    for (const field of fields) {
-      if (field.isDynamic) {
-        // Dynamic key: {(.user): .titles}
-        const dynamicKey = field.key(input);
-        if (!isNullOrUndefined(dynamicKey)) {
-          result[dynamicKey] = field.value(input);
-        }
-      } else {
-        // Static key
-        result[field.key] = field.value(input);
-      }
-    }
-    
-    return result;
-  }
-  
-  if (isNullOrUndefined(input)) return undefined;
-  
-  // Handle array input for object construction: { user, title: .titles[] }
-  // This creates an array of objects by iterating over array elements in the fields
-  const hasArrayField = fields.some(field => {
-    const fieldValue = field.value(input);
-    return Array.isArray(fieldValue) && !field.isDynamic;
-  });
-  
-  if (hasArrayField) {
-    // First, find the array field and its length
-    let arrayField;
-    let arrayLength = 0;
-    
-    for (const field of fields) {
-      const fieldValue = field.value(input);
-      if (Array.isArray(fieldValue) && !field.isDynamic) {
-        arrayField = field;
-        arrayLength = fieldValue.length;
-        break;
-      }
-    }
-    
-    // Create an array of objects
-    const result = [];
-    
-    for (let i = 0; i < arrayLength; i++) {
-      const obj = {};
-      
-      for (const field of fields) {
-        const fieldValue = field.value(input);
-        
-        if (field === arrayField) {
-          obj[field.key] = fieldValue[i];
-        } else {
-          obj[field.key] = fieldValue;
-        }
-      }
-      
-      result.push(obj);
-    }
-    
-    return result;
-  } else {
-    // Regular object construction
-    const result = {};
-    
-    for (const field of fields) {
-      if (field.isDynamic) {
-        // Dynamic key: {(.user): .titles}
-        const dynamicKey = field.key(input);
-        if (!isNullOrUndefined(dynamicKey)) {
-          result[dynamicKey] = field.value(input);
-        }
-      } else {
-        // Static key
-        result[field.key] = field.value(input);
-      }
-    }
-    
-    return result;
-  }
-};
-
-const addValues = (left, right) => {
-  // If either value is undefined, use the other one (handles null + val cases)
-  if (isNullOrUndefined(left)) return right;
-  if (isNullOrUndefined(right)) return left;
-  
-  // If both are arrays, concatenate them
-  if (Array.isArray(left) && Array.isArray(right)) {
-    return [...left, ...right];
-  }
-  
-  // If both are objects, merge them with right taking precedence for duplicate keys
-  if (typeof left === 'object' && left !== null && 
-      typeof right === 'object' && right !== null && 
-      !Array.isArray(left) && !Array.isArray(right)) {
-    return { ...left, ...right };
-  }
-  
-  // If one is an array and the other isn't, convert the non-array to an array and concatenate
-  if (Array.isArray(left) && !Array.isArray(right)) {
-    return [...left, right];
-  }
-  
-  if (!Array.isArray(left) && Array.isArray(right)) {
-    return [left, ...right];
-  }
-  
-  // For numeric addition
-  if (typeof left === 'number' && typeof right === 'number') {
-    return left + right;
-  }
-  
-  // Default string concatenation
-  return String(left) + String(right);
-};
-
-const subtractValues = (left, right) => {
-  // If left is undefined, treat as 0 for numeric subtraction
-  if (isNullOrUndefined(left)) {
-    // For array subtraction, nothing to subtract from
-    if (Array.isArray(right)) return [];
-    // For numeric subtraction, treat as 0 - right
-    if (typeof right === 'number') return -right;
-    // Default: return undefined for other types
-    return undefined;
-  }
-  
-  // If right is undefined, return left unchanged
-  if (isNullOrUndefined(right)) return left;
-  
-  // If both are arrays, remove elements from left that are in right
-  if (Array.isArray(left) && Array.isArray(right)) {
-    // Handle string array case differently to ensure proper comparison
-    // Also handle null/undefined values in the arrays
-    const isRightStringArray = right.every(item => 
-      typeof item === 'string' || item === null || item === undefined);
-    
-    if (isRightStringArray) {
-      // Make sure we preserve the array type
-      const result = left.filter(item => !right.includes(item));
-      // Mark as a difference result to preserve array structure
-      Object.defineProperty(result, '_fromDifference', { value: true });
-      return result; // Always return as array, never unwrap
-    }
-    
-    // Convert right array to a Set for O(1) lookups - for non-string arrays
-    const rightSet = new Set(right);
-    // Make sure we preserve the array type
-    const result = left.filter(item => !rightSet.has(item));
-    // Mark as a difference result to preserve array structure
-    Object.defineProperty(result, '_fromDifference', { value: true });
-    return result; // Always return as array, never unwrap
-  }
-  
-  // If left is an array but right is not, still remove the element from array
-  if (Array.isArray(left) && !Array.isArray(right)) {
-    const result = left.filter(item => item !== right);
-    // Mark as a difference result to preserve array structure
-    Object.defineProperty(result, '_fromDifference', { value: true });
-    return result;
-  }
-  
-  // If left is not an array but right is, can't meaningfully subtract
-  if (!Array.isArray(left) && Array.isArray(right)) {
-    // For numeric, treat right as empty and return left
-    if (typeof left === 'number') return left;
-    // Otherwise return left unchanged
-    return left;
-  }
-  
-  // For numeric subtraction
-  if (typeof left === 'number' && typeof right === 'number') {
-    return left - right;
-  }
-  
-  // For objects, remove keys that exist in right from left
-  if (typeof left === 'object' && left !== null && 
-      typeof right === 'object' && right !== null &&
-      !Array.isArray(left) && !Array.isArray(right)) {
-    const result = { ...left };
-    for (const key in right) {
-      delete result[key];
-    }
-    return result;
-  }
-  
-  // Default: convert to numbers and subtract if possible
-  const leftNum = Number(left);
-  const rightNum = Number(right);
-  if (!isNaN(leftNum) && !isNaN(rightNum)) {
-    return leftNum - rightNum;
-  }
-  
-  // If all else fails, return left unchanged
-  return left;
-};
-
+// Execute the generated expression
 const result = ${body};
-return flattenResult(result);
-`
-    return new Function('input', code)
+
+// Return the result, applying flattening rules
+return flattenResult(result);`
+
+    // Create a function factory that receives all helper functions as parameters
+    const functionFactory = new Function(
+      'isNullOrUndefined',
+      'ensureArray',
+      'getNestedValue',
+      'flattenResult',
+      'accessProperty',
+      'accessIndex',
+      'accessSlice',
+      'iterateArray',
+      'handlePipe',
+      'constructArray',
+      'constructObject',
+      'addValues',
+      'subtractValues',
+      `return function(input) { ${code} }`
+    )
+
+    // Return a function that uses the imported helper functions
+    return functionFactory(
+      isNullOrUndefined,
+      ensureArray,
+      getNestedValue,
+      flattenResult,
+      accessProperty,
+      accessIndex,
+      accessSlice,
+      iterateArray,
+      handlePipe,
+      constructArray,
+      constructObject,
+      addValues,
+      subtractValues
+    )
   }
 }
