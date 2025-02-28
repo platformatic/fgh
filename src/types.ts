@@ -31,6 +31,12 @@ export type TokenType =
   | '('
   | ')'
   | '+'
+  | '<'
+  | '>'
+  | '<='
+  | '>='
+  | '=='
+  | '!='
   | 'MAP'
   | 'MAP_VALUES'
   | 'EMPTY'
@@ -38,6 +44,8 @@ export type TokenType =
   | 'THEN'
   | 'ELSE'
   | 'END'
+  | 'SORT'
+  | 'SORT_BY'
   | 'EOF'
 
 export interface Token {
@@ -75,6 +83,14 @@ export type NodeType =
   | 'MapFilter'
   | 'MapValuesFilter'
   | 'Conditional'
+  | 'Sort'
+  | 'SortBy'
+  | 'GreaterThan'
+  | 'GreaterThanOrEqual'
+  | 'LessThan'
+  | 'LessThanOrEqual'
+  | 'Equal'
+  | 'NotEqual'
 
 export interface BaseNode {
   type: NodeType;
@@ -181,6 +197,51 @@ export interface ConditionalNode extends BaseNode {
   elseBranch?: ASTNode;
 }
 
+export interface SortNode extends BaseNode {
+  type: 'Sort';
+}
+
+export interface SortByNode extends BaseNode {
+  type: 'SortBy';
+  paths: ASTNode[];
+}
+
+export interface GreaterThanNode extends BaseNode {
+  type: 'GreaterThan';
+  left: ASTNode;
+  right: ASTNode;
+}
+
+export interface GreaterThanOrEqualNode extends BaseNode {
+  type: 'GreaterThanOrEqual';
+  left: ASTNode;
+  right: ASTNode;
+}
+
+export interface LessThanNode extends BaseNode {
+  type: 'LessThan';
+  left: ASTNode;
+  right: ASTNode;
+}
+
+export interface LessThanOrEqualNode extends BaseNode {
+  type: 'LessThanOrEqual';
+  left: ASTNode;
+  right: ASTNode;
+}
+
+export interface EqualNode extends BaseNode {
+  type: 'Equal';
+  left: ASTNode;
+  right: ASTNode;
+}
+
+export interface NotEqualNode extends BaseNode {
+  type: 'NotEqual';
+  left: ASTNode;
+  right: ASTNode;
+}
+
 export type ASTNode =
   | IdentityNode
   | PropertyAccessNode
@@ -200,6 +261,14 @@ export type ASTNode =
   | MapFilterNode
   | MapValuesFilterNode
   | ConditionalNode
+  | SortNode
+  | SortByNode
+  | GreaterThanNode
+  | GreaterThanOrEqualNode
+  | LessThanNode
+  | LessThanOrEqualNode
+  | EqualNode
+  | NotEqualNode
 
 export interface Parser {
   parse(): ASTNode;

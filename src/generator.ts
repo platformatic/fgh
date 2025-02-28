@@ -23,7 +23,15 @@ import {
   constructArray,
   constructObject,
   addValues,
-  subtractValues
+  subtractValues,
+  sortArray,
+  sortArrayBy,
+  greaterThan,
+  greaterThanOrEqual,
+  lessThan,
+  lessThanOrEqual,
+  equal,
+  notEqual
 } from './helpers/index.ts'
 
 export class JQCodeGenerator implements CodeGenerator {
@@ -65,6 +73,22 @@ export class JQCodeGenerator implements CodeGenerator {
         return this.generateMapValuesFilter(node)
       case 'Conditional':
         return this.generateConditional(node)
+      case 'Sort':
+        return this.generateSort(node)
+      case 'SortBy':
+        return this.generateSortBy(node)
+      case 'GreaterThan':
+        return this.generateGreaterThan(node)
+      case 'GreaterThanOrEqual':
+        return this.generateGreaterThanOrEqual(node)
+      case 'LessThan':
+        return this.generateLessThan(node)
+      case 'LessThanOrEqual':
+        return this.generateLessThanOrEqual(node)
+      case 'Equal':
+        return this.generateEqual(node)
+      case 'NotEqual':
+        return this.generateNotEqual(node)
       default: {
         throw new Error(`Unknown node type: ${node}`)
       }
@@ -157,6 +181,13 @@ export class JQCodeGenerator implements CodeGenerator {
   }
 
   private generateArrayIteration (node: ArrayIterationNode): string {
+    // Special case for '[]' which is parsed as ArrayIteration without input
+    // We need to check if this is a direct [] without a preceding input, which means empty array construction
+    if (!node.input && node.position === 0) {
+      // Return an empty array with proper construction marker
+      return 'Object.defineProperty([], "_fromArrayConstruction", { value: true })'
+    }
+
     if (node.input) {
       const inputCode = this.generateNode(node.input)
       // Need to preserve array for correct handling in comma operator
@@ -291,7 +322,7 @@ export class JQCodeGenerator implements CodeGenerator {
   }
 
   private generateArrayConstruction (node: any): string {
-    // Handle special case of empty array
+    // Handle empty array construction
     if (!node.elements || node.elements.length === 0) {
       // Return an empty array that will be preserved by flattenResult
       return 'Object.defineProperty([], "_fromArrayConstruction", { value: true })'
@@ -515,11 +546,87 @@ export class JQCodeGenerator implements CodeGenerator {
     })()`
   }
 
+  private generateSort (node: any): string {
+    return `(() => {
+      // Handle special case for null input
+      if (input === null) return null;
+      return sortArray(input);
+    })()`
+  }
+
+  private generateSortBy (node: any): string {
+    const pathFunctions = node.paths.map((path: any) => {
+      const pathCode = this.generateNode(path)
+      return JQCodeGenerator.wrapInFunction(pathCode)
+    }).join(', ')
+
+    return `(() => {
+      // Handle special case for null input
+      if (input === null) return null;
+      return sortArrayBy(input, [${pathFunctions}]);
+    })()`
+  }
+
+  private generateGreaterThan (node: any): string {
+    const leftCode = this.generateNode(node.left)
+    const rightCode = this.generateNode(node.right)
+
+    return `greaterThan(${leftCode}, ${rightCode})`
+  }
+
+  private generateGreaterThanOrEqual (node: any): string {
+    const leftCode = this.generateNode(node.left)
+    const rightCode = this.generateNode(node.right)
+
+    return `greaterThanOrEqual(${leftCode}, ${rightCode})`
+  }
+
+  private generateLessThan (node: any): string {
+    const leftCode = this.generateNode(node.left)
+    const rightCode = this.generateNode(node.right)
+
+    return `lessThan(${leftCode}, ${rightCode})`
+  }
+
+  private generateLessThanOrEqual (node: any): string {
+    const leftCode = this.generateNode(node.left)
+    const rightCode = this.generateNode(node.right)
+
+    return `lessThanOrEqual(${leftCode}, ${rightCode})`
+  }
+
+  private generateEqual (node: any): string {
+    const leftCode = this.generateNode(node.left)
+    const rightCode = this.generateNode(node.right)
+
+    return `equal(${leftCode}, ${rightCode})`
+  }
+
+  private generateNotEqual (node: any): string {
+    const leftCode = this.generateNode(node.left)
+    const rightCode = this.generateNode(node.right)
+
+    return `notEqual(${leftCode}, ${rightCode})`
+  }
+
   generate (ast: ASTNode): Function {
-    // Special case for empty array construction
-    if (ast.type === 'ArrayConstruction' && (!ast.elements || ast.elements.length === 0)) {
-      return function () {
-        return [] // Simply return a clean empty array
+    // Special cases for sort and sort_by with null input
+    if (ast.type === 'Sort') {
+      return function (input: any) {
+        if (input === null) return null
+        return flattenResult(sortArray(input))
+      }
+    }
+
+    if (ast.type === 'SortBy') {
+      const pathFns = (ast as any).paths.map((path: any) => {
+        const fn = this.generate(path)
+        return fn
+      })
+
+      return function (input: any) {
+        if (input === null) return null
+        return flattenResult(sortArrayBy(input, pathFns))
       }
     }
 
@@ -548,6 +655,14 @@ return flattenResult(result);`
       'constructObject',
       'addValues',
       'subtractValues',
+      'sortArray',
+      'sortArrayBy',
+      'greaterThan',
+      'greaterThanOrEqual',
+      'lessThan',
+      'lessThanOrEqual',
+      'equal',
+      'notEqual',
       `return function(input) { ${code} }`
     )
 
@@ -565,7 +680,15 @@ return flattenResult(result);`
       constructArray,
       constructObject,
       addValues,
-      subtractValues
+      subtractValues,
+      sortArray,
+      sortArrayBy,
+      greaterThan,
+      greaterThanOrEqual,
+      lessThan,
+      lessThanOrEqual,
+      equal,
+      notEqual
     )
   }
 }
