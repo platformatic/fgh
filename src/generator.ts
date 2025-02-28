@@ -590,6 +590,26 @@ export class JQCodeGenerator implements CodeGenerator {
       }
     }
 
+    // Special cases for sort and sort_by with null input
+    if (ast.type === 'Sort') {
+      return function (input: any) {
+        if (input === null) return null
+        return flattenResult(sortArray(input))
+      }
+    }
+
+    if (ast.type === 'SortBy') {
+      const pathFns = (ast as any).paths.map((path: any) => {
+        const fn = this.generate(path)
+        return fn
+      })
+
+      return function (input: any) {
+        if (input === null) return null
+        return flattenResult(sortArrayBy(input, pathFns))
+      }
+    }
+
     const body = this.generateNode(ast)
 
     // Create a function that uses the helper functions

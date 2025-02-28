@@ -37,13 +37,6 @@ export function compile (expression: string): JQFunction {
  * const result = query('.name', {name: 'John'});
  */
 export function query (expression: string, input: unknown): unknown {
-  // Special cases for sort and sort_by with null input
-  if (input === null) {
-    if (expression.trim() === 'sort' || expression.trim().startsWith('sort_by(')) {
-      return null
-    }
-  }
-
   const fn = compile(expression)
   return fn(input)
 }
