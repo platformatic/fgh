@@ -34,7 +34,10 @@ import {
   lessThanOrEqual,
   equal,
   notEqual,
-  handleArrayIterationToSelectPipe
+  handleArrayIterationToSelectPipe,
+  logicalAnd,
+  logicalOr,
+  logicalNot
 } from './helpers/index.ts'
 
 export class JQCodeGenerator implements CodeGenerator {
@@ -98,6 +101,12 @@ export class JQCodeGenerator implements CodeGenerator {
         return this.generateEqual(node)
       case 'NotEqual':
         return this.generateNotEqual(node)
+      case 'And':
+        return this.generateAnd(node)
+      case 'Or':
+        return this.generateOr(node)
+      case 'Not':
+        return this.generateNot(node)
       default: {
         throw new Error(`Unknown node type: ${node}`)
       }
@@ -775,6 +784,26 @@ export class JQCodeGenerator implements CodeGenerator {
     return `notEqual(${leftCode}, ${rightCode})`
   }
 
+  private generateAnd (node: any): string {
+    const leftCode = this.generateNode(node.left)
+    const rightCode = this.generateNode(node.right)
+
+    return `logicalAnd(${leftCode}, ${rightCode})`
+  }
+
+  private generateOr (node: any): string {
+    const leftCode = this.generateNode(node.left)
+    const rightCode = this.generateNode(node.right)
+
+    return `logicalOr(${leftCode}, ${rightCode})`
+  }
+
+  private generateNot (node: any): string {
+    const expressionCode = this.generateNode(node.expression)
+
+    return `logicalNot(${expressionCode})`
+  }
+
   generate (ast: ASTNode): Function {
     // Special cases for sort and sort_by with null input
     if (ast.type === 'Sort') {
@@ -832,6 +861,9 @@ return flattenResult(result);`
       'equal',
       'notEqual',
       'handleArrayIterationToSelectPipe',
+      'logicalAnd',
+      'logicalOr',
+      'logicalNot',
       `return function(input) { ${code} }`
     )
 
@@ -860,7 +892,10 @@ return flattenResult(result);`
       lessThanOrEqual,
       equal,
       notEqual,
-      handleArrayIterationToSelectPipe
+      handleArrayIterationToSelectPipe,
+      logicalAnd,
+      logicalOr,
+      logicalNot
     )
   }
 }

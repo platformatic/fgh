@@ -20,6 +20,7 @@ A typescript implementation of the [JQ language](http://jqlang.org/).
 - Multiplication Operator (`*`): Multiplies numbers or repeats strings/arrays
 - Division Operator (`/`): Divides numbers
 - Comparison Operators (`>`, `>=`, `<`, `<=`): Compare values using the same ordering rules as the sort function
+- Boolean Operators (`and`, `or`, `not`): Perform logical operations on values
 
 ### Map Filters
 - Map (`map(f)`): Applies filter `f` to each value of input array or object and outputs an array of all values
@@ -115,6 +116,73 @@ query('{ doubled: (.value * 2), halved: (.value / 2) }', { value: 10 })
 // Complex calculations
 query('{ weighted_avg: ((.a * 0.5) + (.b * 0.3) + (.c * 0.2)) }', { a: 10, b: 20, c: 30 })
 // => { weighted_avg: 17 }
+```
+
+### Boolean Operators
+Boolean operators `and`, `or`, and `not` perform logical operations with standard truthiness rules: `false` and `null` are considered "false values", and anything else is a "true value".
+
+If an operand produces multiple results, the operator will produce a result for each input. Note that `not` is a function that can be used with the pipe operator.
+
+```javascript
+// Basic AND operation
+query('true and true', null)
+// => true
+
+query('42 and "a string"', null)
+// => true
+
+query('true and false', null)
+// => false
+
+query('false and true', null)
+// => false
+
+query('null and true', null)
+// => false
+
+// Basic OR operation
+query('true or false', null)
+// => true
+
+query('false or true', null)
+// => true
+
+query('false or false', null)
+// => false
+
+query('null or false', null)
+// => false
+
+// NOT operation (using pipe)
+query('true | not', null)
+// => false
+
+query('false | not', null)
+// => true
+
+// Using property access with boolean operators
+query('.a and .b', { a: true, b: true })
+// => true
+
+query('.a and .b', { a: true, b: false })
+// => false
+
+query('.a or .b', { a: false, b: true })
+// => true
+
+// Using boolean operators with multiple values
+query('(true, false) and true', null)
+// => [true, false]
+
+query('true and (true, false)', null)
+// => [true, false]
+
+query('(true, true) and (true, false)', null)
+// => [true, false, true, false]
+
+// Map function with NOT operation
+query('map(not)', [true, false])
+// => [false, true]
 ```
 
 ### Comparison Operators

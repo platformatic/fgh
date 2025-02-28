@@ -186,6 +186,20 @@ export class JQParser {
           value
         })
         this.advance() // Consume identifier
+      } else if (this.currentToken.type === 'NOT' as TokenType) {
+        // Handle 'not' keyword
+        const notPos = this.currentToken.position
+        this.advance() // Consume 'not'
+
+        // Create a Not node
+        elements.push({
+          type: 'Not',
+          position: notPos,
+          expression: {
+            type: 'Identity',
+            position: notPos
+          }
+        })
       } else {
         // Skip unknown tokens to try to recover
         console.log(`Skipping unexpected token '${this.currentToken.type}' in array literal`)
@@ -233,7 +247,7 @@ export class JQParser {
 
   private parseExpression (): ASTNode {
     const startPos = this.currentToken?.position ?? 0
-    let left = this.parseComparison()
+    let left = this.parseLogical()
 
     // Handle pipe operator
     if (this.currentToken && this.currentToken.type === '|') {
@@ -257,7 +271,7 @@ export class JQParser {
       // Continue parsing expressions separated by commas
       while (this.currentToken && this.currentToken.type === ',' as TokenType) {
         this.advance() // Consume comma
-        const next = this.parseComparison() // Use parseComparison instead of parseChain to handle arithmetic
+        const next = this.parseLogical() // Use parseLogical to handle arithmetic and logical operations
         expressions.push(next)
 
         // Handle pipe operators inside sequence elements
@@ -281,6 +295,45 @@ export class JQParser {
         type: 'Sequence',
         position: startPos,
         expressions
+      }
+    }
+
+    return left
+  }
+
+  private parseLogical (): ASTNode {
+    const startPos = this.currentToken?.position ?? 0
+    let left = this.parseComparison()
+
+    // Handle logical operators (and, or)
+    while (this.currentToken && (
+      this.currentToken.type === 'AND' as TokenType ||
+      this.currentToken.type === 'OR' as TokenType
+    )) {
+      const operator = this.currentToken.type
+      this.advance() // Consume the operator
+
+      // Parse the right side
+      const right = this.parseComparison()
+
+      // Create the appropriate logical node
+      switch (operator) {
+        case 'AND' as TokenType:
+          left = {
+            type: 'And',
+            position: startPos,
+            left,
+            right
+          }
+          break
+        case 'OR' as TokenType:
+          left = {
+            type: 'Or',
+            position: startPos,
+            left,
+            right
+          }
+          break
       }
     }
 
@@ -658,6 +711,49 @@ export class JQParser {
           position: numPos,
           value: numValue
         })
+      } else if (this.currentToken.type === 'IDENT' as TokenType) {
+      // Handle identifiers like true, false, null, not, or other identifiers
+        if (this.currentToken.value === 'true' || this.currentToken.value === 'false' || this.currentToken.value === 'null') {
+          // Handle boolean and null literals
+          const value = this.currentToken.value === 'true'
+            ? true
+            : this.currentToken.value === 'false' ? false : null
+          const idPos = this.currentToken.position
+          this.advance() // Consume the identifier
+
+          elements.push({
+            type: 'Literal',
+            position: idPos,
+            value
+          })
+        } else if (this.currentToken.value === 'not') {
+          // Handle 'not' as a special case
+          const idPos = this.currentToken.position
+          this.advance() // Consume 'not'
+
+          elements.push({
+            type: 'Not',
+            position: idPos,
+            expression: {
+              type: 'Identity',
+              position: idPos
+            }
+          })
+        } else {
+          // Other identifiers - try parsing as an expression
+          try {
+            const element = this.parseChain()
+            elements.push(element)
+          } catch (e) {
+            // If parsing fails, add the identifier as a string literal
+            elements.push({
+              type: 'Literal',
+              position: this.currentToken.position,
+              value: this.currentToken.value
+            })
+            this.advance() // Consume the identifier
+          }
+        }
       } else {
         // Other expressions - Try to parse as expression or simple literal
         try {
@@ -884,6 +980,20 @@ export class JQParser {
         }
       }
 
+      case 'NOT': {
+        const pos = this.currentToken.position
+        this.advance() // Consume 'not'
+
+        return {
+          type: 'Not',
+          position: pos,
+          expression: {
+            type: 'Identity',
+            position: pos
+          }
+        }
+      }
+
       case 'EMPTY': {
         const pos = this.currentToken.position
         this.advance() // Consume 'empty'
@@ -1046,8 +1156,9 @@ export class JQParser {
           // This is likely an index access like [0] or array.prop[0]
           // Only treat as array construction if we're sure it's part of an array literal
           const nextAfterNum = this.peekAhead(2)
-          if (nextAfterNum?.type === ',' as TokenType || nextAfterNum?.type === ']' as TokenType) {
-            // If it looks like [0, ...] or just [0], it's an array construction
+          if (nextAfterNum?.type === ',' as TokenType || nextAfterNum?.type === ']' as TokenType ||
+            nextToken?.type === 'IDENT' as TokenType) {
+          // If it looks like [0, ...] or just [0] or [true, false], it's an array construction
             return this.parseArrayConstruction()
           }
 
@@ -1073,10 +1184,10 @@ export class JQParser {
           }
         }
 
-        // Check for array literal - a construct like ["string1", "string2"]
+        // Check for array literal - a construct like ["string1", "string2"] or [true, false]
         if (nextToken?.type === 'STRING' as TokenType || nextToken?.type === 'NUM' as TokenType ||
-        nextToken?.type === ']' as TokenType) {
-          // This is an array construction - either empty or with literals
+            nextToken?.type === ']' as TokenType || nextToken?.type === 'IDENT' as TokenType) {
+          // This is an array construction - either empty, with literals, or identifiers
           return this.parseArrayConstruction()
         }
 

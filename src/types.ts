@@ -49,6 +49,9 @@ export type TokenType =
   | 'SORT'
   | 'SORT_BY'
   | 'SELECT'
+  | 'AND'
+  | 'OR'
+  | 'NOT'
   | 'EOF'
 
 export interface Token {
@@ -97,6 +100,9 @@ export type NodeType =
   | 'LessThanOrEqual'
   | 'Equal'
   | 'NotEqual'
+  | 'And'
+  | 'Or'
+  | 'Not'
 
 export interface BaseNode {
   type: NodeType;
@@ -265,6 +271,23 @@ export interface NotEqualNode extends BaseNode {
   right: ASTNode;
 }
 
+export interface AndNode extends BaseNode {
+  type: 'And';
+  left: ASTNode;
+  right: ASTNode;
+}
+
+export interface OrNode extends BaseNode {
+  type: 'Or';
+  left: ASTNode;
+  right: ASTNode;
+}
+
+export interface NotNode extends BaseNode {
+  type: 'Not';
+  expression: ASTNode;
+}
+
 export type ASTNode =
   | IdentityNode
   | PropertyAccessNode
@@ -295,6 +318,9 @@ export type ASTNode =
   | LessThanOrEqualNode
   | EqualNode
   | NotEqualNode
+  | AndNode
+  | OrNode
+  | NotNode
 
 export interface Parser {
   parse(): ASTNode;
