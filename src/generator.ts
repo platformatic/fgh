@@ -175,6 +175,13 @@ export class JQCodeGenerator implements CodeGenerator {
   }
 
   private generateArrayIteration (node: ArrayIterationNode): string {
+    // Special case for '[]' which is parsed as ArrayIteration without input
+    // We need to check if this is a direct [] without a preceding input, which means empty array construction
+    if (!node.input && node.position === 0) {
+      // Return an empty array with proper construction marker
+      return 'Object.defineProperty([], "_fromArrayConstruction", { value: true })'
+    }
+
     if (node.input) {
       const inputCode = this.generateNode(node.input)
       // Need to preserve array for correct handling in comma operator
@@ -309,7 +316,7 @@ export class JQCodeGenerator implements CodeGenerator {
   }
 
   private generateArrayConstruction (node: any): string {
-    // Handle special case of empty array
+    // Handle empty array construction
     if (!node.elements || node.elements.length === 0) {
       // Return an empty array that will be preserved by flattenResult
       return 'Object.defineProperty([], "_fromArrayConstruction", { value: true })'
@@ -583,13 +590,6 @@ export class JQCodeGenerator implements CodeGenerator {
   }
 
   generate (ast: ASTNode): Function {
-    // Special case for empty array construction
-    if (ast.type === 'ArrayConstruction' && (!ast.elements || ast.elements.length === 0)) {
-      return function () {
-        return [] // Simply return a clean empty array
-      }
-    }
-
     // Special cases for sort and sort_by with null input
     if (ast.type === 'Sort') {
       return function (input: any) {
