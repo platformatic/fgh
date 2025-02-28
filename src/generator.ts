@@ -531,14 +531,61 @@ export class JQCodeGenerator implements CodeGenerator {
   private generateConditional (node: any): string {
     const conditionCode = this.generateNode(node.condition)
     const thenCode = this.generateNode(node.thenBranch)
-    const elseCode = node.elseBranch ? this.generateNode(node.elseBranch) : 'undefined'
+    const elseCode = node.elseBranch ? this.generateNode(node.elseBranch) : 'input'
 
     return `(() => {
       // Evaluate condition
       const conditionResult = ${conditionCode};
       
-      // Check if condition is truthy
-      if (conditionResult && conditionResult !== null) {
+      // Handle multiple results from condition evaluation
+      if (Array.isArray(conditionResult)) {
+        const results = [];
+        
+        // For each condition result that is not false or null
+        const truthyResults = conditionResult.filter(item => item !== false && item !== null);
+        const falsyResults = conditionResult.filter(item => item === false || item === null);
+        
+        // If any truthy results, evaluate 'then' branch for each
+        if (truthyResults.length > 0) {
+          for (const item of truthyResults) {
+            // Apply the 'then' branch with the current item as input
+            const thenResult = ((input) => ${thenCode})(item);
+            
+            // Add result(s) to the output
+            if (Array.isArray(thenResult)) {
+              results.push(...thenResult);
+            } else if (thenResult !== undefined) {
+              results.push(thenResult);
+            }
+          }
+        }
+        
+        // If any falsy results, evaluate 'else' branch for each
+        if (falsyResults.length > 0) {
+          for (const item of falsyResults) {
+            // Apply the 'else' branch with the current item as input
+            const elseResult = ((input) => ${elseCode})(item);
+            
+            // Add result(s) to the output
+            if (Array.isArray(elseResult)) {
+              results.push(...elseResult);
+            } else if (elseResult !== undefined) {
+              results.push(elseResult);
+            }
+          }
+        }
+        
+        // Mark as construction array to preserve in later operations
+        if (results.length > 0) {
+          Object.defineProperty(results, '_fromArrayConstruction', { value: true });
+          return results;
+        }
+        
+        return undefined;
+      }
+      
+      // Handle single result case
+      if (conditionResult !== false && conditionResult !== null) {
         return ${thenCode};
       } else {
         return ${elseCode};

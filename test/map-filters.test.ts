@@ -64,12 +64,12 @@ test('map_values filter', async (t) => {
   })
 
   // This test requires conditionals with comparison operators to be implemented
-  // await t.test('should drop keys from objects when filter produces no values', () => {
-  //   assert.deepEqual(
-  //     query('map_values(if . > 1 then . else empty end)', {"a": 1, "b": 2, "c": 3}),
-  //     {"b": 2, "c": 3}
-  //   )
-  // })
+  await t.test('should drop keys from objects when filter produces no values', () => {
+    assert.deepEqual(
+      query('map_values(if . > 1 then . else empty end)', { a: 1, b: 2, c: 3 }),
+      { b: 2, c: 3 }
+    )
+  })
 
   // A simpler alternative test
   await t.test('should drop keys from objects when filter produces no values', () => {

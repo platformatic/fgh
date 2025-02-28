@@ -855,9 +855,48 @@ export class JQParser {
         const thenBranch = this.parseExpression()
 
         let elseBranch
-        if (this.currentToken && this.currentToken.type === 'ELSE') {
+        if (this.currentToken && this.currentToken.type === 'ELIF') {
+          // Handle elif as a nested if inside the else branch
+          const elifPos = this.currentToken.position
+          this.advance() // Consume 'elif'
+
+          // Parse the elif condition
+          const elifCondition = this.parseExpression()
+
+          this.expect('THEN')
+          const elifThenBranch = this.parseExpression()
+
+          // If there's another elif or an else, parse it as the else branch of this elif
+          let elifElseBranch
+          if (this.currentToken && (this.currentToken.type === 'ELIF' || this.currentToken.type === 'ELSE')) {
+            // Create the else branch as a nested conditional or direct value
+            if (this.currentToken.type === 'ELIF') {
+              // Handle nested elif by creating a nested if node in the elif's else branch
+              elifElseBranch = this.parsePrimary() // This will call this case again with the next elif
+            } else {
+              // Handle else
+              this.advance() // Consume 'else'
+              elifElseBranch = this.parseExpression()
+            }
+          }
+
+          // Create a conditional node for the elif
+          elseBranch = {
+            type: 'Conditional',
+            position: elifPos,
+            condition: elifCondition,
+            thenBranch: elifThenBranch,
+            elseBranch: elifElseBranch
+          }
+        } else if (this.currentToken && this.currentToken.type === 'ELSE') {
           this.advance() // Consume 'else'
           elseBranch = this.parseExpression()
+        } else {
+          // If no else branch, use identity as default
+          elseBranch = {
+            type: 'Identity',
+            position: pos
+          }
         }
 
         this.expect('END')

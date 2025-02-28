@@ -43,6 +43,7 @@ export type TokenType =
   | 'IF'
   | 'THEN'
   | 'ELSE'
+  | 'ELIF'
   | 'END'
   | 'SORT'
   | 'SORT_BY'
