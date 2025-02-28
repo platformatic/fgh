@@ -31,6 +31,19 @@ export type TokenType =
   | '('
   | ')'
   | '+'
+  | '<'
+  | '>'
+  | '<='
+  | '>='
+  | 'MAP'
+  | 'MAP_VALUES'
+  | 'EMPTY'
+  | 'IF'
+  | 'THEN'
+  | 'ELSE'
+  | 'END'
+  | 'SORT'
+  | 'SORT_BY'
   | 'EOF'
 
 export interface Token {
@@ -65,6 +78,15 @@ export type NodeType =
   | 'Difference'
   | 'Literal'
   | 'RecursiveDescent'
+  | 'MapFilter'
+  | 'MapValuesFilter'
+  | 'Conditional'
+  | 'Sort'
+  | 'SortBy'
+  | 'GreaterThan'
+  | 'GreaterThanOrEqual'
+  | 'LessThan'
+  | 'LessThanOrEqual'
 
 export interface BaseNode {
   type: NodeType;
@@ -154,6 +176,56 @@ export interface RecursiveDescentNode extends BaseNode {
   type: 'RecursiveDescent';
 }
 
+export interface MapFilterNode extends BaseNode {
+  type: 'MapFilter';
+  filter: ASTNode;
+}
+
+export interface MapValuesFilterNode extends BaseNode {
+  type: 'MapValuesFilter';
+  filter: ASTNode;
+}
+
+export interface ConditionalNode extends BaseNode {
+  type: 'Conditional';
+  condition: ASTNode;
+  thenBranch: ASTNode;
+  elseBranch?: ASTNode;
+}
+
+export interface SortNode extends BaseNode {
+  type: 'Sort';
+}
+
+export interface SortByNode extends BaseNode {
+  type: 'SortBy';
+  paths: ASTNode[];
+}
+
+export interface GreaterThanNode extends BaseNode {
+  type: 'GreaterThan';
+  left: ASTNode;
+  right: ASTNode;
+}
+
+export interface GreaterThanOrEqualNode extends BaseNode {
+  type: 'GreaterThanOrEqual';
+  left: ASTNode;
+  right: ASTNode;
+}
+
+export interface LessThanNode extends BaseNode {
+  type: 'LessThan';
+  left: ASTNode;
+  right: ASTNode;
+}
+
+export interface LessThanOrEqualNode extends BaseNode {
+  type: 'LessThanOrEqual';
+  left: ASTNode;
+  right: ASTNode;
+}
+
 export type ASTNode =
   | IdentityNode
   | PropertyAccessNode
@@ -170,6 +242,15 @@ export type ASTNode =
   | DifferenceNode
   | LiteralNode
   | RecursiveDescentNode
+  | MapFilterNode
+  | MapValuesFilterNode
+  | ConditionalNode
+  | SortNode
+  | SortByNode
+  | GreaterThanNode
+  | GreaterThanOrEqualNode
+  | LessThanNode
+  | LessThanOrEqualNode
 
 export interface Parser {
   parse(): ASTNode;
