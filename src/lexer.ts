@@ -71,6 +71,9 @@ export class JQLexer implements Lexer {
       case '*':
         this.position++
         return { type: '*', value: '*', position: startPos }
+      case '/':
+        this.position++
+        return { type: '/', value: '/', position: startPos }
       case ':':
         this.position++
         return { type: ':', value: ':', position: startPos }
@@ -130,12 +133,32 @@ export class JQLexer implements Lexer {
     const startPos = this.position
     let value = ''
 
+    // Read the integer part
     while (
       this.hasMoreTokens() &&
       this.isDigit(this.input[this.position])
     ) {
       value += this.input[this.position]
       this.position++
+    }
+
+    // Check for decimal point followed by digits
+    if (this.hasMoreTokens() && this.input[this.position] === '.') {
+      // Look ahead to see if the next character is a digit
+      if (this.position + 1 < this.input.length && this.isDigit(this.input[this.position + 1])) {
+        // Include the decimal point
+        value += '.'
+        this.position++
+
+        // Read the decimal part
+        while (
+          this.hasMoreTokens() &&
+          this.isDigit(this.input[this.position])
+        ) {
+          value += this.input[this.position]
+          this.position++
+        }
+      }
     }
 
     return { type: 'NUM', value, position: startPos }

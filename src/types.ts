@@ -23,6 +23,7 @@ export type TokenType =
   | '|'
   | '?'
   | '*'
+  | '/'
   | ':'
   | '-'
   | '{'
@@ -80,6 +81,8 @@ export type NodeType =
   | 'ArrayConstruction'
   | 'Sum'
   | 'Difference'
+  | 'Multiply'
+  | 'Divide'
   | 'Literal'
   | 'RecursiveDescent'
   | 'MapFilter'
@@ -174,6 +177,18 @@ export interface DifferenceNode extends BaseNode {
   right: ASTNode;
 }
 
+export interface MultiplyNode extends BaseNode {
+  type: 'Multiply';
+  left: ASTNode;
+  right: ASTNode;
+}
+
+export interface DivideNode extends BaseNode {
+  type: 'Divide';
+  left: ASTNode;
+  right: ASTNode;
+}
+
 export interface LiteralNode extends BaseNode {
   type: 'Literal';
   value: number | string | boolean | null;
@@ -264,6 +279,8 @@ export type ASTNode =
   | ArrayConstructionNode
   | SumNode
   | DifferenceNode
+  | MultiplyNode
+  | DivideNode
   | LiteralNode
   | RecursiveDescentNode
   | MapFilterNode

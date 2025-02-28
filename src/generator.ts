@@ -24,6 +24,8 @@ import {
   constructObject,
   addValues,
   subtractValues,
+  multiplyValues,
+  divideValues,
   sortArray,
   sortArrayBy,
   greaterThan,
@@ -64,6 +66,10 @@ export class JQCodeGenerator implements CodeGenerator {
         return this.generateSum(node)
       case 'Difference':
         return this.generateDifference(node)
+      case 'Multiply':
+        return this.generateMultiply(node)
+      case 'Divide':
+        return this.generateDivide(node)
       case 'Literal':
         return this.generateLiteral(node)
       case 'RecursiveDescent':
@@ -383,6 +389,20 @@ export class JQCodeGenerator implements CodeGenerator {
 
     // Standard case
     return `subtractValues(${leftCode}, ${rightCode})`
+  }
+
+  private generateMultiply (node: any): string {
+    const leftCode = this.generateNode(node.left)
+    const rightCode = this.generateNode(node.right)
+
+    return `multiplyValues(${leftCode}, ${rightCode})`
+  }
+
+  private generateDivide (node: any): string {
+    const leftCode = this.generateNode(node.left)
+    const rightCode = this.generateNode(node.right)
+
+    return `divideValues(${leftCode}, ${rightCode})`
   }
 
   private generateLiteral (node: any): string {
@@ -801,6 +821,8 @@ return flattenResult(result);`
       'constructObject',
       'addValues',
       'subtractValues',
+      'multiplyValues',
+      'divideValues',
       'sortArray',
       'sortArrayBy',
       'greaterThan',
@@ -828,6 +850,8 @@ return flattenResult(result);`
       constructObject,
       addValues,
       subtractValues,
+      multiplyValues,
+      divideValues,
       sortArray,
       sortArrayBy,
       greaterThan,

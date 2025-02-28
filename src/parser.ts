@@ -257,7 +257,7 @@ export class JQParser {
       // Continue parsing expressions separated by commas
       while (this.currentToken && this.currentToken.type === ',' as TokenType) {
         this.advance() // Consume comma
-        const next = this.parseChain()
+        const next = this.parseComparison() // Use parseComparison instead of parseChain to handle arithmetic
         expressions.push(next)
 
         // Handle pipe operators inside sequence elements
@@ -364,7 +364,7 @@ export class JQParser {
 
   private parseSum (): ASTNode {
     const startPos = this.currentToken?.position ?? 0
-    let left = this.parseChain()
+    let left = this.parseProduct() // Changed from parseChain to parseProduct
 
     // Handle the plus or minus operators (potentially multiple in a chain)
     while (this.currentToken && (this.currentToken.type === '+' || this.currentToken.type === '-')) {
@@ -405,10 +405,33 @@ export class JQParser {
       }
 
       // Normal handling for other cases
-      const right = this.parseChain()
+      const right = this.parseProduct() // Changed from parseChain to parseProduct
 
       left = {
         type: operator === '+' as TokenType ? 'Sum' : 'Difference',
+        position: startPos,
+        left,
+        right
+      }
+    }
+
+    return left
+  }
+
+  private parseProduct (): ASTNode {
+    const startPos = this.currentToken?.position ?? 0
+    let left = this.parseChain()
+
+    // Handle multiplication and division operators (potentially multiple in a chain)
+    while (this.currentToken && (this.currentToken.type === '*' || this.currentToken.type === '/')) {
+      const operator = this.currentToken.type
+      this.advance() // Consume the operator
+
+      // Parse the right operand
+      const right = this.parseChain()
+
+      left = {
+        type: operator === '*' ? 'Multiply' : 'Divide',
         position: startPos,
         left,
         right
@@ -424,7 +447,10 @@ export class JQParser {
     }
 
     if (this.currentToken.type === 'NUM' as TokenType) {
-      const value = parseInt(this.currentToken.value, 10)
+      // Parse number as float if it contains a decimal point
+      const value = this.currentToken.value.includes('.')
+        ? parseFloat(this.currentToken.value)
+        : parseInt(this.currentToken.value, 10)
       const position = this.currentToken.position
       this.advance() // Consume the number
       return {
@@ -720,7 +746,15 @@ export class JQParser {
       // If we have a colon, parse the value expression
       if (this.currentToken && this.currentToken.type === ':' as TokenType) {
         this.advance() // Consume :
-        value = this.parseChain() // Use parseChain here to parse the value
+
+        // If the value is a parenthesized expression, use parseExpression
+        if (this.currentToken && this.currentToken.type === '(' as TokenType) {
+          this.advance() // Consume (
+          value = this.parseExpression() // Handle complex expressions
+          this.expect(')') // Expect closing parenthesis
+        } else {
+          value = this.parseChain() // Use parseChain for non-parenthesized
+        }
       } else {
         // Handle shorthand syntax: { user } -> { user: .user }
         if (typeof key === 'string') {
@@ -955,8 +989,10 @@ export class JQParser {
       }
 
       case 'NUM': {
-        // Handle numeric literals
-        const value = parseInt(this.currentToken.value, 10)
+        // Handle numeric literals with proper decimal point handling
+        const value = this.currentToken.value.includes('.')
+          ? parseFloat(this.currentToken.value)
+          : parseInt(this.currentToken.value, 10)
         const position = this.currentToken.position
         this.advance() // Consume the number
         return {

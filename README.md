@@ -17,6 +17,8 @@ A typescript implementation of the [JQ language](http://jqlang.org/).
 - Comma Operator (`,`): Creates a sequence of outputs, combining the results of two or more filters
 - Addition Operator (`+`): Adds numbers, concatenates strings and arrays, or merges objects
 - Subtraction Operator (`-`): Subtracts numbers or removes elements from arrays and objects
+- Multiplication Operator (`*`): Multiplies numbers or repeats strings/arrays
+- Division Operator (`/`): Divides numbers
 - Comparison Operators (`>`, `>=`, `<`, `<=`): Compare values using the same ordering rules as the sort function
 
 ### Map Filters
@@ -71,6 +73,48 @@ query('7 - 2', null)
 // Removing elements from an array
 query('[1, 2, 3, 4] - [2, 4]', null)
 // => [1, 3]
+```
+
+### Multiplication and Division Operators
+Multiplication (`*`) and division (`/`) operators work with numbers and other data types:
+
+```javascript
+// Multiplying numbers
+query('6 * 3', null)
+// => 18
+
+// Repeating strings
+query('"abc" * 3', null)
+// => "abcabcabc"
+
+// Repeating arrays
+query('[1, 2] * 3', null)
+// => [1, 2, 1, 2, 1, 2]
+
+// Dividing numbers
+query('10 / 2', null)
+// => 5
+
+// Using decimals in calculations
+query('10 * 0.5', null)
+// => 5
+```
+
+### Mathematical Operations in Object Construction
+You can use arithmetic operators within object construction for calculating values:
+
+```javascript
+// Basic arithmetic in object values
+query('{ sum: (2 + 3), product: (4 * 2) }', null)
+// => { sum: 5, product: 8 }
+
+// Arithmetic with property values
+query('{ doubled: (.value * 2), halved: (.value / 2) }', { value: 10 })
+// => { doubled: 20, halved: 5 }
+
+// Complex calculations
+query('{ weighted_avg: ((.a * 0.5) + (.b * 0.3) + (.c * 0.2)) }', { a: 10, b: 20, c: 30 })
+// => { weighted_avg: 17 }
 ```
 
 ### Comparison Operators
