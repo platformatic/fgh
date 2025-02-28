@@ -7,7 +7,11 @@ import type {
   PipeNode,
   OptionalNode,
   SequenceNode,
-  ArrayIterationNode
+  ArrayIterationNode,
+  GreaterThanNode,
+  GreaterThanOrEqualNode,
+  LessThanNode,
+  LessThanOrEqualNode
 } from './types.ts'
 
 import {
@@ -23,7 +27,13 @@ import {
   constructArray,
   constructObject,
   addValues,
-  subtractValues
+  subtractValues,
+  sortArray,
+  sortArrayBy,
+  greaterThan,
+  greaterThanOrEqual,
+  lessThan,
+  lessThanOrEqual
 } from './helpers/index.ts'
 
 export class JQCodeGenerator implements CodeGenerator {
@@ -65,6 +75,18 @@ export class JQCodeGenerator implements CodeGenerator {
         return this.generateMapValuesFilter(node)
       case 'Conditional':
         return this.generateConditional(node)
+      case 'Sort':
+        return this.generateSort(node)
+      case 'SortBy':
+        return this.generateSortBy(node)
+      case 'GreaterThan':
+        return this.generateGreaterThan(node)
+      case 'GreaterThanOrEqual':
+        return this.generateGreaterThanOrEqual(node)
+      case 'LessThan':
+        return this.generateLessThan(node)
+      case 'LessThanOrEqual':
+        return this.generateLessThanOrEqual(node)
       default: {
         throw new Error(`Unknown node type: ${node}`)
       }
@@ -515,6 +537,55 @@ export class JQCodeGenerator implements CodeGenerator {
     })()`
   }
 
+  private generateSort (node: any): string {
+    return `(() => {
+      // Handle special case for null input
+      if (input === null) return null;
+      return sortArray(input);
+    })()`
+  }
+
+  private generateSortBy (node: any): string {
+    const pathFunctions = node.paths.map((path: any) => {
+      const pathCode = this.generateNode(path)
+      return JQCodeGenerator.wrapInFunction(pathCode)
+    }).join(', ')
+
+    return `(() => {
+      // Handle special case for null input
+      if (input === null) return null;
+      return sortArrayBy(input, [${pathFunctions}]);
+    })()`
+  }
+
+  private generateGreaterThan (node: any): string {
+    const leftCode = this.generateNode(node.left)
+    const rightCode = this.generateNode(node.right)
+
+    return `greaterThan(${leftCode}, ${rightCode})`
+  }
+
+  private generateGreaterThanOrEqual (node: any): string {
+    const leftCode = this.generateNode(node.left)
+    const rightCode = this.generateNode(node.right)
+
+    return `greaterThanOrEqual(${leftCode}, ${rightCode})`
+  }
+
+  private generateLessThan (node: any): string {
+    const leftCode = this.generateNode(node.left)
+    const rightCode = this.generateNode(node.right)
+
+    return `lessThan(${leftCode}, ${rightCode})`
+  }
+
+  private generateLessThanOrEqual (node: any): string {
+    const leftCode = this.generateNode(node.left)
+    const rightCode = this.generateNode(node.right)
+
+    return `lessThanOrEqual(${leftCode}, ${rightCode})`
+  }
+
   generate (ast: ASTNode): Function {
     // Special case for empty array construction
     if (ast.type === 'ArrayConstruction' && (!ast.elements || ast.elements.length === 0)) {
@@ -548,6 +619,12 @@ return flattenResult(result);`
       'constructObject',
       'addValues',
       'subtractValues',
+      'sortArray',
+      'sortArrayBy',
+      'greaterThan',
+      'greaterThanOrEqual',
+      'lessThan',
+      'lessThanOrEqual',
       `return function(input) { ${code} }`
     )
 
@@ -565,7 +642,13 @@ return flattenResult(result);`
       constructArray,
       constructObject,
       addValues,
-      subtractValues
+      subtractValues,
+      sortArray,
+      sortArrayBy,
+      greaterThan,
+      greaterThanOrEqual,
+      lessThan,
+      lessThanOrEqual
     )
   }
 }

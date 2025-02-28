@@ -29,6 +29,15 @@ export class JQLexer implements Lexer {
     const startPos = this.position
     let pos
 
+    // Look ahead for two-character operators
+    if (this.position + 1 < this.input.length) {
+      const twoChars = this.input.substring(this.position, this.position + 2)
+      if (twoChars === '<=' || twoChars === '>=') {
+        this.position += 2
+        return { type: twoChars as any, value: twoChars, position: startPos }
+      }
+    }
+
     switch (char) {
       case '.':
         this.position++
@@ -86,6 +95,12 @@ export class JQLexer implements Lexer {
       case '+':
         this.position++
         return { type: '+', value: '+', position: startPos }
+      case '<':
+        this.position++
+        return { type: '<', value: '<', position: startPos }
+      case '>':
+        this.position++
+        return { type: '>', value: '>', position: startPos }
       case '"':
       case "'":
         return this.readString(char)
@@ -139,7 +154,7 @@ export class JQLexer implements Lexer {
     }
 
     // Check for keywords
-    const keywords = ['map', 'map_values', 'empty', 'if', 'then', 'else', 'end']
+    const keywords = ['map', 'map_values', 'empty', 'if', 'then', 'else', 'end', 'sort', 'sort_by']
     if (keywords.includes(value)) {
       return { type: value.toUpperCase() as any, value, position: startPos }
     }

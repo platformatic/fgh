@@ -233,7 +233,7 @@ export class JQParser {
 
   private parseExpression (): ASTNode {
     const startPos = this.currentToken?.position ?? 0
-    let left = this.parseSum()
+    let left = this.parseComparison()
 
     // Handle pipe operator
     if (this.currentToken && this.currentToken.type === '|') {
@@ -281,6 +281,63 @@ export class JQParser {
         type: 'Sequence',
         position: startPos,
         expressions
+      }
+    }
+
+    return left
+  }
+
+  private parseComparison (): ASTNode {
+    const startPos = this.currentToken?.position ?? 0
+    let left = this.parseSum()
+
+    // Handle comparison operators
+    while (this.currentToken && (
+      this.currentToken.type === '<' as TokenType ||
+      this.currentToken.type === '>' as TokenType ||
+      this.currentToken.type === '<=' as TokenType ||
+      this.currentToken.type === '>=' as TokenType
+    )) {
+      const operator = this.currentToken.type
+      this.advance() // Consume the operator
+
+      // Parse the right side
+      const right = this.parseSum()
+
+      // Create the appropriate comparison node
+      switch (operator) {
+        case '>' as TokenType:
+          left = {
+            type: 'GreaterThan',
+            position: startPos,
+            left,
+            right
+          }
+          break
+        case '>=' as TokenType:
+          left = {
+            type: 'GreaterThanOrEqual',
+            position: startPos,
+            left,
+            right
+          }
+          break
+        case '<' as TokenType:
+          left = {
+            type: 'LessThan',
+            position: startPos,
+            left,
+            right
+          }
+          break
+        case '<=' as TokenType:
+          left = {
+            type: 'LessThanOrEqual',
+            position: startPos,
+            left,
+            right
+          }
+          break
       }
     }
 
@@ -707,6 +764,41 @@ export class JQParser {
           type: 'MapFilter',
           position: pos,
           filter
+        }
+      }
+
+      case 'SORT': {
+        const pos = this.currentToken.position
+        this.advance() // Consume 'sort'
+        
+        return {
+          type: 'Sort',
+          position: pos
+        }
+      }
+      
+      case 'SORT_BY': {
+        const pos = this.currentToken.position
+        this.advance() // Consume 'sort_by'
+        
+        const paths: ASTNode[] = []
+        
+        this.expect('(')
+        // Parse the first path expression
+        paths.push(this.parseExpression())
+        
+        // Parse additional path expressions if present (comma separated)
+        while (this.currentToken && this.currentToken.type === ',') {
+          this.advance() // Consume comma
+          paths.push(this.parseExpression())
+        }
+        
+        this.expect(')')
+        
+        return {
+          type: 'SortBy',
+          position: pos,
+          paths
         }
       }
 
