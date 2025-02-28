@@ -3,12 +3,11 @@
  */
 
 import { compareValues } from './sort.ts'
-import { isNullOrUndefined } from './utils.ts'
 
 /**
  * Check if left value is greater than right value
  * Using the same ordering rules as the sort function
- * 
+ *
  * @param left The left value
  * @param right The right value to compare
  * @returns true if left > right, false otherwise
@@ -37,7 +36,7 @@ export const greaterThan = (left: any, right: any): boolean => {
 /**
  * Check if left value is greater than or equal to right value
  * Using the same ordering rules as the sort function
- * 
+ *
  * @param left The left value
  * @param right The right value to compare
  * @returns true if left >= right, false otherwise
@@ -66,7 +65,7 @@ export const greaterThanOrEqual = (left: any, right: any): boolean => {
 /**
  * Check if left value is less than right value
  * Using the same ordering rules as the sort function
- * 
+ *
  * @param left The left value
  * @param right The right value to compare
  * @returns true if left < right, false otherwise
@@ -94,7 +93,7 @@ export const lessThan = (left: any, right: any): boolean => {
 /**
  * Check if left value is less than or equal to right value
  * Using the same ordering rules as the sort function
- * 
+ *
  * @param left The left value
  * @param right The right value to compare
  * @returns true if left <= right, false otherwise

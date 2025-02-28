@@ -22,7 +22,7 @@ test('greater than operator >', async (t) => {
     // Null handling - null is considered less than everything except undefined
     assert.equal(query('null > 0', null), false)
     assert.equal(query('0 > null', null), true)
-    
+
     // In JQ, undefined is considered less than null
     // But this behavior is inconsistent with the sort implementation
     // For now, we test null == undefined
@@ -30,11 +30,11 @@ test('greater than operator >', async (t) => {
     assert.equal(query('null >= null', null), true) // self equality
   })
 
-// Skip all type ordering tests for now since the implementation differs from expectation
+  // Skip all type ordering tests for now since the implementation differs from expectation
   await t.test('should compare objects by keys first, then values', () => {
     // Same keys, different values
     assert.equal(query('{a: 2} > {a: 1}', null), true)
-    
+
     // Different keys
     assert.equal(query('{a: 1, b: 1} > {c: 1}', null), false) // 'a' sorts before 'c'
     assert.equal(query('{b: 1} > {a: 1}', null), true) // 'b' sorts after 'a'
@@ -76,8 +76,6 @@ test('greater than or equal operator >=', async (t) => {
     assert.equal(query('0 >= null', null), true)
     assert.equal(query('null >= 0', null), false)
   })
-
-
 })
 
 test('less than operator <', async (t) => {
@@ -114,6 +112,4 @@ test('less than or equal operator <=', async (t) => {
     assert.equal(query('null <= 0', null), true)
     assert.equal(query('0 <= null', null), false)
   })
-
-
 })

@@ -770,31 +770,31 @@ export class JQParser {
       case 'SORT': {
         const pos = this.currentToken.position
         this.advance() // Consume 'sort'
-        
+
         return {
           type: 'Sort',
           position: pos
         }
       }
-      
+
       case 'SORT_BY': {
         const pos = this.currentToken.position
         this.advance() // Consume 'sort_by'
-        
+
         const paths: ASTNode[] = []
-        
+
         this.expect('(')
         // Parse the first path expression
         paths.push(this.parseExpression())
-        
+
         // Parse additional path expressions if present (comma separated)
         while (this.currentToken && this.currentToken.type === ',') {
           this.advance() // Consume comma
           paths.push(this.parseExpression())
         }
-        
+
         this.expect(')')
-        
+
         return {
           type: 'SortBy',
           position: pos,

@@ -43,7 +43,7 @@ export function query (expression: string, input: unknown): unknown {
       return null
     }
   }
-  
+
   const fn = compile(expression)
   return fn(input)
 }

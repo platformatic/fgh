@@ -45,18 +45,18 @@ test('compareValues function', async (t) => {
   })
 
   await t.test('should compare objects correctly', () => {
-    assert.equal(compareValues({a: 1}, {a: 1}), 0)
-    assert.equal(compareValues({a: 1}, {a: 2}), -1)
-    assert.equal(compareValues({a: 2}, {a: 1}), 1)
-    assert.equal(compareValues({a: 1}, {b: 1}), -1)
-    assert.equal(compareValues({b: 1}, {a: 1}), 1)
-    assert.equal(compareValues({a: 1, b: 2}, {a: 1}), 1)
-    assert.equal(compareValues({a: 1}, {a: 1, b: 2}), -1)
+    assert.equal(compareValues({ a: 1 }, { a: 1 }), 0)
+    assert.equal(compareValues({ a: 1 }, { a: 2 }), -1)
+    assert.equal(compareValues({ a: 2 }, { a: 1 }), 1)
+    assert.equal(compareValues({ a: 1 }, { b: 1 }), -1)
+    assert.equal(compareValues({ b: 1 }, { a: 1 }), 1)
+    assert.equal(compareValues({ a: 1, b: 2 }, { a: 1 }), 1)
+    assert.equal(compareValues({ a: 1 }, { a: 1, b: 2 }), -1)
   })
 
   await t.test('should order values by type correctly', () => {
     const values = [
-      {a: 1},
+      { a: 1 },
       [1, 2],
       'hello',
       42,
@@ -73,7 +73,7 @@ test('compareValues function', async (t) => {
       42,
       'hello',
       [1, 2],
-      {a: 1}
+      { a: 1 }
     ])
   })
 })
@@ -90,7 +90,7 @@ test('sortArray function', async (t) => {
   await t.test('should return undefined for non-array input', () => {
     assert.strictEqual(sortArray(42), undefined)
     assert.strictEqual(sortArray('hello'), undefined)
-    assert.strictEqual(sortArray({a: 1}), undefined)
+    assert.strictEqual(sortArray({ a: 1 }), undefined)
   })
 
   await t.test('should sort an array of numbers', () => {
@@ -122,29 +122,29 @@ test('sortArrayBy function', async (t) => {
   await t.test('should return undefined for non-array input', () => {
     assert.strictEqual(sortArrayBy(42, [(item) => item]), undefined)
     assert.strictEqual(sortArrayBy('hello', [(item) => item]), undefined)
-    assert.strictEqual(sortArrayBy({a: 1}, [(item) => item]), undefined)
+    assert.strictEqual(sortArrayBy({ a: 1 }, [(item) => item]), undefined)
   })
 
   await t.test('should sort an array based on a single path expression', () => {
     const input = [
-      {name: 'Bob', age: 30},
-      {name: 'Alice', age: 25},
-      {name: 'Charlie', age: 35}
+      { name: 'Bob', age: 30 },
+      { name: 'Alice', age: 25 },
+      { name: 'Charlie', age: 35 }
     ]
 
     const result = sortArrayBy(input, [(item) => item.name])
     assert.deepEqual(result, [
-      {name: 'Alice', age: 25},
-      {name: 'Bob', age: 30},
-      {name: 'Charlie', age: 35}
+      { name: 'Alice', age: 25 },
+      { name: 'Bob', age: 30 },
+      { name: 'Charlie', age: 35 }
     ])
   })
 
   await t.test('should sort an array based on multiple path expressions', () => {
     const input = [
-      {name: 'Alice', age: 30},
-      {name: 'Bob', age: 20},
-      {name: 'Alice', age: 25}
+      { name: 'Alice', age: 30 },
+      { name: 'Bob', age: 20 },
+      { name: 'Alice', age: 25 }
     ]
 
     const result = sortArrayBy(input, [
@@ -153,29 +153,29 @@ test('sortArrayBy function', async (t) => {
     ])
 
     assert.deepEqual(result, [
-      {name: 'Alice', age: 25},
-      {name: 'Alice', age: 30},
-      {name: 'Bob', age: 20}
+      { name: 'Alice', age: 25 },
+      { name: 'Alice', age: 30 },
+      { name: 'Bob', age: 20 }
     ])
   })
 
   await t.test('should handle missing properties by treating them as null', () => {
     const input = [
-      {name: 'Bob', age: 30},
-      {age: 25},
-      {name: 'Alice'}
+      { name: 'Bob', age: 30 },
+      { age: 25 },
+      { name: 'Alice' }
     ]
 
     const result = sortArrayBy(input, [(item) => item.name])
     assert.deepEqual(result, [
-      {age: 25},
-      {name: 'Alice'},
-      {name: 'Bob', age: 30}
+      { age: 25 },
+      { name: 'Alice' },
+      { name: 'Bob', age: 30 }
     ])
   })
 
   await t.test('should preserve the _fromArrayConstruction property', () => {
-    const result = sortArrayBy([{a: 2}, {a: 1}], [(item) => item.a])
+    const result = sortArrayBy([{ a: 2 }, { a: 1 }], [(item) => item.a])
     assert.strictEqual(Object.getOwnPropertyDescriptor(result, '_fromArrayConstruction')?.value, true)
   })
 })

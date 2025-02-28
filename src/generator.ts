@@ -7,11 +7,7 @@ import type {
   PipeNode,
   OptionalNode,
   SequenceNode,
-  ArrayIterationNode,
-  GreaterThanNode,
-  GreaterThanOrEqualNode,
-  LessThanNode,
-  LessThanOrEqualNode
+  ArrayIterationNode
 } from './types.ts'
 
 import {
