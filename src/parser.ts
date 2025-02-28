@@ -785,6 +785,21 @@ export class JQParser {
         }
       }
 
+      case 'SELECT': {
+        const pos = this.currentToken.position
+        this.advance() // Consume 'select'
+
+        this.expect('(')
+        const condition = this.parseExpression()
+        this.expect(')')
+
+        return {
+          type: 'SelectFilter',
+          position: pos,
+          condition
+        }
+      }
+
       case 'SORT': {
         const pos = this.currentToken.position
         this.advance() // Consume 'sort'

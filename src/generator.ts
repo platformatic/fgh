@@ -31,7 +31,8 @@ import {
   lessThan,
   lessThanOrEqual,
   equal,
-  notEqual
+  notEqual,
+  handleArrayIterationToSelectPipe
 } from './helpers/index.ts'
 
 export class JQCodeGenerator implements CodeGenerator {
@@ -71,6 +72,8 @@ export class JQCodeGenerator implements CodeGenerator {
         return this.generateMapFilter(node)
       case 'MapValuesFilter':
         return this.generateMapValuesFilter(node)
+      case 'SelectFilter':
+        return this.generateSelectFilter(node)
       case 'Conditional':
         return this.generateConditional(node)
       case 'Sort':
@@ -281,6 +284,16 @@ export class JQCodeGenerator implements CodeGenerator {
   }
 
   private generatePipe (node: PipeNode): string {
+    // Special handling for .[] | select(...) pattern
+    if (node.left.type === 'ArrayIteration' && node.right.type === 'SelectFilter') {
+      const leftCode = this.generateNode(node.left)
+      const rightSelectConditionCode = this.generateNode((node.right as any).condition)
+      return `(() => {
+        const leftResult = ${leftCode};
+        return handleArrayIterationToSelectPipe(leftResult, ${JQCodeGenerator.wrapInFunction(rightSelectConditionCode)});
+      })()`
+    }
+
     const leftCode = this.generateNode(node.left)
     const rightCode = this.generateNode(node.right)
     return `handlePipe(input, ${JQCodeGenerator.wrapInFunction(leftCode)}, ${JQCodeGenerator.wrapInFunction(rightCode)})`
@@ -528,6 +541,92 @@ export class JQCodeGenerator implements CodeGenerator {
     })()`
   }
 
+  private generateSelectFilter (node: any, isAfterArrayIteration = false): string {
+    const conditionCode = this.generateNode(node.condition)
+    const conditionFn = JQCodeGenerator.wrapInFunction(conditionCode)
+
+    if (isAfterArrayIteration) {
+      // Special case for .[] | select(...) pattern - directly return a single item
+      return `(() => {
+        if (isNullOrUndefined(input)) return null;
+        
+        // Special implementation for direct array iteration pipe to select
+        // Used in patterns like ".[] | select(.id == 'second')"
+        
+        // Filter the elements that match the condition
+        if (Array.isArray(input) && input._fromArrayConstruction) {
+          const result = [];
+          
+          for (const item of input) {
+            // Apply the condition to each item
+            const conditionResult = ${conditionFn}(item);
+            
+            // Include the item if the condition is true
+            if (conditionResult !== null && conditionResult !== undefined && conditionResult !== false) {
+              result.push(item);
+            }
+          }
+          
+          // For this special case, return a single match directly without array wrapping
+          if (result.length === 1) {
+            return result[0];
+          }
+          
+          // Otherwise return the array with matches
+          if (result.length > 0) {
+            Object.defineProperty(result, "_fromArrayConstruction", { value: true });
+          }
+          
+          return result;
+        }
+        
+        // When used on a single item
+        const conditionResult = ${conditionFn}(input);
+        
+        return (conditionResult !== null && conditionResult !== undefined && conditionResult !== false) 
+          ? input 
+          : null;
+      })()`
+    }
+
+    // Regular select implementation
+    return `(() => {
+      // Handle null/undefined input
+      if (isNullOrUndefined(input)) return null;
+      
+      // Handle array iteration input - when select is used with map(select(...))
+      if (input && input._fromArrayConstruction) {
+        // Filter the elements that match the condition
+        const result = [];
+        
+        for (const item of input) {
+          // Apply the condition to each item
+          const conditionResult = ${conditionFn}(item);
+          
+          // Include the item if the condition is true (not null, undefined, or false)
+          if (conditionResult !== null && conditionResult !== undefined && conditionResult !== false) {
+            result.push(item);
+          }
+        }
+        
+        // Mark as array construction to preserve its structure
+        if (result.length > 0) {
+          Object.defineProperty(result, "_fromArrayConstruction", { value: true });
+        }
+        
+        return result;
+      }
+      
+      // When used directly on a single object input
+      const conditionResult = ${conditionFn}(input);
+      
+      // Return the input unchanged if condition is true, otherwise null
+      return (conditionResult !== null && conditionResult !== undefined && conditionResult !== false) 
+        ? input 
+        : null;
+    })()`
+  }
+
   private generateConditional (node: any): string {
     const conditionCode = this.generateNode(node.condition)
     const thenCode = this.generateNode(node.thenBranch)
@@ -710,6 +809,7 @@ return flattenResult(result);`
       'lessThanOrEqual',
       'equal',
       'notEqual',
+      'handleArrayIterationToSelectPipe',
       `return function(input) { ${code} }`
     )
 
@@ -735,7 +835,8 @@ return flattenResult(result);`
       lessThan,
       lessThanOrEqual,
       equal,
-      notEqual
+      notEqual,
+      handleArrayIterationToSelectPipe
     )
   }
 }

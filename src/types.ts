@@ -47,6 +47,7 @@ export type TokenType =
   | 'END'
   | 'SORT'
   | 'SORT_BY'
+  | 'SELECT'
   | 'EOF'
 
 export interface Token {
@@ -83,6 +84,7 @@ export type NodeType =
   | 'RecursiveDescent'
   | 'MapFilter'
   | 'MapValuesFilter'
+  | 'SelectFilter'
   | 'Conditional'
   | 'Sort'
   | 'SortBy'
@@ -191,6 +193,11 @@ export interface MapValuesFilterNode extends BaseNode {
   filter: ASTNode;
 }
 
+export interface SelectFilterNode extends BaseNode {
+  type: 'SelectFilter';
+  condition: ASTNode;
+}
+
 export interface ConditionalNode extends BaseNode {
   type: 'Conditional';
   condition: ASTNode;
@@ -261,6 +268,7 @@ export type ASTNode =
   | RecursiveDescentNode
   | MapFilterNode
   | MapValuesFilterNode
+  | SelectFilterNode
   | ConditionalNode
   | SortNode
   | SortByNode

@@ -22,10 +22,7 @@ A typescript implementation of the [JQ language](http://jqlang.org/).
 ### Map Filters
 - Map (`map(f)`): Applies filter `f` to each value of input array or object and outputs an array of all values
 - Map Values (`map_values(f)`): Applies filter `f` to each value, taking only the first result for each input value
-
-### Map Filters
-- Map (`map(f)`): Applies filter `f` to each value of input array or object and outputs an array of all values
-- Map Values (`map_values(f)`): Applies filter `f` to each value, taking only the first result for each input value
+- Select (`select(f)`): Produces its input unchanged if `f` returns true, and produces no output otherwise
 
 ## Examples
 
@@ -130,6 +127,33 @@ query('map_values(.+1)', {"a": 1, "b": 2, "c": 3})
 // Using map_values with a filter that produces no values for some keys (those keys are dropped)
 query('map_values(empty)', {"a": 1, "b": 2, "c": 3})
 // => {}
+```
+
+### Select Filter
+The `select` filter outputs its input unchanged if the filter returns true, and produces no output otherwise. It's useful for filtering arrays and objects based on conditions:
+
+```javascript
+// Filter out values that don't match a condition
+query('map(select(. >= 2))', [1, 5, 3, 0, 7])
+// => [5, 3, 7]
+
+// Find a specific item in an array of objects
+query('.[] | select(.id == "second")', [
+  { id: 'first', val: 1 },
+  { id: 'second', val: 2 }
+])
+// => { id: 'second', val: 2 }
+
+// Filter multiple items from an array of objects
+query('.[] | select(.val > 0)', [
+  { id: 'first', val: 1 },
+  { id: 'second', val: 2 }
+])
+// => [{ id: 'first', val: 1 }, { id: 'second', val: 2 }]
+
+// Use select on a single object
+query('select(.value > 10)', { name: 'test', value: 15 })
+// => { name: 'test', value: 15 }
 ```
 
 ## Performance
