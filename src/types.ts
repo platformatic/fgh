@@ -326,20 +326,40 @@ export interface Parser {
   parse(): ASTNode;
 }
 
+/**
+ * Base error class for all FGH errors
+ */
 export class JQError extends Error {
+  /**
+   * The underlying error that caused this error
+   */
+  cause?: Error
+
   constructor (message: string) {
     super(message)
     this.name = 'JQError'
   }
 }
 
+/**
+ * Error thrown during parsing
+ */
 export class ParseError extends JQError {
+  /**
+   * Position in the input where the error occurred
+   */
+  position: number
+
   constructor (message: string, position: number) {
     super(`Parse error at position ${position}: ${message}`)
     this.name = 'ParseError'
+    this.position = position
   }
 }
 
+/**
+ * Error thrown during query execution
+ */
 export class ExecutionError extends JQError {
   constructor (message: string) {
     super(message)
@@ -351,9 +371,22 @@ export type JQFunction = (input: unknown) => unknown
 
 // Interface for arrays with marker property
 export interface MarkedArray<T> extends Array<T> {
-  _fromArrayConstruction?: boolean
+  _fromArrayConstruction?: boolean;
 }
 
 export interface CompileOptions {
+  /**
+   * Whether to cache compiled expressions
+   */
   cache?: boolean;
+
+  /**
+   * Whether to attempt error recovery for common syntax errors
+   */
+  attemptRecovery?: boolean;
+
+  /**
+   * Whether to enable debug logging
+   */
+  debug?: boolean;
 }

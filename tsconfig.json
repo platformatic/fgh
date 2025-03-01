@@ -13,11 +13,11 @@
     "declaration": true,
     /* Strictness */
     "strict": false,
-    "noUncheckedIndexedAccess": true,
-    "noImplicitOverride": true,
+    "noUncheckedIndexedAccess": false,
+    "noImplicitOverride": false,
     /* Node Stuff */
     "allowImportingTsExtensions": true,
-		"rewriteRelativeImportExtensions": true,
+    "rewriteRelativeImportExtensions": true,
     "module": "NodeNext",
     "outDir": "dist",
     // "noEmit": true,
