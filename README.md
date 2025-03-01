@@ -268,6 +268,25 @@ query('select(.value > 10)', { name: 'test', value: 15 })
 // => { name: 'test', value: 15 }
 ```
 
+## CLI Tool
+
+FGH includes a command-line interface (CLI) tool for processing newline-delimited JSON data using JQ expressions:
+
+```bash
+# Basic usage (reads from stdin)
+cat data.ndjson | fgh '.name'
+
+# Read from file
+fgh -f data.ndjson '.users[].name'
+
+# Exit on first error
+fgh -e -f data.ndjson '.complex.expression'
+```
+
+The CLI processes each line of input as a separate JSON document, applies the JQ expression, and outputs the result as a newline-delimited JSON stream.
+
+See [CLI usage examples](./examples/cli/usage-examples.md) for more details.
+
 ## Performance
 
 FGH is designed for performance, particularly when compiling expressions that will be used multiple times.

@@ -3,8 +3,12 @@
   "version": "1.0.0",
   "description": "A typescript implementation of the JQ language",
   "main": "dist/fgh.js",
+  "bin": {
+    "fgh": "dist/cli/index.js"
+  },
   "type": "module",
   "scripts": {
+    "cli": "node --no-warnings --experimental-strip-types src/cli/index.ts",
     "clean": "rm -rf dist",
     "build": "tsc",
     "prepublishOnly": "rm -rf dist && tsc",
@@ -14,7 +18,8 @@
     "benchmark": "node --no-warnings benchmarks/benchmark.ts",
     "benchmark:report": "node --no-warnings benchmarks/runner.js",
     "benchmark:sample": "node --no-warnings benchmarks/generate-sample.js && node --no-warnings benchmarks/update-docs.js",
-    "benchmark:docs": "node --no-warnings benchmarks/runner.js && node --no-warnings benchmarks/update-docs.js"
+    "benchmark:docs": "node --no-warnings benchmarks/runner.js && node --no-warnings benchmarks/update-docs.js",
+    "examples:cli": "node --no-warnings --experimental-strip-types src/cli/index.ts -f examples/cli/sample.ndjson '.name'"
   },
   "pre-commit": [
     "test",
