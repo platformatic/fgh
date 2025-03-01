@@ -27,6 +27,7 @@ import {
   multiplyValues,
   divideValues,
   moduloValues,
+  handleDefault,
   sortArray,
   sortArrayBy,
   greaterThan,
@@ -110,6 +111,8 @@ export class JQCodeGenerator implements CodeGenerator {
         return this.generateOr(node)
       case 'Not':
         return this.generateNot(node)
+      case 'Default':
+        return this.generateDefault(node)
       default: {
         throw new Error(`Unknown node type: ${node}`)
       }
@@ -814,6 +817,13 @@ export class JQCodeGenerator implements CodeGenerator {
     return `logicalNot(${expressionCode})`
   }
 
+  private generateDefault (node: any): string {
+    const leftCode = this.generateNode(node.left)
+    const rightCode = this.generateNode(node.right)
+
+    return `handleDefault(${leftCode}, ${rightCode})`
+  }
+
   generate (ast: ASTNode): Function {
     // Special cases for sort and sort_by with null input
     if (ast.type === 'Sort') {
@@ -875,6 +885,7 @@ return flattenResult(result);`
       'logicalAnd',
       'logicalOr',
       'logicalNot',
+      'handleDefault',
       `return function(input) { ${code} }`
     )
 
@@ -907,7 +918,8 @@ return flattenResult(result);`
       handleArrayIterationToSelectPipe,
       logicalAnd,
       logicalOr,
-      logicalNot
+      logicalNot,
+      handleDefault
     )
   }
 }

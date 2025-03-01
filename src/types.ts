@@ -53,6 +53,7 @@ export type TokenType =
   | 'AND'
   | 'OR'
   | 'NOT'
+  | '//'
   | 'EOF'
 
 export interface Token {
@@ -105,6 +106,7 @@ export type NodeType =
   | 'And'
   | 'Or'
   | 'Not'
+  | 'Default'
 
 export interface BaseNode {
   type: NodeType;
@@ -296,6 +298,12 @@ export interface NotNode extends BaseNode {
   expression: ASTNode;
 }
 
+export interface DefaultNode extends BaseNode {
+  type: 'Default';
+  left: ASTNode;
+  right: ASTNode;
+}
+
 export type ASTNode =
   | IdentityNode
   | PropertyAccessNode
@@ -330,6 +338,7 @@ export type ASTNode =
   | AndNode
   | OrNode
   | NotNode
+  | DefaultNode
 
 export interface Parser {
   parse(): ASTNode;

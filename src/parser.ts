@@ -301,9 +301,29 @@ export class JQParser {
     return left
   }
 
-  private parseLogical (): ASTNode {
+  private parseDefault (): ASTNode {
     const startPos = this.currentToken?.position ?? 0
     let left = this.parseComparison()
+
+    // Handle default operator (//)
+    if (this.currentToken && this.currentToken.type === '//' as TokenType) {
+      this.advance() // Consume the '//' operator
+      const right = this.parseComparison()
+
+      left = {
+        type: 'Default',
+        position: startPos,
+        left,
+        right
+      }
+    }
+
+    return left
+  }
+
+  private parseLogical (): ASTNode {
+    const startPos = this.currentToken?.position ?? 0
+    let left = this.parseDefault()
 
     // Handle logical operators (and, or)
     while (this.currentToken && (

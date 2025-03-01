@@ -20,6 +20,7 @@ A typescript implementation of the [JQ language](http://jqlang.org/).
 - Multiplication Operator (`*`): Multiplies numbers or repeats strings/arrays
 - Division Operator (`/`): Divides numbers
 - Modulo Operator (`%`): Calculates the remainder after division
+- Default Operator (`//`): Provides a fallback value when the left operand is `false`, `null`, or produces no values
 - Comparison Operators (`>`, `>=`, `<`, `<=`): Compare values using the same ordering rules as the sort function
 - Boolean Operators (`and`, `or`, `not`): Perform logical operations on values
 
@@ -268,6 +269,35 @@ query('map_values(.+1)', {"a": 1, "b": 2, "c": 3})
 // Using map_values with a filter that produces no values for some keys (those keys are dropped)
 query('map_values(empty)', {"a": 1, "b": 2, "c": 3})
 // => {}
+```
+
+### Default Operator
+The default operator (`//`) provides fallback values when expressions produce no values or only `false` or `null`:
+
+```javascript
+// Basic usage with missing property
+query('.foo // 42', {})
+// => 42
+
+// Basic usage with existing property
+query('.foo // 42', {foo: 19})
+// => 19
+
+// Using empty as left operand
+query('empty // 42', null)
+// => 42
+
+// With sequence operator - returns non-false/null values from left side
+query('(false, null, 1) // 42', null)
+// => 1
+
+// Different behavior with pipe operator
+query('(false, null, 1) | . // 42', null)
+// => [42, 42, 1]
+
+// Using as a fallback in objects
+query('{ name: .name, status: (.status // "unknown") }', {name: "test"})
+// => {"name": "test", "status": "unknown"}
 ```
 
 ### Select Filter

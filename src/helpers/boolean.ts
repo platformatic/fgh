@@ -1,5 +1,5 @@
 /**
- * Boolean operations for FGH
+ * Boolean and default operations for FGH
  */
 
 /**
@@ -110,4 +110,46 @@ export const logicalNot = (value: any): boolean | boolean[] => {
     // Simple case - scalar value
     return !isTruthy(value)
   }
+}
+
+/**
+ * Implement default operation (//)
+ * Returns left if it produces values that are not false or null,
+ * otherwise returns right.
+ *
+ * @param left The left operand
+ * @param right The right operand
+ * @returns left if left produces values that are not false or null, otherwise right
+ */
+export const handleDefault = (left: any, right: any): any => {
+  // Check if left is an array
+  if (Array.isArray(left)) {
+    // Empty arrays should not trigger default behavior
+    if (left.length === 0) {
+      return left
+    }
+
+    // Filter out false and null values
+    const filteredLeft = left.filter(item => item !== false && item !== null)
+    // If there are non-false, non-null values, return those
+    if (filteredLeft.length > 0) {
+      return filteredLeft
+    }
+    // Otherwise, return right
+    return right
+  }
+
+  // Check if left is false or null
+  if (left === false || left === null) {
+    return right
+  }
+
+  // If left is undefined (sometimes happens with property access)
+  // return right
+  if (left === undefined) {
+    return right
+  }
+
+  // Otherwise return left
+  return left
 }

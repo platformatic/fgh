@@ -32,7 +32,7 @@ export class JQLexer implements Lexer {
     // Look ahead for two-character operators
     if (this.position + 1 < this.input.length) {
       const twoChars = this.input.substring(this.position, this.position + 2)
-      if (twoChars === '<=' || twoChars === '>=' || twoChars === '==' || twoChars === '!=') {
+      if (twoChars === '<=' || twoChars === '>=' || twoChars === '==' || twoChars === '!=' || twoChars === '//') {
         this.position += 2
         return { type: twoChars as any, value: twoChars, position: startPos }
       }
