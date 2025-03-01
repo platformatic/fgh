@@ -19,6 +19,7 @@ A typescript implementation of the [JQ language](http://jqlang.org/).
 - Subtraction Operator (`-`): Subtracts numbers or removes elements from arrays and objects
 - Multiplication Operator (`*`): Multiplies numbers or repeats strings/arrays
 - Division Operator (`/`): Divides numbers
+- Modulo Operator (`%`): Calculates the remainder after division
 - Comparison Operators (`>`, `>=`, `<`, `<=`): Compare values using the same ordering rules as the sort function
 - Boolean Operators (`and`, `or`, `not`): Perform logical operations on values
 
@@ -101,6 +102,30 @@ query('10 * 0.5', null)
 // => 5
 ```
 
+### Modulo Operator
+The modulo operator (`%`) calculates the remainder after division and always returns a positive result, even with negative operands:
+
+```javascript
+// Basic modulo operation
+query('10 % 3', null)
+// => 1
+
+// Modulo with negative numbers (normalized to positive result)
+query('.negValue % 3', { negValue: -10 })
+// => 2
+
+query('10 % .negDivisor', { negDivisor: -3 })
+// => 1
+
+// Modulo with arrays
+query('.[] | . % 3', [5, 7, 9, 10, 12])
+// => [2, 1, 0, 1, 0]
+
+// Checking if a number is even
+query('{ isEven: (.value % 2 == 0) }', { value: 6 })
+// => { isEven: true }
+```
+
 ### Mathematical Operations in Object Construction
 You can use arithmetic operators within object construction for calculating values:
 
@@ -116,6 +141,10 @@ query('{ doubled: (.value * 2), halved: (.value / 2) }', { value: 10 })
 // Complex calculations
 query('{ weighted_avg: ((.a * 0.5) + (.b * 0.3) + (.c * 0.2)) }', { a: 10, b: 20, c: 30 })
 // => { weighted_avg: 17 }
+
+// Using modulo to check for divisibility
+query('{ remainder: (10 % 3), even: (.value % 2 == 0) }', { value: 6 })
+// => { remainder: 1, even: true }
 ```
 
 ### Boolean Operators

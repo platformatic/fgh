@@ -1,6 +1,6 @@
 import { describe, it } from 'node:test'
 import assert from 'node:assert'
-import { addValues, subtractValues } from '../../src/helpers/math.ts'
+import { addValues, subtractValues, moduloValues } from '../../src/helpers/math.ts'
 
 describe('Math Helper Functions', () => {
   describe('addValues', () => {
@@ -99,6 +99,45 @@ describe('Math Helper Functions', () => {
 
     it('should return left value if numeric conversion is not possible', () => {
       assert.strictEqual(subtractValues('hello', 'world'), 'hello')
+    })
+  })
+
+  describe('moduloValues', () => {
+    it('should handle null or undefined values', () => {
+      assert.strictEqual(moduloValues(null, 5), 0)
+      assert.strictEqual(moduloValues(undefined, 5), 0)
+      assert.strictEqual(moduloValues(5, null), 5)
+      assert.strictEqual(moduloValues(5, undefined), 5)
+    })
+
+    it('should calculate modulo of numbers correctly', () => {
+      assert.strictEqual(moduloValues(10, 3), 1)
+      assert.strictEqual(moduloValues(10, 2), 0)
+      assert.strictEqual(moduloValues(5, 3), 2)
+    })
+
+    it('should handle modulo by zero', () => {
+      assert.ok(Number.isNaN(moduloValues(10, 0)))
+    })
+
+    it('should normalize negative number modulo results', () => {
+      // Standard JavaScript behavior for -10 % 3 would be -1
+      // But we normalize to ensure positive remainders
+      assert.strictEqual(moduloValues(-10, 3), 2)
+      assert.strictEqual(moduloValues(10, -3), 1)
+      assert.strictEqual(moduloValues(-7, -4), 1)
+    })
+
+    it('should convert strings to numbers when possible', () => {
+      assert.strictEqual(moduloValues('10', '3'), 1)
+      assert.strictEqual(moduloValues('10', 3), 1)
+      assert.strictEqual(moduloValues(10, '3'), 1)
+    })
+
+    it('should return NaN for incompatible types', () => {
+      assert.ok(Number.isNaN(moduloValues('hello', 3)))
+      assert.ok(Number.isNaN(moduloValues([1, 2], 3)))
+      assert.ok(Number.isNaN(moduloValues({ a: 1 }, 3)))
     })
   })
 })

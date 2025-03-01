@@ -475,19 +475,36 @@ export class JQParser {
     const startPos = this.currentToken?.position ?? 0
     let left = this.parseChain()
 
-    // Handle multiplication and division operators (potentially multiple in a chain)
-    while (this.currentToken && (this.currentToken.type === '*' || this.currentToken.type === '/')) {
+    // Handle multiplication, division, and modulo operators (potentially multiple in a chain)
+    while (this.currentToken && (this.currentToken.type === '*' || this.currentToken.type === '/' || this.currentToken.type === '%')) {
       const operator = this.currentToken.type
       this.advance() // Consume the operator
 
       // Parse the right operand
       const right = this.parseChain()
 
-      left = {
-        type: operator === '*' ? 'Multiply' : 'Divide',
-        position: startPos,
-        left,
-        right
+      // Create the appropriate node based on the operator
+      if (operator === '*') {
+        left = {
+          type: 'Multiply',
+          position: startPos,
+          left,
+          right
+        }
+      } else if (operator === '/') {
+        left = {
+          type: 'Divide',
+          position: startPos,
+          left,
+          right
+        }
+      } else { // operator === '%'
+        left = {
+          type: 'Modulo',
+          position: startPos,
+          left,
+          right
+        }
       }
     }
 

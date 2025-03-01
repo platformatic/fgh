@@ -26,6 +26,7 @@ import {
   subtractValues,
   multiplyValues,
   divideValues,
+  moduloValues,
   sortArray,
   sortArrayBy,
   greaterThan,
@@ -73,6 +74,8 @@ export class JQCodeGenerator implements CodeGenerator {
         return this.generateMultiply(node)
       case 'Divide':
         return this.generateDivide(node)
+      case 'Modulo':
+        return this.generateModulo(node)
       case 'Literal':
         return this.generateLiteral(node)
       case 'RecursiveDescent':
@@ -412,6 +415,13 @@ export class JQCodeGenerator implements CodeGenerator {
     const rightCode = this.generateNode(node.right)
 
     return `divideValues(${leftCode}, ${rightCode})`
+  }
+
+  private generateModulo (node: any): string {
+    const leftCode = this.generateNode(node.left)
+    const rightCode = this.generateNode(node.right)
+
+    return `moduloValues(${leftCode}, ${rightCode})`
   }
 
   private generateLiteral (node: any): string {
@@ -852,6 +862,7 @@ return flattenResult(result);`
       'subtractValues',
       'multiplyValues',
       'divideValues',
+      'moduloValues',
       'sortArray',
       'sortArrayBy',
       'greaterThan',
@@ -884,6 +895,7 @@ return flattenResult(result);`
       subtractValues,
       multiplyValues,
       divideValues,
+      moduloValues,
       sortArray,
       sortArrayBy,
       greaterThan,

@@ -228,3 +228,39 @@ export const divideValues = (left: any, right: any): any => {
   // Default: return NaN for incompatible types
   return NaN
 }
+
+/**
+ * Calculate the modulo of two values
+ * @param left The dividend
+ * @param right The divisor
+ * @returns The remainder after division
+ */
+export const moduloValues = (left: any, right: any): any => {
+  // Handle null/undefined inputs
+  if (isNullOrUndefined(left)) return 0
+  if (isNullOrUndefined(right)) return left // Modulo by null treated as identity
+
+  // Handle modulo by zero - return NaN rather than causing an error
+  if (right === 0) return NaN
+
+  // For numeric modulo
+  if (typeof left === 'number' && typeof right === 'number') {
+    // JavaScript's % operator retains the sign of the dividend, but we want true mathematical modulo
+    // For modulo, we want to ensure the result is always in the range [0, abs(right)-1]
+    const mod = left % right
+    // If mod is negative, we add the absolute value of right to make it positive
+    return mod < 0 ? mod + Math.abs(right) : mod
+  }
+
+  // Try to convert values to numbers if possible
+  const leftNum = Number(left)
+  const rightNum = Number(right)
+  if (!isNaN(leftNum) && !isNaN(rightNum)) {
+    if (rightNum === 0) return NaN
+    const mod = leftNum % rightNum
+    return mod < 0 ? mod + Math.abs(rightNum) : mod
+  }
+
+  // Default: return NaN for incompatible types
+  return NaN
+}
