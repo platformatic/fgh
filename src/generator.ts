@@ -37,6 +37,7 @@ import {
   equal,
   notEqual,
   handleArrayIterationToSelectPipe,
+  handleArrayIterationToKeysPipe,
   logicalAnd,
   logicalOr,
   logicalNot,
@@ -318,6 +319,28 @@ export class JQCodeGenerator implements CodeGenerator {
       return `(() => {
         const leftResult = ${leftCode};
         return handleArrayIterationToSelectPipe(leftResult, ${JQCodeGenerator.wrapInFunction(rightSelectConditionCode)});
+      })()`
+    }
+
+    // Special handling for .[] | keys pattern
+    // This allows extracting keys from each object in an array while preserving the array structure
+    // e.g., '.users[] | keys' returns [["id","name"],["id","name"]] instead of flattening to ["id","name","id","name"]
+    if (node.left.type === 'ArrayIteration' && node.right.type === 'Keys') {
+      const leftCode = this.generateNode(node.left)
+      return `(() => {
+        const leftResult = ${leftCode};
+        return handleArrayIterationToKeysPipe(leftResult, true);
+      })()`
+    }
+
+    // Special handling for .[] | keys_unsorted pattern
+    // This allows extracting keys in insertion order from each object in an array while preserving the array structure
+    // e.g., '.users[] | keys_unsorted' returns [["id","name"],["id","name"]] but in insertion order for each object
+    if (node.left.type === 'ArrayIteration' && node.right.type === 'KeysUnsorted') {
+      const leftCode = this.generateNode(node.left)
+      return `(() => {
+        const leftResult = ${leftCode};
+        return handleArrayIterationToKeysPipe(leftResult, false);
       })()`
     }
 
@@ -928,6 +951,7 @@ return flattenResult(result);`
       'equal',
       'notEqual',
       'handleArrayIterationToSelectPipe',
+      'handleArrayIterationToKeysPipe',
       'logicalAnd',
       'logicalOr',
       'logicalNot',
@@ -964,6 +988,7 @@ return flattenResult(result);`
       equal,
       notEqual,
       handleArrayIterationToSelectPipe,
+      handleArrayIterationToKeysPipe,
       logicalAnd,
       logicalOr,
       logicalNot,
