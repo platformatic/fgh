@@ -1,35 +1,3 @@
-    // Special handling for .. | .prop? pattern
-    // This prevents accessing properties on array values returned by recursive descent
-    if (node.left.type === 'RecursiveDescent' && 
-        node.right.type === 'Optional' &&
-        node.right.expression.type === 'PropertyAccess' &&
-        !node.right.expression.input) { // Only if it's a direct property access
-      const leftCode = this.generateNode(node.left)
-      const propName = (node.right.expression as any).property
-      
-      return `(() => {
-        const leftResult = ${leftCode};
-        if (isNullOrUndefined(leftResult)) return undefined;
-        
-        const results = [];
-        
-        // Filter the values to only include objects (not arrays)
-        const objectValues = Array.isArray(leftResult) ? 
-          leftResult.filter(item => item !== null && typeof item === 'object' && !Array.isArray(item)) : 
-          [leftResult];
-          
-        // Access the property on each object
-        for (const obj of objectValues) {
-          const propValue = accessProperty(obj, '${propName}', true);
-          if (!isNullOrUndefined(propValue)) {
-            results.push(propValue);
-          }
-        }
-        
-        return results.length > 0 ? results : undefined;
-      })()`
-    }
-
 /* eslint no-new-func: "off" */
 import type {
   CodeGenerator,
@@ -345,6 +313,48 @@ export class JQCodeGenerator implements CodeGenerator {
   }
 
   private generatePipe (node: PipeNode): string {
+    // Special handling for .. | .prop? pattern
+    // This handles accessing properties on objects returned by recursive descent
+    if (node.left.type === 'RecursiveDescent' && 
+        node.right.type === 'Optional' &&
+        node.right.expression.type === 'PropertyAccess' &&
+        !node.right.expression.input) { // Only if it's a direct property access
+      const leftCode = this.generateNode(node.left)
+      const propName = (node.right.expression as any).property
+      
+      return `(() => {
+        const leftResult = ${leftCode};
+        if (isNullOrUndefined(leftResult)) return undefined;
+        
+        const results = [];
+        
+        // Process all values returned by recursive descent
+        const allValues = Array.isArray(leftResult) ? leftResult : [leftResult];
+        
+        // Access the property on each object
+        for (const item of allValues) {
+          // Only try to access properties on objects, not arrays or primitives
+          if (item !== null && typeof item === 'object' && !Array.isArray(item)) {
+            // For objects, check if the property exists
+            if (Object.prototype.hasOwnProperty.call(item, '${propName}')) {
+              const propValue = item['${propName}'];
+              // Only include non-null/undefined values
+              if (propValue !== null && propValue !== undefined) {
+                results.push(propValue);
+              }
+            }
+          }
+        }
+        
+        // Mark as array construction to preserve its structure
+        if (results.length > 0) {
+          Object.defineProperty(results, '_fromArrayConstruction', { value: true });
+        }
+        
+        return results.length > 0 ? results : undefined;
+      })()`
+    }
+
     // Special handling for .[] | select(...) pattern
     if (node.left.type === 'ArrayIteration' && node.right.type === 'SelectFilter') {
       const leftCode = this.generateNode(node.left)
@@ -506,7 +516,7 @@ export class JQCodeGenerator implements CodeGenerator {
       // Final result array
       const result = [];
       
-      // Track object references to avoid duplicates
+      // Track object references to avoid duplicates and cycles
       const visited = new WeakSet();
       
       // Function to recursively collect all values
@@ -514,26 +524,26 @@ export class JQCodeGenerator implements CodeGenerator {
         // Skip null/undefined values
         if (isNullOrUndefined(obj)) return;
         
-        // For objects and arrays, track if we've seen them before
+        // Add the current object/value itself to results first
+        result.push(obj);
+        
+        // For objects and arrays, track if we've seen them before to avoid cycles
         if (typeof obj === 'object') {
           if (visited.has(obj)) return;
           visited.add(obj);
-        }
-        
-        // Add the current object/value itself to results
-        result.push(obj);
-        
-        // If it's an array, process each element
-        if (Array.isArray(obj)) {
-          for (const item of obj) {
-            collectAllValues(item);
+          
+          // If it's an array, process each element
+          if (Array.isArray(obj)) {
+            for (const item of obj) {
+              collectAllValues(item);
+            }
           }
-        }
-        // If it's an object, process each property
-        else if (typeof obj === 'object' && obj !== null) {
-          for (const key in obj) {
-            if (key.startsWith('_')) continue; // Skip internal properties
-            collectAllValues(obj[key]);
+          // If it's an object, process each property
+          else if (obj !== null) {
+            for (const key in obj) {
+              if (key.startsWith('_')) continue; // Skip internal properties
+              collectAllValues(obj[key]);
+            }
           }
         }
       };

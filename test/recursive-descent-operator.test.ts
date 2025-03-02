@@ -68,51 +68,35 @@ test('recursive descent operator should return all values', async (t) => {
     const input = { a: 1, b: 2, c: 3 }
     const result = query('..', input)
 
-    // Should return the object itself and all its values
-    const values = result[0];
-    assert.ok(values.includes(input), "Result should include input object")
-    assert.ok(values.includes(1), "Result should include value 1")
-    assert.ok(values.includes(2), "Result should include value 2")
-    assert.ok(values.includes(3), "Result should include value 3")
+    assert.deepStrictEqual(result, [input, 1, 2, 3])
   })
 
   await t.test('should return all values in a nested object', () => {
     const input = { a: { b: 1, c: 2 }, d: 3 }
     const result = query('..', input)
 
-    // Should return every object and value in the structure
-    const values = result[0];
-    assert.ok(values.includes(input), "Result should include input object")
-    assert.ok(values.includes(input.a), "Result should include input.a object")
-    assert.ok(values.includes(1), "Result should include value 1")
-    assert.ok(values.includes(2), "Result should include value 2")
-    assert.ok(values.includes(3), "Result should include value 3")
+    assert.deepStrictEqual(result, [input, input.a, input.a.b, input.a.c, input.d])
   })
 
   await t.test('should return all values in an array', () => {
     const input = [1, 2, 3]
     const result = query('..', input)
 
-    // Should return the array itself and all its elements
-    const values = result[0];
-    assert.ok(values.includes(input), "Result should include input array")
-    assert.ok(values.includes(1), "Result should include value 1")
-    assert.ok(values.includes(2), "Result should include value 2")
-    assert.ok(values.includes(3), "Result should include value 3")
+    assert.deepStrictEqual(result, [input, 1, 2, 3])
   })
 
   await t.test('should return all values in a nested structure with arrays', () => {
     const input = { a: [1, 2], b: { c: 3 } }
     const result = query('..', input)
 
-    // Should return every object, array, and value in the structure
-    const values = result[0];
-    assert.ok(values.includes(input), "Result should include input object")
-    assert.ok(values.includes(input.a), "Result should include input.a array")
-    assert.ok(values.includes(1), "Result should include value 1")
-    assert.ok(values.includes(2), "Result should include value 2")
-    assert.ok(values.includes(input.b), "Result should include input.b object")
-    assert.ok(values.includes(3), "Result should include value 3")
+    assert.deepStrictEqual(result, [
+      input,
+      input.a,
+      input.a[0],
+      input.a[1],
+      input.b,
+      input.b.c
+    ])
   })
 
   await t.test('should find all occurrences of a specific key with .. | .a?', () => {
@@ -126,9 +110,6 @@ test('recursive descent operator should return all values', async (t) => {
   await t.test('should handle example from the description', () => {
     const input = [[{ a: 1 }]]
     const result = query('.. | .a?', input)
-
-    // The query finds 'a' property each time it encounters it in the depth-first traversal
-    // With recursive descent we expect multiple occurrences of the same value
-    assert.ok(result.includes(1), "Result should include value 1")
+    assert.deepStrictEqual(result, [1])
   })
 })

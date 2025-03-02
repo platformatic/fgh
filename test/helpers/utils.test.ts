@@ -1,6 +1,6 @@
 import { describe, it } from 'node:test'
 import assert from 'node:assert'
-import { isNullOrUndefined, ensureArray, getNestedValue, flattenResult } from '../../src/helpers/utils.ts'
+import { isNullOrUndefined, ensureArray, getNestedValue, ensureArrayResult, flattenResult } from '../../src/helpers/utils.ts'
 
 describe('Utils Helper Functions', () => {
   describe('isNullOrUndefined', () => {
@@ -91,52 +91,55 @@ describe('Utils Helper Functions', () => {
     })
   })
 
+  describe('ensureArrayResult', () => {
+    it('should wrap null in an array', () => {
+      assert.deepStrictEqual(ensureArrayResult(null), [null])
+    })
+
+    it('should return empty array for undefined', () => {
+      assert.deepStrictEqual(ensureArrayResult(undefined), [])
+    })
+
+    it('should wrap non-array values in an array', () => {
+      assert.deepStrictEqual(ensureArrayResult(5), [5])
+      assert.deepStrictEqual(ensureArrayResult('test'), ['test'])
+      assert.deepStrictEqual(ensureArrayResult({ a: 1 }), [{ a: 1 }])
+    })
+
+    it('should preserve array-marked with _fromArrayConstruction', () => {
+      const arr = [1, 2, 3]
+      Object.defineProperty(arr, '_fromArrayConstruction', { value: true })
+      const result = ensureArrayResult(arr)
+      assert.deepStrictEqual(result, [1, 2, 3])
+      assert.notStrictEqual(result, arr) // Should be a new array
+    })
+
+    it('should preserve empty arrays', () => {
+      assert.deepStrictEqual(ensureArrayResult([]), [])
+    })
+
+    it('should wrap regular arrays', () => {
+      // Regular arrays without special marking should be wrapped
+      assert.deepStrictEqual(ensureArrayResult([1, 2, 3]), [[1, 2, 3]])
+    })
+  })
+
   describe('flattenResult', () => {
-    it('should return undefined for null or undefined', () => {
-      assert.strictEqual(flattenResult(null), undefined)
-      assert.strictEqual(flattenResult(undefined), undefined)
+    it('should be an alias for ensureArrayResult', () => {
+      assert.strictEqual(flattenResult, ensureArrayResult)
     })
 
-    it('should return non-array values as-is', () => {
-      assert.strictEqual(flattenResult(5), 5)
-      assert.strictEqual(flattenResult('test'), 'test')
-      assert.deepStrictEqual(flattenResult({ a: 1 }), { a: 1 })
+    it('should wrap null in an array', () => {
+      assert.deepStrictEqual(flattenResult(null), [null])
     })
 
-    it('should return undefined for empty arrays without _fromArrayConstruction', () => {
-      assert.strictEqual(flattenResult([]), undefined)
+    it('should return empty array for undefined', () => {
+      assert.deepStrictEqual(flattenResult(undefined), [])
     })
 
-    it('should preserve empty arrays with _fromArrayConstruction', () => {
-      const arr: any[] = []
-      Object.defineProperty(arr, '_fromArrayConstruction', { value: true })
-      assert.deepStrictEqual(flattenResult(arr), [])
-    })
-
-    it('should preserve arrays with _fromArrayConstruction', () => {
-      const arr: any[] = [1, 2, 3]
-      Object.defineProperty(arr, '_fromArrayConstruction', { value: true })
-      assert.deepStrictEqual(flattenResult(arr), [1, 2, 3])
-    })
-
-    it('should preserve arrays with _fromDifference', () => {
-      const arr: any[] = [1, 2, 3]
-      Object.defineProperty(arr, '_fromDifference', { value: true })
-      assert.deepStrictEqual(flattenResult(arr), [1, 2, 3])
-    })
-
-    it('should unwrap single-element arrays', () => {
-      assert.strictEqual(flattenResult([5]), 5)
-    })
-
-    it('should not unwrap single-element arrays with _fromArrayConstruction', () => {
-      const arr: any[] = [5]
-      Object.defineProperty(arr, '_fromArrayConstruction', { value: true })
-      assert.deepStrictEqual(flattenResult(arr), [5])
-    })
-
-    it('should preserve multi-element arrays', () => {
-      assert.deepStrictEqual(flattenResult([1, 2, 3]), [1, 2, 3])
+    it('should wrap non-array values in an array', () => {
+      assert.deepStrictEqual(flattenResult(5), [5])
+      assert.deepStrictEqual(flattenResult('test'), ['test'])
     })
   })
 })
