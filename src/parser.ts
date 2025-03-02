@@ -862,11 +862,15 @@ export class JQParser {
         key = this.parseExpression()
         isDynamic = true
         this.expect(')') // Expect closing parenthesis
+      } else if (this.currentToken.type === 'STRING' as TokenType) {
+        // String literal key: { "foo": . }
+        key = this.currentToken.value
+        this.advance()
       } else {
         // Regular identifier key
         if (this.currentToken.type !== 'IDENT' as TokenType) {
           throw new ParseError(
-            `Expected identifier or dynamic key, got ${this.currentToken.type}`,
+            `Expected identifier, string literal, or dynamic key, got ${this.currentToken.type}`,
             this.currentToken.position
           )
         }
