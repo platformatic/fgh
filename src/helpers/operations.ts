@@ -20,6 +20,40 @@ export const handlePipe = (
   const leftResult = leftFn(input)
   if (isNullOrUndefined(leftResult)) return undefined
 
+  // Special handling for recursive descent with property access
+  // This prevents accessing properties on array values from recursive descent
+  if (Array.isArray(leftResult) && (leftResult as any)._fromRecursiveDescent) {
+    // First try normal property access, if it works we're done
+    let rightResult = rightFn(leftResult)
+    if (!isNullOrUndefined(rightResult)) {
+      return rightResult
+    }
+    
+    // Try filtering to just object values (not arrays)
+    const objectValues = leftResult.filter(item => 
+      item !== null && typeof item === 'object' && !Array.isArray(item)
+    )
+    
+    const results: any[] = []
+    for (const obj of objectValues) {
+      rightResult = rightFn(obj)
+      if (!isNullOrUndefined(rightResult)) {
+        if (Array.isArray(rightResult)) {
+          results.push(...rightResult)
+        } else {
+          results.push(rightResult)
+        }
+      }
+    }
+    
+    if (results.length > 0) {
+      Object.defineProperty(results, '_fromArrayConstruction', { value: true })
+      return results
+    }
+    
+    return undefined
+  }
+
   // Ensure we have an array to iterate over
   const leftArray = ensureArray(leftResult)
   const results: any[] = []
@@ -38,6 +72,7 @@ export const handlePipe = (
       // Define interface for arrays with _fromArrayConstruction property
       interface ArrayWithConstruction extends Array<any> {
         _fromArrayConstruction?: boolean;
+        _fromRecursiveDescent?: boolean;
       }
 
       if ((rightResult as ArrayWithConstruction)._fromArrayConstruction) {

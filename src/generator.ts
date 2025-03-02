@@ -1,3 +1,35 @@
+    // Special handling for .. | .prop? pattern
+    // This prevents accessing properties on array values returned by recursive descent
+    if (node.left.type === 'RecursiveDescent' && 
+        node.right.type === 'Optional' &&
+        node.right.expression.type === 'PropertyAccess' &&
+        !node.right.expression.input) { // Only if it's a direct property access
+      const leftCode = this.generateNode(node.left)
+      const propName = (node.right.expression as any).property
+      
+      return `(() => {
+        const leftResult = ${leftCode};
+        if (isNullOrUndefined(leftResult)) return undefined;
+        
+        const results = [];
+        
+        // Filter the values to only include objects (not arrays)
+        const objectValues = Array.isArray(leftResult) ? 
+          leftResult.filter(item => item !== null && typeof item === 'object' && !Array.isArray(item)) : 
+          [leftResult];
+          
+        // Access the property on each object
+        for (const obj of objectValues) {
+          const propValue = accessProperty(obj, '${propName}', true);
+          if (!isNullOrUndefined(propValue)) {
+            results.push(propValue);
+          }
+        }
+        
+        return results.length > 0 ? results : undefined;
+      })()`
+    }
+
 /* eslint no-new-func: "off" */
 import type {
   CodeGenerator,
@@ -509,8 +541,10 @@ export class JQCodeGenerator implements CodeGenerator {
       // Start the collection process with the input
       collectAllValues(input);
       
-      // No need to mark as array construction anymore
-      // due to the new ensureArrayResult behavior
+      // Mark as array construction to preserve its structure
+      Object.defineProperty(result, '_fromArrayConstruction', { value: true });
+      // Mark as recursive descent to help with property access filtering
+      Object.defineProperty(result, '_fromRecursiveDescent', { value: true });
       
       return result;
     })()`
