@@ -37,9 +37,12 @@ import {
   equal,
   notEqual,
   handleArrayIterationToSelectPipe,
+  handleArrayIterationToKeysPipe,
   logicalAnd,
   logicalOr,
-  logicalNot
+  logicalNot,
+  getKeys,
+  getKeysUnsorted
 } from './helpers/index.ts'
 
 export class JQCodeGenerator implements CodeGenerator {
@@ -113,6 +116,10 @@ export class JQCodeGenerator implements CodeGenerator {
         return this.generateNot(node)
       case 'Default':
         return this.generateDefault(node)
+      case 'Keys':
+        return this.generateKeys(node)
+      case 'KeysUnsorted':
+        return this.generateKeysUnsorted(node)
       default: {
         throw new Error(`Unknown node type: ${node}`)
       }
@@ -312,6 +319,28 @@ export class JQCodeGenerator implements CodeGenerator {
       return `(() => {
         const leftResult = ${leftCode};
         return handleArrayIterationToSelectPipe(leftResult, ${JQCodeGenerator.wrapInFunction(rightSelectConditionCode)});
+      })()`
+    }
+
+    // Special handling for .[] | keys pattern
+    // This allows extracting keys from each object in an array while preserving the array structure
+    // e.g., '.users[] | keys' returns [["id","name"],["id","name"]] instead of flattening to ["id","name","id","name"]
+    if (node.left.type === 'ArrayIteration' && node.right.type === 'Keys') {
+      const leftCode = this.generateNode(node.left)
+      return `(() => {
+        const leftResult = ${leftCode};
+        return handleArrayIterationToKeysPipe(leftResult, true);
+      })()`
+    }
+
+    // Special handling for .[] | keys_unsorted pattern
+    // This allows extracting keys in insertion order from each object in an array while preserving the array structure
+    // e.g., '.users[] | keys_unsorted' returns [["id","name"],["id","name"]] but in insertion order for each object
+    if (node.left.type === 'ArrayIteration' && node.right.type === 'KeysUnsorted') {
+      const leftCode = this.generateNode(node.left)
+      return `(() => {
+        const leftResult = ${leftCode};
+        return handleArrayIterationToKeysPipe(leftResult, false);
       })()`
     }
 
@@ -824,6 +853,14 @@ export class JQCodeGenerator implements CodeGenerator {
     return `handleDefault(${leftCode}, ${rightCode})`
   }
 
+  private generateKeys (node: any): string {
+    return 'getKeys(input)'
+  }
+
+  private generateKeysUnsorted (node: any): string {
+    return 'getKeysUnsorted(input)'
+  }
+
   generate (ast: ASTNode): Function {
     // Special cases for sort and sort_by with null input
     if (ast.type === 'Sort') {
@@ -842,6 +879,38 @@ export class JQCodeGenerator implements CodeGenerator {
       return function (input: any) {
         if (input === null) return null
         return flattenResult(sortArrayBy(input, pathFns))
+      }
+    }
+
+    // Special case for keys function
+    if (ast.type === 'Keys') {
+      return function (input: any) {
+        const result = getKeys(input)
+        // Ensure keys is always an array and marked as construction
+        if (Array.isArray(result)) {
+          Object.defineProperty(result, '_fromArrayConstruction', { value: true })
+          return result
+        }
+        // Return empty array for non-array results
+        const emptyArray: any[] = []
+        Object.defineProperty(emptyArray, '_fromArrayConstruction', { value: true })
+        return emptyArray
+      }
+    }
+
+    // Special case for keys_unsorted function
+    if (ast.type === 'KeysUnsorted') {
+      return function (input: any) {
+        const result = getKeysUnsorted(input)
+        // Ensure keys is always an array and marked as construction
+        if (Array.isArray(result)) {
+          Object.defineProperty(result, '_fromArrayConstruction', { value: true })
+          return result
+        }
+        // Return empty array for non-array results
+        const emptyArray: any[] = []
+        Object.defineProperty(emptyArray, '_fromArrayConstruction', { value: true })
+        return emptyArray
       }
     }
 
@@ -882,10 +951,13 @@ return flattenResult(result);`
       'equal',
       'notEqual',
       'handleArrayIterationToSelectPipe',
+      'handleArrayIterationToKeysPipe',
       'logicalAnd',
       'logicalOr',
       'logicalNot',
       'handleDefault',
+      'getKeys',
+      'getKeysUnsorted',
       `return function(input) { ${code} }`
     )
 
@@ -916,10 +988,13 @@ return flattenResult(result);`
       equal,
       notEqual,
       handleArrayIterationToSelectPipe,
+      handleArrayIterationToKeysPipe,
       logicalAnd,
       logicalOr,
       logicalNot,
-      handleDefault
+      handleDefault,
+      getKeys,
+      getKeysUnsorted
     )
   }
 }

@@ -53,6 +53,8 @@ export type TokenType =
   | 'AND'
   | 'OR'
   | 'NOT'
+  | 'KEYS'
+  | 'KEYS_UNSORTED'
   | '//'
   | 'EOF'
 
@@ -107,6 +109,8 @@ export type NodeType =
   | 'Or'
   | 'Not'
   | 'Default'
+  | 'Keys'
+  | 'KeysUnsorted'
 
 export interface BaseNode {
   type: NodeType;
@@ -304,6 +308,14 @@ export interface DefaultNode extends BaseNode {
   right: ASTNode;
 }
 
+export interface KeysNode extends BaseNode {
+  type: 'Keys';
+}
+
+export interface KeysUnsortedNode extends BaseNode {
+  type: 'KeysUnsorted';
+}
+
 export type ASTNode =
   | IdentityNode
   | PropertyAccessNode
@@ -339,6 +351,8 @@ export type ASTNode =
   | OrNode
   | NotNode
   | DefaultNode
+  | KeysNode
+  | KeysUnsortedNode
 
 export interface Parser {
   parse(): ASTNode;
