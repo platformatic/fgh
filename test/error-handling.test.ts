@@ -45,14 +45,14 @@ test('error handling utilities', async (t) => {
     assert.strictEqual(recovery?.originalError, error)
   })
 
-  await t.test('safeQuery should return undefined on error', () => {
+  await t.test('safeQuery should return empty array on error', () => {
     // Valid query
     const validResult = safeQuery('.name', { name: 'John' })
-    assert.equal(validResult, 'John')
+    assert.deepEqual(validResult, ['John'])
 
     // Invalid query
     const invalidResult = safeQuery('.name[', { name: 'John' })
-    assert.equal(invalidResult, undefined)
+    assert.deepEqual(invalidResult, [])
   })
 
   await t.test('query should throw errors for invalid expressions', () => {

@@ -14,6 +14,7 @@ import {
   isNullOrUndefined,
   ensureArray,
   getNestedValue,
+  ensureArrayResult,
   flattenResult,
   accessProperty,
   accessIndex,
@@ -865,8 +866,8 @@ export class JQCodeGenerator implements CodeGenerator {
     // Special cases for sort and sort_by with null input
     if (ast.type === 'Sort') {
       return function (input: any) {
-        if (input === null) return null
-        return flattenResult(sortArray(input))
+        if (input === null) return [null]
+        return ensureArrayResult(sortArray(input))
       }
     }
 
@@ -877,8 +878,8 @@ export class JQCodeGenerator implements CodeGenerator {
       })
 
       return function (input: any) {
-        if (input === null) return null
-        return flattenResult(sortArrayBy(input, pathFns))
+        if (input === null) return [null]
+        return ensureArrayResult(sortArrayBy(input, pathFns))
       }
     }
 
@@ -889,12 +890,10 @@ export class JQCodeGenerator implements CodeGenerator {
         // Ensure keys is always an array and marked as construction
         if (Array.isArray(result)) {
           Object.defineProperty(result, '_fromArrayConstruction', { value: true })
-          return result
+          return ensureArrayResult(result)
         }
         // Return empty array for non-array results
-        const emptyArray: any[] = []
-        Object.defineProperty(emptyArray, '_fromArrayConstruction', { value: true })
-        return emptyArray
+        return []
       }
     }
 
@@ -905,12 +904,10 @@ export class JQCodeGenerator implements CodeGenerator {
         // Ensure keys is always an array and marked as construction
         if (Array.isArray(result)) {
           Object.defineProperty(result, '_fromArrayConstruction', { value: true })
-          return result
+          return ensureArrayResult(result)
         }
         // Return empty array for non-array results
-        const emptyArray: any[] = []
-        Object.defineProperty(emptyArray, '_fromArrayConstruction', { value: true })
-        return emptyArray
+        return []
       }
     }
 
@@ -921,14 +918,15 @@ export class JQCodeGenerator implements CodeGenerator {
 // Execute the generated expression
 const result = ${body};
 
-// Return the result, applying flattening rules
-return flattenResult(result);`
+// Return the result as an array
+return ensureArrayResult(result);`
 
     // Create a function factory that receives all helper functions as parameters
     const functionFactory = new Function(
       'isNullOrUndefined',
       'ensureArray',
       'getNestedValue',
+      'ensureArrayResult',
       'flattenResult',
       'accessProperty',
       'accessIndex',
@@ -966,6 +964,7 @@ return flattenResult(result);`
       isNullOrUndefined,
       ensureArray,
       getNestedValue,
+      ensureArrayResult,
       flattenResult,
       accessProperty,
       accessIndex,

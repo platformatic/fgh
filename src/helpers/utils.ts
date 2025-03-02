@@ -71,63 +71,35 @@ export const getNestedValue = (
 }
 
 /**
- * Flatten the final result of an operation according to FGH rules
- * @param result The result to flatten
- * @returns The flattened result
+ * Ensure the final result is always an array according to the new FGH API
+ * @param result The result to convert to an array
+ * @returns The result as an array
  */
-export const flattenResult = (result: any): any => {
-  // Define the types to avoid TS errors
-  interface ArrayWithConstruction extends Array<any> {
-    _fromArrayConstruction?: boolean;
-    _fromDifference?: boolean;
-  }
-  // Handle non-array cases
-  if (isNullOrUndefined(result)) return undefined
-  if (!Array.isArray(result)) return result
-
-  // Special case for empty arrays
-  if (result.length === 0) {
-    // Empty arrays from array construction should be preserved
-    if ((result as ArrayWithConstruction)._fromArrayConstruction) {
-      return []
+export const ensureArrayResult = (result: any): any[] => {
+  // For null, we want to return [null], not an empty array
+  if (result === null) return [null]
+  
+  // If result is undefined, return an empty array
+  if (result === undefined) return []
+  
+  // If result is already an array, we need to decide based on whether we're dealing
+  // with a direct array input or array elements
+  if (Array.isArray(result)) {
+    // If array is from array iteration, always keep as-is
+    if ((result as any)._fromArrayConstruction || result.length === 0) {
+      return [...result]
     }
-    // Otherwise maintain backward compatibility and return undefined
-    return undefined
+    
+    // If it's the original input, wrap it
+    return [result]
   }
-
-  // Special case for recursive descent with scalar values
-  // If all items are identical primitive values, return just one
-  if ((result as ArrayWithConstruction)._fromArrayConstruction && result.length > 1) {
-    const isPrimitive = (val: any) => val !== Object(val) || val === null
-    const allPrimitives = result.every(isPrimitive)
-
-    if (allPrimitives) {
-      // Check if all values are the same
-      const firstVal = result[0]
-      const allSame = result.every(val => val === firstVal)
-
-      if (allSame) {
-        return firstVal
-      }
-    }
-  }
-
-  // Critical: preserve arrays that are marked as construction results
-  // This is essential for the comma operator and array iteration to work properly
-  if ((result as ArrayWithConstruction)._fromArrayConstruction) {
-    return [...result]
-  }
-
-  // For array subtraction, always return an array
-  if ((result as ArrayWithConstruction)._fromDifference) {
-    return [...result] // Ensure we always return an array for difference operations
-  }
-
-  // Single-element arrays should be simplified unless they're from array construction
-  if (result.length === 1 && !Array.isArray(result[0])) {
-    return result[0]
-  }
-
-  // Return the array as is for all other cases
-  return result
+  
+  // If result is a scalar value, wrap it in an array
+  return [result]
 }
+
+/**
+ * Legacy function for backward compatibility
+ * @deprecated Use ensureArrayResult instead
+ */
+export const flattenResult = ensureArrayResult

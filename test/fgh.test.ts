@@ -4,13 +4,13 @@ import { compile, query } from '../src/fgh.ts'
 
 test('compile creates reusable function', () => {
   const fn = compile('.name')
-  assert.equal(fn({ name: 'John' }), 'John')
-  assert.equal(fn({ name: 'Jane' }), 'Jane')
+  assert.deepEqual(fn({ name: 'John' }), ['John'])
+  assert.deepEqual(fn({ name: 'Jane' }), ['Jane'])
 })
 
 test('query executes one-off expression', () => {
-  assert.equal(
+  assert.deepEqual(
     query('.name', { name: 'John' }),
-    'John'
+    ['John']
   )
 })
