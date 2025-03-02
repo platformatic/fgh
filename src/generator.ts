@@ -829,11 +829,11 @@ export class JQCodeGenerator implements CodeGenerator {
 
     return `handleDefault(${leftCode}, ${rightCode})`
   }
-  
+
   private generateKeys (node: any): string {
     return 'getKeys(input)'
   }
-  
+
   private generateKeysUnsorted (node: any): string {
     return 'getKeysUnsorted(input)'
   }
@@ -858,36 +858,36 @@ export class JQCodeGenerator implements CodeGenerator {
         return flattenResult(sortArrayBy(input, pathFns))
       }
     }
-    
+
     // Special case for keys function
     if (ast.type === 'Keys') {
       return function (input: any) {
-        const result = getKeys(input);
+        const result = getKeys(input)
         // Ensure keys is always an array and marked as construction
         if (Array.isArray(result)) {
-          Object.defineProperty(result, "_fromArrayConstruction", { value: true });
-          return result;
+          Object.defineProperty(result, '_fromArrayConstruction', { value: true })
+          return result
         }
         // Return empty array for non-array results
-        const emptyArray: any[] = [];
-        Object.defineProperty(emptyArray, "_fromArrayConstruction", { value: true });
-        return emptyArray;
+        const emptyArray: any[] = []
+        Object.defineProperty(emptyArray, '_fromArrayConstruction', { value: true })
+        return emptyArray
       }
     }
-    
+
     // Special case for keys_unsorted function
     if (ast.type === 'KeysUnsorted') {
       return function (input: any) {
-        const result = getKeysUnsorted(input);
+        const result = getKeysUnsorted(input)
         // Ensure keys is always an array and marked as construction
         if (Array.isArray(result)) {
-          Object.defineProperty(result, "_fromArrayConstruction", { value: true });
-          return result;
+          Object.defineProperty(result, '_fromArrayConstruction', { value: true })
+          return result
         }
         // Return empty array for non-array results
-        const emptyArray: any[] = [];
-        Object.defineProperty(emptyArray, "_fromArrayConstruction", { value: true });
-        return emptyArray;
+        const emptyArray: any[] = []
+        Object.defineProperty(emptyArray, '_fromArrayConstruction', { value: true })
+        return emptyArray
       }
     }
 

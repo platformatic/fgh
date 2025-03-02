@@ -1005,17 +1005,17 @@ export class JQParser {
       case 'KEYS': {
         const pos = this.currentToken.position
         this.advance() // Consume 'keys'
-        
+
         return {
           type: 'Keys',
           position: pos
         }
       }
-      
+
       case 'KEYS_UNSORTED': {
         const pos = this.currentToken.position
         this.advance() // Consume 'keys_unsorted'
-        
+
         return {
           type: 'KeysUnsorted',
           position: pos

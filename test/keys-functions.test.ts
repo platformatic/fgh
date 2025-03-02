@@ -28,7 +28,7 @@ describe('keys function', () => {
   })
 
   test('keys handles Unicode characters correctly', () => {
-    const input = { '😊': 1, 'é': 2, 'a': 3 }
+    const input = { '😊': 1, é: 2, a: 3 }
     const result = query('keys', input)
     // Unicode sort order: a, é, 😊
     assert.deepStrictEqual(result, ['a', 'é', '😊'])
@@ -84,21 +84,21 @@ describe('keys_unsorted function', () => {
     Object.defineProperty(input, 'z', { value: 1, enumerable: true })
     Object.defineProperty(input, 'a', { value: 2, enumerable: true })
     Object.defineProperty(input, 'k', { value: 3, enumerable: true })
-    
+
     const result = query('keys_unsorted', input)
     assert.deepStrictEqual(result, ['z', 'a', 'k'])
   })
-  
+
   test('keys_unsorted vs keys - comparison', () => {
     // Create object where keys_unsorted and keys should return different orders
     const input = {}
     Object.defineProperty(input, 'c', { value: 1, enumerable: true })
     Object.defineProperty(input, 'a', { value: 2, enumerable: true })
     Object.defineProperty(input, 'b', { value: 3, enumerable: true })
-    
+
     const unsortedResult = query('keys_unsorted', input)
     const sortedResult = query('keys', input)
-    
+
     assert.deepStrictEqual(unsortedResult, ['c', 'a', 'b'])
     assert.deepStrictEqual(sortedResult, ['a', 'b', 'c'])
   })
@@ -125,5 +125,26 @@ describe('keys_unsorted function', () => {
     const input = true
     const result = query('keys_unsorted', input)
     assert.deepStrictEqual(result, [])
+  })
+})
+
+describe('keys and keys_unsorted with pipes and filters', () => {
+  test('keys | select - filter object keys', () => {
+    const input = { name: 'John', age: 30, address: '123 Main St', email: 'john@example.com' }
+    const result = query('keys | select(. != "age")', input)
+    assert.deepStrictEqual(result, ['address', 'email', 'name'])
+  })
+
+  test('keys with select comparison using equality', () => {
+    const input = { name: 'John', age: 30, address: '123 Main St', email: 'john@example.com' }
+    // Select keys equal to 'name'
+    const result = query('keys | select(. == "name")', input)
+    assert.deepStrictEqual(result, ['name'])
+  })
+
+  test('keys_unsorted with pipe to identity', () => {
+    const input = { z: 1, a: 2, c: 3, b: 4 }
+    const result = query('keys_unsorted | .', input)
+    assert.deepStrictEqual(result, ['z', 'a', 'c', 'b'])
   })
 })

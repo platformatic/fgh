@@ -9,7 +9,7 @@ import { isNullOrUndefined } from './utils.ts'
  * For objects, keys are sorted by unicode codepoint order
  * For arrays, returns indices from 0 to length-1
  * Non-object types return an empty array
- * 
+ *
  * @param input The input object or array
  * @returns Array of keys (sorted) or indices
  */
@@ -18,7 +18,7 @@ export const getKeys = (input: unknown): string[] | number[] => {
   if (isNullOrUndefined(input)) {
     return []
   }
-  
+
   // Handle arrays - return indices
   if (Array.isArray(input)) {
     const result = Array.from({ length: input.length }, (_, i) => i)
@@ -26,7 +26,7 @@ export const getKeys = (input: unknown): string[] | number[] => {
     Object.defineProperty(result, '_fromArrayConstruction', { value: true })
     return result
   }
-  
+
   // Handle objects - return sorted keys
   if (typeof input === 'object' && input !== null) {
     const keys = Object.keys(input).sort()
@@ -34,10 +34,10 @@ export const getKeys = (input: unknown): string[] | number[] => {
     Object.defineProperty(keys, '_fromArrayConstruction', { value: true })
     return keys
   }
-  
+
   // Non-object types have no keys - return empty array
   const result: any[] = []
-  // Mark as array construction to preserve its structure 
+  // Mark as array construction to preserve its structure
   Object.defineProperty(result, '_fromArrayConstruction', { value: true })
   return result
 }
@@ -47,7 +47,7 @@ export const getKeys = (input: unknown): string[] | number[] => {
  * For objects, keys are in insertion order (not sorted)
  * For arrays, returns indices from 0 to length-1
  * Non-object types return an empty array
- * 
+ *
  * @param input The input object or array
  * @returns Array of keys (unsorted) or indices
  */
@@ -56,7 +56,7 @@ export const getKeysUnsorted = (input: unknown): string[] | number[] => {
   if (isNullOrUndefined(input)) {
     return []
   }
-  
+
   // Handle arrays - return indices
   if (Array.isArray(input)) {
     const result = Array.from({ length: input.length }, (_, i) => i)
@@ -64,7 +64,7 @@ export const getKeysUnsorted = (input: unknown): string[] | number[] => {
     Object.defineProperty(result, '_fromArrayConstruction', { value: true })
     return result
   }
-  
+
   // Handle objects - return keys in insertion order (not sorted)
   if (typeof input === 'object' && input !== null) {
     const keys = Object.keys(input)
@@ -72,10 +72,10 @@ export const getKeysUnsorted = (input: unknown): string[] | number[] => {
     Object.defineProperty(keys, '_fromArrayConstruction', { value: true })
     return keys
   }
-  
+
   // Non-object types have no keys - return empty array
   const result: any[] = []
-  // Mark as array construction to preserve its structure 
+  // Mark as array construction to preserve its structure
   Object.defineProperty(result, '_fromArrayConstruction', { value: true })
   return result
 }
