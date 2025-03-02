@@ -41,11 +41,12 @@ export const handlePipe = (
       }
 
       if ((rightResult as ArrayWithConstruction)._fromArrayConstruction) {
-        results.push(...rightResult)
-
-        // Normal arrays should be spread too
-      } else {
-        results.push(...rightResult)
+        // Add the array elements
+        results.push(...rightResult);
+      }
+      // Normal arrays should be spread too
+      else {
+        results.push(...rightResult);
       }
 
       // Single values added directly

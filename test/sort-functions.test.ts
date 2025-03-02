@@ -8,14 +8,14 @@ test('sort function', async (t) => {
   await t.test('should sort an array of numbers', () => {
     assert.deepEqual(
       query('sort', [8, 3, null, 6]),
-      [null, 3, 6, 8]
+      [[null, 3, 6, 8]]
     )
   })
 
   await t.test('should sort an array of mixed types', () => {
     assert.deepEqual(
       query('sort', [null, true, false, 42, 'foo', [1, 2], { a: 1 }]),
-      [null, false, true, 42, 'foo', [1, 2], { a: 1 }]
+      [[null, false, true, 42, 'foo', [1, 2], { a: 1 }]]
     )
   })
 
@@ -26,25 +26,25 @@ test('sort function', async (t) => {
         { a: 1, b: 2 },
         { a: 1, b: 1 }
       ]),
-      [
+      [[
         { a: 1, b: 1 },
         { a: 1, b: 2 },
         { b: 1, a: 2 }
-      ]
+      ]]
     )
   })
 
   await t.test('should return null for null input', () => {
-    assert.strictEqual(
+    assert.deepEqual(
       query('sort', null),
-      null
+      [null]
     )
   })
 
   await t.test('should return undefined for non-array input', () => {
-    assert.strictEqual(
+    assert.deepEqual(
       query('sort', 42),
-      undefined
+      []
     )
   })
 })
@@ -57,11 +57,11 @@ test('sort_by function', async (t) => {
         { foo: 3, bar: 10 },
         { foo: 2, bar: 1 }
       ]),
-      [
+      [[
         { foo: 2, bar: 1 },
         { foo: 3, bar: 10 },
         { foo: 4, bar: 10 }
-      ]
+      ]]
     )
   })
 
@@ -73,12 +73,12 @@ test('sort_by function', async (t) => {
         { foo: 2, bar: 1 },
         { foo: 3, bar: 10 }
       ]),
-      [
+      [[
         { foo: 2, bar: 1 },
         { foo: 3, bar: 10 },
         { foo: 3, bar: 20 },
         { foo: 4, bar: 10 }
-      ]
+      ]]
     )
   })
 
@@ -89,25 +89,25 @@ test('sort_by function', async (t) => {
         { bar: 10 },
         { foo: 2, bar: 1 }
       ]),
-      [
+      [[
         { bar: 10 },
         { foo: 2, bar: 1 },
         { foo: 4, bar: 10 }
-      ]
+      ]]
     )
   })
 
   await t.test('should return null for null input', () => {
-    assert.strictEqual(
+    assert.deepEqual(
       query('sort_by(.foo)', null),
-      null
+      [null]
     )
   })
 
   await t.test('should return undefined for non-array input', () => {
-    assert.strictEqual(
+    assert.deepEqual(
       query('sort_by(.foo)', 42),
-      undefined
+      []
     )
   })
 })

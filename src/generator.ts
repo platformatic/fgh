@@ -473,6 +473,7 @@ export class JQCodeGenerator implements CodeGenerator {
       
       // Final result array
       const result = [];
+      
       // Track object references to avoid duplicates
       const visited = new WeakSet();
       
@@ -499,6 +500,7 @@ export class JQCodeGenerator implements CodeGenerator {
         // If it's an object, process each property
         else if (typeof obj === 'object' && obj !== null) {
           for (const key in obj) {
+            if (key.startsWith('_')) continue; // Skip internal properties
             collectAllValues(obj[key]);
           }
         }
@@ -507,10 +509,8 @@ export class JQCodeGenerator implements CodeGenerator {
       // Start the collection process with the input
       collectAllValues(input);
       
-      // Mark as array construction to preserve its structure
-      if (result.length > 0) {
-        Object.defineProperty(result, "_fromArrayConstruction", { value: true });
-      }
+      // No need to mark as array construction anymore
+      // due to the new ensureArrayResult behavior
       
       return result;
     })()`

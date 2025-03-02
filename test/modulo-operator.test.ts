@@ -5,38 +5,40 @@ import { query } from '../src/fgh.ts'
 
 test('modulo operator', async (t) => {
   await t.test('should perform modulo on numbers', () => {
-    assert.strictEqual(query('10 % 3', null), 1)
-    assert.strictEqual(query('10 % 2', null), 0)
-    assert.strictEqual(query('5 % 3', null), 2)
-    assert.strictEqual(query('7 % 4', null), 3)
+    assert.deepStrictEqual(query('10 % 3', null), [1])
+    assert.deepStrictEqual(query('10 % 2', null), [0])
+    assert.deepStrictEqual(query('5 % 3', null), [2])
+    assert.deepStrictEqual(query('7 % 4', null), [3])
   })
 
   await t.test('should handle edge cases', () => {
     // Modulo by zero returns NaN
-    assert.ok(Number.isNaN(query('10 % 0', null)))
+    const result = query('10 % 0', null)
+    assert.deepStrictEqual(result.length, 1)
+    assert.ok(Number.isNaN(result[0]))
 
     // Negative numbers using variables (the implementation normalizes to match mathematical mod operation)
     // -10 % 3 = -1 in JavaScript, but in mathematical modulo it's 2
-    assert.strictEqual(query('.negValue % 3', { negValue: -10 }), 2)
+    assert.deepStrictEqual(query('.negValue % 3', { negValue: -10 }), [2])
     // 10 % -3 = 1 in JavaScript, and our implementation preserves this behavior
-    assert.strictEqual(query('10 % .negDivisor', { negDivisor: -3 }), 1)
+    assert.deepStrictEqual(query('10 % .negDivisor', { negDivisor: -3 }), [1])
 
     // Modulo with null/undefined
-    assert.strictEqual(query('null % 5', null), 0)
-    assert.strictEqual(query('10 % null', null), 10)
+    assert.deepStrictEqual(query('null % 5', null), [0])
+    assert.deepStrictEqual(query('10 % null', null), [10])
   })
 
   await t.test('should work with variables', () => {
-    assert.strictEqual(
+    assert.deepStrictEqual(
       query('.value % 3', { value: 10 }),
-      1
+      [1]
     )
   })
 
   await t.test('should handle modulo in expressions', () => {
-    assert.strictEqual(query('(10 + 5) % 7', null), 1)
-    assert.strictEqual(query('10 % (1 + 2)', null), 1)
-    assert.strictEqual(query('(20 / 2) % 3', null), 1)
+    assert.deepStrictEqual(query('(10 + 5) % 7', null), [1])
+    assert.deepStrictEqual(query('10 % (1 + 2)', null), [1])
+    assert.deepStrictEqual(query('(20 / 2) % 3', null), [1])
   })
 
   await t.test('should work with arrays', () => {
@@ -47,7 +49,7 @@ test('modulo operator', async (t) => {
   await t.test('should work in object construction', () => {
     assert.deepStrictEqual(
       query('{ remainder: (10 % 3), even: (.value % 2 == 0) }', { value: 6 }),
-      { remainder: 1, even: true }
+      [{ remainder: 1, even: true }]
     )
   })
 })

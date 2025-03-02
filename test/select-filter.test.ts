@@ -8,7 +8,7 @@ test('select filter', async (t) => {
   await t.test('should filter array elements that match a condition', () => {
     assert.deepEqual(
       query('map(select(. >= 2))', [1, 5, 3, 0, 7]),
-      [5, 3, 7]
+      [[5, 3, 7]]
     )
   })
 
@@ -31,14 +31,14 @@ test('select filter', async (t) => {
         { id: 'first', val: 1 },
         { id: 'second', val: 2 }
       ]),
-      { id: 'second', val: 2 }
+      [{ id: 'second', val: 2 }]
     )
   })
 
   await t.test('should return nothing for non-matching condition', () => {
     assert.deepEqual(
       query('map(select(. > 10))', [1, 5, 3, 0, 7]),
-      []
+      [[]]
     )
   })
 
@@ -48,21 +48,21 @@ test('select filter', async (t) => {
         { id: 'first', val: 1 },
         { id: 'second', val: 2 }
       ]),
-      [{ id: 'second', val: 2 }]
+      [[{ id: 'second', val: 2 }]]
     )
   })
 
   await t.test('should work with object input', () => {
     assert.deepEqual(
       query('select(.value > 10)', { name: 'test', value: 15 }),
-      { name: 'test', value: 15 }
+      [{ name: 'test', value: 15 }]
     )
   })
 
   await t.test('should return nothing for object that does not match', () => {
     assert.deepEqual(
       query('select(.value < 10)', { name: 'test', value: 15 }),
-      null
+      []
     )
   })
 
@@ -70,12 +70,12 @@ test('select filter', async (t) => {
     const highValueFilter = compile('select(.value > 10)')
     assert.deepEqual(
       highValueFilter({ name: 'test', value: 15 }),
-      { name: 'test', value: 15 }
+      [{ name: 'test', value: 15 }]
     )
 
     assert.deepEqual(
       highValueFilter({ name: 'test', value: 5 }),
-      null
+      []
     )
   })
 

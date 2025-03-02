@@ -6,9 +6,9 @@ import { query } from '../src/fgh.ts'
 
 test('equality operator examples from requirements', async () => {
   // Example 1: '. == false' with null input should return false
-  assert.equal(
+  assert.deepEqual(
     query('. == false', null),
-    false
+    [false]
   )
 
   // Example 2: array equality with numeric equivalence
