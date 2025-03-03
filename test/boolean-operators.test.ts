@@ -4,7 +4,7 @@ import { test } from 'node:test'
 import assert from 'node:assert'
 import { query } from '../src/fgh.ts'
 
-// Helper function to check boolean results that might be single values or arrays
+// Helper function to check boolean results that will always be wrapped in an array
 const checkBoolean = (expr, input, expected) => {
   const result = query(expr, input)
 
@@ -15,8 +15,8 @@ const checkBoolean = (expr, input, expected) => {
     return
   }
 
-  assert.strictEqual(result.length, 1)
-  assert.strictEqual(result[0], expected)
+  assert.strictEqual(result.length, 1, `Expected array of length 1, got ${result.length} for ${expr}`)
+  assert.strictEqual(result[0], expected, `Expected ${expected}, got ${result[0]} for ${expr}`)
 }
 
 test('and operator', async (t) => {
@@ -45,17 +45,17 @@ test('and operator', async (t) => {
   await t.test('should handle multiple results', () => {
     assert.deepEqual(
       query('(true, false) and true', null),
-      [true, false]
+      [[true, false]]
     )
 
     assert.deepEqual(
       query('true and (true, false)', null),
-      [true, false]
+      [[true, false]]
     )
 
     assert.deepEqual(
       query('(true, true) and (true, false)', null),
-      [true, false, true, false]
+      [[true, false, true, false]]
     )
   })
 })
@@ -87,17 +87,17 @@ test('or operator', async (t) => {
   await t.test('should handle multiple results', () => {
     assert.deepEqual(
       query('(true, false) or false', null),
-      [true, false]
+      [[true, false]]
     )
 
     assert.deepEqual(
       query('false or (true, false)', null),
-      [true, false]
+      [[true, false]]
     )
 
     assert.deepEqual(
       query('(false, false) or (true, false)', null),
-      [true, false, true, false]
+      [[true, false, true, false]]
     )
   })
 })
@@ -128,7 +128,7 @@ test('not function', async (t) => {
     // Use map function to apply not to each element in the array
     assert.deepEqual(
       query('map(not)', [true, false]),
-      [false, true]
+      [[false, true]]
     )
   })
 })
@@ -151,6 +151,6 @@ test('combined boolean operators', async (t) => {
   await t.test('should handle array examples from spec', () => {
     // Using map to implement the example from spec
     const result = query('map(if . then . else (. | not) end)', [true, false])
-    assert.deepEqual(result, [true, true])
+    assert.deepEqual(result, [[true, true]])
   })
 })
