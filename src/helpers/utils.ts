@@ -106,6 +106,11 @@ export const ensureArrayResult = (result: any): any[] => {
       return [result]
     }
     
+    // Arrays that need to be preserved as-is (from default operator)
+    if ((result as any)._preserveArray) {
+      return [result]
+    }
+    
     // If array is from array iteration, return as-is
     if ((result as any)._fromArrayConstruction || result.length === 0) {
       return [...result]

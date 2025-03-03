@@ -126,6 +126,8 @@ export const handleDefault = (left: any, right: any): any => {
   if (Array.isArray(left)) {
     // Empty arrays should not trigger default behavior
     if (left.length === 0) {
+      // Mark it to ensure it's preserved as an empty array
+      Object.defineProperty(left, '_preserveArray', { value: true })
       return left
     }
 
@@ -133,23 +135,46 @@ export const handleDefault = (left: any, right: any): any => {
     const filteredLeft = left.filter(item => item !== false && item !== null)
     // If there are non-false, non-null values, return those
     if (filteredLeft.length > 0) {
+      // If we started with a sequence, we should return just the last non-falsy value
+      // As a special case for sequences like '(false, null, 1) // 42'
+      if (filteredLeft.length === 1 && left.length > 1) {
+        return filteredLeft[0]
+      }
       return filteredLeft
     }
     // Otherwise, return right
+    // Make sure to preserve arrays on the right side too
+    if (Array.isArray(right)) {
+      Object.defineProperty(right, '_preserveArray', { value: true })
+    }
     return right
   }
 
   // Check if left is false or null
   if (left === false || left === null) {
+    // Make sure to preserve arrays on the right side
+    if (Array.isArray(right)) {
+      Object.defineProperty(right, '_preserveArray', { value: true })
+    }
     return right
   }
 
   // If left is undefined (sometimes happens with property access)
   // return right
   if (left === undefined) {
+    // Make sure to preserve arrays on the right side
+    if (Array.isArray(right)) {
+      Object.defineProperty(right, '_preserveArray', { value: true })
+    }
     return right
   }
 
+  // For any other value (including 0, "", objects, etc.)
+  // Make sure arrays are properly preserved
+  if (Array.isArray(left)) {
+    Object.defineProperty(left, '_preserveArray', { value: true })
+  }
+  
   // Otherwise return left
   return left
 }
