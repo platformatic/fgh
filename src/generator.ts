@@ -911,7 +911,10 @@ export class JQCodeGenerator implements CodeGenerator {
     if (ast.type === 'Sort') {
       return function (input: any) {
         if (input === null) return [null]
-        return ensureArrayResult(sortArray(input))
+        if (!Array.isArray(input)) return []
+        // We need to wrap the result in an array since ensureArrayResult will preserve the sorted array
+        // as a single item in the result array
+        return [sortArray(input)]
       }
     }
 
@@ -923,7 +926,10 @@ export class JQCodeGenerator implements CodeGenerator {
 
       return function (input: any) {
         if (input === null) return [null]
-        return ensureArrayResult(sortArrayBy(input, pathFns))
+        if (!Array.isArray(input)) return []
+        // We need to wrap the result in an array since ensureArrayResult will preserve the sorted array
+        // as a single item in the result array
+        return [sortArrayBy(input, pathFns)]
       }
     }
 
