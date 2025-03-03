@@ -18,8 +18,10 @@ test('object construction with array expansion', () => {
   const input = { user: 'stedolan', titles: ['JQ Primer', 'More JQ'] }
   const result = query('{ user, title: .titles[] }', input)
   assert.deepEqual(result, [
-    { user: 'stedolan', title: 'JQ Primer' },
-    { user: 'stedolan', title: 'More JQ' }
+    [
+      { user: 'stedolan', title: 'JQ Primer' },
+      { user: 'stedolan', title: 'More JQ' }
+    ]
   ])
 })
 
