@@ -597,6 +597,8 @@ export class JQCodeGenerator implements CodeGenerator {
       
       // Mark as array construction to preserve its structure
       Object.defineProperty(result, "_fromArrayConstruction", { value: true });
+      // Mark as map filter result for proper wrapping
+      Object.defineProperty(result, "_fromMapFilter", { value: true });
       
       return result;
     })()`
@@ -633,6 +635,8 @@ export class JQCodeGenerator implements CodeGenerator {
         
         // Mark as array construction to preserve its structure
         Object.defineProperty(result, "_fromArrayConstruction", { value: true });
+        // Mark as map_values filter result for proper wrapping
+        Object.defineProperty(result, "_fromMapValuesFilter", { value: true });
         
         return result;
       }
@@ -658,6 +662,9 @@ export class JQCodeGenerator implements CodeGenerator {
             result[key] = filterResult;
           }
         }
+        
+        // Mark as map_values filter result for proper wrapping
+        Object.defineProperty(result, "_fromMapValuesFilter", { value: true });
         
         return Object.keys(result).length > 0 ? result : {};
       }
@@ -974,6 +981,9 @@ export class JQCodeGenerator implements CodeGenerator {
           // Evaluate the result - must be truthy and not null/undefined/false
           return conditionResult !== null && conditionResult !== undefined && conditionResult !== false;
         });
+        
+        // Mark as map filter result for proper wrapping
+        Object.defineProperty(filtered, "_fromMapFilter", { value: true });
         
         // For map(select(...)), we want to return the filtered array wrapped in an array
         // e.g., [[1, 2, 3]] instead of [1, 2, 3]

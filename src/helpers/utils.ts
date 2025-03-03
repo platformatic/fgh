@@ -95,7 +95,12 @@ export const ensureArrayResult = (result: any): any[] => {
       return [result]
     }
     
-    // If array is from array iteration, always keep as-is
+    // If array is from map or map_values filter, we need to wrap the entire array
+    if ((result as any)._fromMapFilter || (result as any)._fromMapValuesFilter) {
+      return [result]
+    }
+    
+    // If array is from array iteration, return as-is
     if ((result as any)._fromArrayConstruction || result.length === 0) {
       return [...result]
     }
