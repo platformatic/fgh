@@ -23,7 +23,11 @@ export const getKeys = (input: unknown): string[] | number[] => {
   if (Array.isArray(input)) {
     const result = Array.from({ length: input.length }, (_, i) => i)
     // Mark as array construction to preserve its structure
-    Object.defineProperty(result, '_fromArrayConstruction', { value: true })
+    try {
+      Object.defineProperty(result, '_fromArrayConstruction', { value: true })
+    } catch (e) {
+      // If we can't set the property (rare case with frozen objects), still continue
+    }
     return result
   }
 
@@ -31,14 +35,22 @@ export const getKeys = (input: unknown): string[] | number[] => {
   if (typeof input === 'object' && input !== null) {
     const keys = Object.keys(input).sort()
     // Mark as array construction to preserve its structure
-    Object.defineProperty(keys, '_fromArrayConstruction', { value: true })
+    try {
+      Object.defineProperty(keys, '_fromArrayConstruction', { value: true })
+    } catch (e) {
+      // If we can't set the property (rare case with frozen objects), still continue
+    }
     return keys
   }
 
   // Non-object types have no keys - return empty array
   const result: any[] = []
   // Mark as array construction to preserve its structure
-  Object.defineProperty(result, '_fromArrayConstruction', { value: true })
+  try {
+    Object.defineProperty(result, '_fromArrayConstruction', { value: true })
+  } catch (e) {
+    // If we can't set the property (rare case with frozen objects), still continue
+  }
   return result
 }
 
@@ -61,7 +73,11 @@ export const getKeysUnsorted = (input: unknown): string[] | number[] => {
   if (Array.isArray(input)) {
     const result = Array.from({ length: input.length }, (_, i) => i)
     // Mark as array construction to preserve its structure
-    Object.defineProperty(result, '_fromArrayConstruction', { value: true })
+    try {
+      Object.defineProperty(result, '_fromArrayConstruction', { value: true })
+    } catch (e) {
+      // If we can't set the property (rare case with frozen objects), still continue
+    }
     return result
   }
 
@@ -69,13 +85,21 @@ export const getKeysUnsorted = (input: unknown): string[] | number[] => {
   if (typeof input === 'object' && input !== null) {
     const keys = Object.keys(input)
     // Mark as array construction to preserve its structure
-    Object.defineProperty(keys, '_fromArrayConstruction', { value: true })
+    try {
+      Object.defineProperty(keys, '_fromArrayConstruction', { value: true })
+    } catch (e) {
+      // If we can't set the property (rare case with frozen objects), still continue
+    }
     return keys
   }
 
   // Non-object types have no keys - return empty array
   const result: any[] = []
   // Mark as array construction to preserve its structure
-  Object.defineProperty(result, '_fromArrayConstruction', { value: true })
+  try {
+    Object.defineProperty(result, '_fromArrayConstruction', { value: true })
+  } catch (e) {
+    // If we can't set the property (rare case with frozen objects), still continue
+  }
   return result
 }

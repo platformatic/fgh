@@ -20,6 +20,8 @@ export const handlePipe = (
   const leftResult = leftFn(input)
   if (isNullOrUndefined(leftResult)) return undefined
 
+
+
   // Special handling for recursive descent with property access
   // This prevents accessing properties on array values from recursive descent
   if (Array.isArray(leftResult) && (leftResult as any)._fromRecursiveDescent) {
@@ -47,11 +49,32 @@ export const handlePipe = (
     }
     
     if (results.length > 0) {
-      Object.defineProperty(results, '_fromArrayConstruction', { value: true })
+      try {
+        Object.defineProperty(results, '_fromArrayConstruction', { value: true })
+      } catch (e) {
+        // If we can't set the property (rare case with frozen objects), still continue
+      }
       return results
     }
     
     return undefined
+  }
+
+  // Handle arrays that are final results (like from keys/keys_unsorted) specially
+  // These should be passed directly to the right function
+  if (Array.isArray(leftResult) && (leftResult as any)._isFinalResult) {
+    const rightResult = rightFn(leftResult)
+    
+    // Make sure the result maintains the _isFinalResult property
+    if (Array.isArray(rightResult) && rightResult && typeof rightResult === 'object') {
+      try {
+        Object.defineProperty(rightResult, '_isFinalResult', { value: true })
+      } catch (e) {
+        // If we can't set the property (rare case with frozen objects), still continue
+      }
+    }
+    
+    return rightResult 
   }
 
   // Ensure we have an array to iterate over
@@ -68,6 +91,12 @@ export const handlePipe = (
 
     // Handle arrays from the right function
     if (Array.isArray(rightResult)) {
+      // Handle final result arrays (should be preserved as-is)
+      if ((rightResult as any)._isFinalResult) {
+        // For final results, we want to return directly without further processing
+        return rightResult
+      }
+
       // Arrays marked as construction results should be spread
       // Define interface for arrays with _fromArrayConstruction property
       interface ArrayWithConstruction extends Array<any> {
@@ -91,7 +120,11 @@ export const handlePipe = (
   }
 
   // Make sure the final results array is preserved
-  Object.defineProperty(results, '_fromArrayConstruction', { value: true })
+  try {
+    Object.defineProperty(results, '_fromArrayConstruction', { value: true })
+  } catch (e) {
+    // If we can't set the property (rare case with frozen objects), still continue
+  }
 
   // Return undefined for empty results, otherwise the array
   return results.length === 0 ? undefined : results
@@ -136,7 +169,11 @@ export const constructArray = (
   }
 
   // Mark the resulting array as a construction result so it's preserved
-  Object.defineProperty(result, '_fromArrayConstruction', { value: true })
+  try {
+    Object.defineProperty(result, '_fromArrayConstruction', { value: true })
+  } catch (e) {
+    // If we can't set the property (rare case with frozen objects), still continue
+  }
 
   return result
 }

@@ -90,6 +90,12 @@ export const ensureArrayResult = (result: any): any[] => {
   // If result is already an array, we need to decide based on whether we're dealing
   // with a direct array input or array elements
   if (Array.isArray(result)) {
+    // Handle arrays that are final results (like from keys/keys_unsorted)
+    // which should be returned without additional wrapping
+    if ((result as any)._isFinalResult) {
+      return result
+    }
+    
     // Special handling for empty array from select filter - we need to wrap it
     if ((result as any)._fromSelectFilter && result.length === 0) {
       return [result]

@@ -313,6 +313,75 @@ export class JQCodeGenerator implements CodeGenerator {
   }
 
   private generatePipe (node: PipeNode): string {
+    // Special handling for keys | select(...) pipe pattern
+    if (node.left.type === 'Keys' && node.right.type === 'SelectFilter') {
+      const rightNode = node.right as any;
+      const conditionCode = this.generateNode(rightNode.condition);
+      
+      return `(() => {
+        // Get the original object keys
+        const input_obj = input;
+        const keys_array = getKeys(input_obj);
+        
+        // Filter the keys based on the condition
+        const result = [];
+        for (const key of keys_array) {
+          // For each key, evaluate if it passes the condition
+          // Using 'key' as the input to the condition
+          const passes = ((item) => {
+            const input = item; // Set input to the current key
+            return ${conditionCode};
+          })(key);
+          
+          // If the key passes the condition, add it to results
+          if (passes) {
+            result.push(key);
+          }
+        }
+        
+        // Mark as a final result
+        try {
+          Object.defineProperty(result, '_isFinalResult', { value: true });
+        } catch (e) {}
+        
+        return result;
+      })()`;
+    }
+    
+    // Special handling for keys_unsorted | select(...) pipe pattern
+    if (node.left.type === 'KeysUnsorted' && node.right.type === 'SelectFilter') {
+      const rightNode = node.right as any;
+      const conditionCode = this.generateNode(rightNode.condition);
+      
+      return `(() => {
+        // Get the original object keys
+        const input_obj = input;
+        const keys_array = getKeysUnsorted(input_obj);
+        
+        // Filter the keys based on the condition
+        const result = [];
+        for (const key of keys_array) {
+          // For each key, evaluate if it passes the condition
+          // Using 'key' as the input to the condition
+          const passes = ((item) => {
+            const input = item; // Set input to the current key
+            return ${conditionCode};
+          })(key);
+          
+          // If the key passes the condition, add it to results
+          if (passes) {
+            result.push(key);
+          }
+        }
+        
+        // Mark as a final result
+        try {
+          Object.defineProperty(result, '_isFinalResult', { value: true });
+        } catch (e) {}
+        
+        return result;
+      })()`;
+    }
     // Special handling for .. | .prop? pattern
     // This handles accessing properties on objects returned by recursive descent
     if (node.left.type === 'RecursiveDescent' && 
@@ -1025,6 +1094,33 @@ export class JQCodeGenerator implements CodeGenerator {
       return function (input: any) {
         if (input === null || input === undefined) return [];
         
+        // Special handling for arrays that are final results (like from keys/keys_unsorted)
+        // or other simple arrays of strings/numbers
+        if (Array.isArray(input) && 
+            ((input as any)._isFinalResult || 
+             input.length === 0 || 
+             typeof input[0] === 'string' || 
+             typeof input[0] === 'number')) {
+          // Filter the array elements based on the condition
+          const result = input.filter(item => {
+            const conditionResult = conditionFn(item);
+            return conditionResult !== null && 
+                   conditionResult !== undefined && 
+                   conditionResult !== false;
+          });
+          
+          // For final results, maintain their status
+          if ((input as any)._isFinalResult && result && typeof result === 'object') {
+            try {
+              Object.defineProperty(result, '_isFinalResult', { value: true })
+            } catch (e) {
+              // If we can't set the property (rare case with frozen objects), still continue
+            }
+          }
+          
+          return result;
+        }
+        
         // Apply the condition function
         const conditionResult = conditionFn(input);
         
@@ -1049,30 +1145,28 @@ export class JQCodeGenerator implements CodeGenerator {
       }
     }
 
-    // Special case for keys function
+    // Functions that inherently return arrays need special handling
+    // to ensure consistent behavior with the compiled function's array wrapping
     if (ast.type === 'Keys') {
       return function (input: any) {
         const result = getKeys(input)
-        // Ensure keys is always an array and marked as construction
         if (Array.isArray(result)) {
-          Object.defineProperty(result, '_fromArrayConstruction', { value: true })
-          return ensureArrayResult(result)
+          // Mark this as a final result that should not be wrapped again
+          Object.defineProperty(result, '_isFinalResult', { value: true })
+          return result
         }
-        // Return empty array for non-array results
         return []
       }
     }
 
-    // Special case for keys_unsorted function
     if (ast.type === 'KeysUnsorted') {
       return function (input: any) {
         const result = getKeysUnsorted(input)
-        // Ensure keys is always an array and marked as construction
         if (Array.isArray(result)) {
-          Object.defineProperty(result, '_fromArrayConstruction', { value: true })
-          return ensureArrayResult(result)
+          // Mark this as a final result that should not be wrapped again
+          Object.defineProperty(result, '_isFinalResult', { value: true })
+          return result
         }
-        // Return empty array for non-array results
         return []
       }
     }
