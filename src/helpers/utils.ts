@@ -76,7 +76,12 @@ export const getNestedValue = (
  * @returns The result as an array
  */
 export const ensureArrayResult = (result: any): any[] => {
-  // For null, we want to return [null], not an empty array
+  // Special handling for null from select filter - return empty array
+  if (result === null && (result as any)?._fromSelectFilter) {
+    return []
+  }
+  
+  // For other null values, we want to return [null], not an empty array
   if (result === null) return [null]
   
   // If result is undefined, return an empty array
@@ -85,6 +90,11 @@ export const ensureArrayResult = (result: any): any[] => {
   // If result is already an array, we need to decide based on whether we're dealing
   // with a direct array input or array elements
   if (Array.isArray(result)) {
+    // Special handling for empty array from select filter - we need to wrap it
+    if ((result as any)._fromSelectFilter && result.length === 0) {
+      return [result]
+    }
+    
     // If array is from array iteration, always keep as-is
     if ((result as any)._fromArrayConstruction || result.length === 0) {
       return [...result]
