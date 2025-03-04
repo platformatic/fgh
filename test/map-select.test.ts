@@ -54,7 +54,7 @@ describe('map with select filter', async (t) => {
     )
   })
   
-  test('should handle no matches correctly', () => {
+  test.only('should handle no matches correctly', () => {
     const input = {
       "users": [
         {"name": "Jane", "role": "user"}, 

@@ -637,14 +637,12 @@ export class JQCodeGenerator implements CodeGenerator {
 
     // Regular implementation for other map filters
     return `(() => {
-      process._rawDebug('Map filter', input);
       if (isNullOrUndefined(input)) return [];
       
       const result = [];
       const inputValues = Array.isArray(input) ? input : [input];
       
       for (const item of inputValues) {
-        process._rawDebug('Map filter item', item);
         // Apply the filter function to each item
         const filterResult = ${filterFn}(item);
         
@@ -660,12 +658,10 @@ export class JQCodeGenerator implements CodeGenerator {
         }
       }
 
-      // Mark as array construction to preserve its structure
-      // Object.defineProperty(result, "_fromArrayConstruction", { value: true });
       // Mark as map filter result for proper wrapping
       Object.defineProperty(result, "_fromMapFilter", { value: true });
 
-    process._rawDebug('Map filter result', result);
+      process._rawDebug('|| Map filter result', result, result._fromMapFilter);
 
       return result;
     })()`
@@ -1099,6 +1095,8 @@ const result = ${body};
 
 // Return the result as an array
 return ensureArrayResult(result);`
+
+console.log(code)
 
     // Create a function factory that receives all helper functions as parameters
     const functionFactory = new Function(

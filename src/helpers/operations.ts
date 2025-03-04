@@ -97,15 +97,25 @@ export const handlePipe = (
 
     // Handle arrays from the right function
     if (Array.isArray(rightResult)) {
+      process._rawDebug('==> rightResult._isFinalResult', rightResult._isFinalResult)
       // Handle final result arrays (should be preserved as-is)
       if ((rightResult as any)._isFinalResult) {
         // For final results, we want to return directly without further processing
         return rightResult
       }
 
-      if (leftIsFromArrayResult) {
+
+      process._rawDebug('==> rightResult', rightResult, leftIsFromArrayResult)
+
+      process._rawDebug('==> rightResult._fromArrayConstruction', rightResult._fromArrayConstruction)
+      process._rawDebug('==> leftIsFromArrayResult', leftIsFromArrayResult)
+      preserveFromMapFiter ||= rightResult._fromMapFilter
+
+      if (leftIsFromArrayResult || rightResult._fromMapFilter) {
+        process._rawDebug('==> rightResult from array construction', rightResult)
         results.push(...rightResult)
       } else {
+        process._rawDebug('==> rightResult from single value', rightResult)
         results.push(...ensureArrayResult(rightResult))
       }
 
@@ -115,14 +125,13 @@ export const handlePipe = (
     }
   }
 
-  process._rawDebug('==> handlePipe results', results)
-
-  // Make sure the final results array is preserved
-  try {
+  process._rawDebug('==> leftIsFromArrayResult', leftIsFromArrayResult, 'preserveFromMapFiter', preserveFromMapFiter)
+  if (leftIsFromArrayResult || preserveFromMapFiter) {
+    // Make sure the final results array is preserved
     Object.defineProperty(results, '_fromArrayConstruction', { value: true })
-  } catch (e) {
-    // If we can't set the property (rare case with frozen objects), still continue
   }
+
+  process._rawDebug('==> handlePipe results', results, results._fromArrayConstruction)
 
   // Return undefined for empty results, otherwise the array
   return results.length === 0 ? undefined : results
