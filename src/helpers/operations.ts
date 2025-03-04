@@ -2,7 +2,7 @@
  * Helper functions for FGH operations (pipe, array/object construction, etc.)
  */
 
-import { isNullOrUndefined, ensureArray } from './utils.ts'
+import { isNullOrUndefined, ensureArray, ensureArrayResult } from './utils.ts'
 
 /**
  * Handle the pipe operation (|) by applying the right function to each result of the left function
@@ -16,6 +16,7 @@ export const handlePipe = (
   leftFn: (input: any) => any,
   rightFn: (input: any) => any
 ): any => {
+  process._rawDebug('==> handlePipe input', input)
   // Get the result of the left function
   const leftResult = leftFn(input)
   if (isNullOrUndefined(leftResult)) return undefined
@@ -75,6 +76,8 @@ export const handlePipe = (
     return rightResult 
   }
 
+  process._rawDebug('==> leftResult', leftResult)
+
   const leftIsFromArrayResult = leftResult._fromArrayConstruction
 
   // Ensure we have an array to iterate over
@@ -84,6 +87,7 @@ export const handlePipe = (
 
   // Process each item from the left result
   for (const item of leftArray) {
+    process._rawDebug('==> item', item)
     // Apply the right function to each item
     const rightResult = rightFn(item)
 
@@ -98,31 +102,15 @@ export const handlePipe = (
         return rightResult
       }
 
-      // Arrays marked as construction results should be spread
-      // Define interface for arrays with _fromArrayConstruction property
-      interface ArrayWithConstruction extends Array<any> {
-        _fromArrayConstruction?: boolean;
-        _fromRecursiveDescent?: boolean;
-      }
-
-      process._rawDebug(rightResult, rightResult._fromArrayConstruction)
-
-      if ((rightResult as ArrayWithConstruction)._fromArrayConstruction) {
-        // Add the array elements
-        results.push(...rightResult);
-      }
-      // Normal arrays should be spread too if they come _fromArrayConstruction
-      else if (leftIsFromArrayResult) {
-        results.push(...rightResult);
-      } else {
-        results.push(rightResult);
-      }
+      results.push(...ensureArrayResult(rightResult))
 
       // Single values added directly
     } else {
       results.push(rightResult)
     }
   }
+
+  process._rawDebug('==> handlePipe results', results)
 
   // Make sure the final results array is preserved
   try {

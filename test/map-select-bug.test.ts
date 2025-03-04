@@ -3,7 +3,7 @@ import assert from 'node:assert'
 import { query } from '../src/fgh.ts'
 
 describe('map(select()) bug', async (t) => {
-  test('should extract admin names from users array', () => {
+  test.only('should extract admin names from users array', () => {
     const filter = '.users | map(select(.role == "admin")) | map(.name)'
     
     // Case 1
