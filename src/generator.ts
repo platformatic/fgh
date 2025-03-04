@@ -634,14 +634,6 @@ export class JQCodeGenerator implements CodeGenerator {
     const filterCode = this.generateNode(node.filter)
     const filterFn = JQCodeGenerator.wrapInFunction(filterCode)
 
-    // Special case handling for map(select(...))
-    if (node.filter.type === 'SelectFilter') {
-      // Instead of generating JS code, we'll handle this specially in the `generate` method
-      // Here, we'll just generate a placeholder that will be recognized by the `generate` method
-      // The actual implementation will be in a special handler function
-      return `(/* map-select-special-case */)`
-    }
-
     // Regular implementation for other map filters
     return `(() => {
       if (isNullOrUndefined(input)) return [];
@@ -664,7 +656,7 @@ export class JQCodeGenerator implements CodeGenerator {
           result.push(filterResult);
         }
       }
-      
+
       // Mark as array construction to preserve its structure
       Object.defineProperty(result, "_fromArrayConstruction", { value: true });
       // Mark as map filter result for proper wrapping
@@ -743,66 +735,9 @@ export class JQCodeGenerator implements CodeGenerator {
     })()`
   }
 
-  private generateSelectFilter (node: any, isAfterArrayIteration = false): string {
+  private generateSelectFilter (node: any): string {
     const conditionCode = this.generateNode(node.condition)
     const conditionFn = JQCodeGenerator.wrapInFunction(conditionCode)
-
-    if (isAfterArrayIteration) {
-      // Special case for .[] | select(...) pattern - directly return a single item
-      return `(() => {
-        if (isNullOrUndefined(input)) return null;
-        
-        // Special implementation for direct array iteration pipe to select
-        // Used in patterns like ".[] | select(.id == 'second')"
-        
-        // Filter the elements that match the condition
-        if (Array.isArray(input) && input._fromArrayConstruction) {
-          const result = [];
-          
-          for (const item of input) {
-            // Apply the condition to each item
-            const conditionResult = ${conditionFn}(item);
-            
-            // Include the item if the condition is true
-            if (conditionResult !== null && conditionResult !== undefined && conditionResult !== false) {
-              result.push(item);
-            }
-          }
-          
-          // For this special case, return a single match directly without array wrapping
-          if (result.length === 1) {
-            return result[0];
-          }
-          
-          // Otherwise return the array with matches
-          if (result.length > 0) {
-            Object.defineProperty(result, "_fromArrayConstruction", { value: true });
-          }
-          
-          // Mark as a select filter result for empty array handling
-          Object.defineProperty(result, "_fromSelectFilter", { value: true });
-          
-          return result;
-        }
-        
-        // When used on a single item
-        const conditionResult = ${conditionFn}(input);
-        
-        const result = (conditionResult !== null && conditionResult !== undefined && conditionResult !== false) 
-          ? input 
-          : null;
-        
-        // Mark null as a select filter result
-        if (result === null) {
-          // Create a special null with metadata
-          const nullWithMetadata = null;
-          Object.defineProperty(nullWithMetadata, "_fromSelectFilter", { value: true });
-          return nullWithMetadata;
-        }
-        
-        return result;
-      })()`
-    }
 
     // Regular select implementation
     return `(() => {
@@ -837,25 +772,20 @@ export class JQCodeGenerator implements CodeGenerator {
       
       // When used directly on a single object input
       const conditionResult = ${conditionFn}(input);
-      
+
       // Return the input unchanged if condition is true, otherwise null
       const result = (conditionResult !== null && conditionResult !== undefined && conditionResult !== false) 
         ? input 
         : null;
-      
+
       // Special handling for null result
-      if (result === null) {
-        // Try to create a special null with metadata for the select filter
-        try {
-          Object.defineProperty(result, "_fromSelectFilter", { value: true });
-        } catch (e) {
-          // If we can't mark null (which we can't in strict mode), return an empty array
-          // that's marked as a select filter result
-          const emptyArray = [];
-          Object.defineProperty(emptyArray, "_fromSelectFilter", { value: true });
-          return emptyArray;
-        }
-      } else {
+      if (result === null || result === undefined) {
+        // If we can't mark null (which we can't in strict mode), return an empty array
+        // that's marked as a select filter result
+        const emptyArray = [];
+        Object.defineProperty(emptyArray, "_fromSelectFilter", { value: true });
+        return emptyArray;
+      } else if (typeof result === 'object') {
         // Mark non-null result as a select filter result
         Object.defineProperty(result, "_fromSelectFilter", { value: true });
       }
@@ -1034,39 +964,6 @@ export class JQCodeGenerator implements CodeGenerator {
   }
 
   generate (ast: ASTNode): Function {
-    // Special case for map(select(...))
-    if (ast.type === 'MapFilter' && (ast as any).filter.type === 'SelectFilter') {
-      const selectCondition = this.generate((ast as any).filter.condition);
-      
-      return function (input: any) {
-        if (input === null || input === undefined) return [[]]
-        
-        // Handle array input
-        const inputArray = Array.isArray(input) ? input : [input];
-        
-        // Filter elements that match the condition
-        const filtered = inputArray.filter(item => {
-          // Apply the condition function to each item
-          const conditionResult = selectCondition(item);
-          
-          // If the result is an array (from condition evaluation), check if it has truthy values
-          if (Array.isArray(conditionResult)) {
-            return conditionResult.some(r => r !== null && r !== undefined && r !== false);
-          }
-          
-          // Evaluate the result - must be truthy and not null/undefined/false
-          return conditionResult !== null && conditionResult !== undefined && conditionResult !== false;
-        });
-        
-        // Mark as map filter result for proper wrapping
-        Object.defineProperty(filtered, "_fromMapFilter", { value: true });
-        
-        // For map(select(...)), we want to return the filtered array wrapped in an array
-        // e.g., [[1, 2, 3]] instead of [1, 2, 3]
-        return [filtered];
-      }
-    }
-
     // Special cases for sort and sort_by with null input
     if (ast.type === 'Sort') {
       return function (input: any) {
@@ -1092,7 +989,6 @@ export class JQCodeGenerator implements CodeGenerator {
         return [sortArrayBy(input, pathFns)]
       }
     }
-
 
     // Special case for select filter when used standalone
     if (ast.type === 'SelectFilter') {

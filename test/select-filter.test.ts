@@ -1,18 +1,18 @@
 // Test for select filter
 
-import { test } from 'node:test'
+import { test, describe } from 'node:test'
 import assert from 'node:assert'
 import { query, compile } from '../src/fgh.ts'
 
-test('select filter', async (t) => {
-  await t.test('should filter array elements that match a condition', () => {
+describe('select filter', async () => {
+  test.only('should filter array elements that match a condition', () => {
     assert.deepEqual(
       query('map(select(. >= 2))', [ 5, 3, 0, 7]),
       [[5, 3, 7]]
     )
   })
 
-  await t.test('should handle multiple matches with array iteration', () => {
+  test('should handle multiple matches with array iteration', () => {
     assert.deepEqual(
       query('.[] | select(.val > 0)', [
         { id: 'first', val: 1 },
@@ -25,7 +25,7 @@ test('select filter', async (t) => {
     )
   })
 
-  await t.test('should filter single match with array iteration', () => {
+  test('should filter single match with array iteration', () => {
     assert.deepEqual(
       query('.[] | select(.id == "second")', [
         { id: 'first', val: 1 },
@@ -35,14 +35,14 @@ test('select filter', async (t) => {
     )
   })
 
-  await t.test('should return nothing for non-matching condition', () => {
+  test('should return nothing for non-matching condition', () => {
     assert.deepEqual(
       query('map(select(. > 10))', [1, 5, 3, 0, 7]),
       [[]]
     )
   })
 
-  await t.test('should work with property access in condition', () => {
+  test('should work with property access in condition', () => {
     assert.deepEqual(
       query('map(select(.val > 1))', [
         { id: 'first', val: 1 },
@@ -52,21 +52,21 @@ test('select filter', async (t) => {
     )
   })
 
-  await t.test('should work with object input', () => {
+  test('should work with object input', () => {
     assert.deepEqual(
       query('select(.value > 10)', { name: 'test', value: 15 }),
       [{ name: 'test', value: 15 }]
     )
   })
 
-  await t.test('should return nothing for object that does not match', () => {
+  test('should return nothing for object that does not match', () => {
     assert.deepEqual(
       query('select(.value < 10)', { name: 'test', value: 15 }),
       []
     )
   })
 
-  await t.test('should work with compile for reuse', () => {
+  test('should work with compile for reuse', () => {
     const highValueFilter = compile('select(.value > 10)')
     assert.deepEqual(
       highValueFilter({ name: 'test', value: 15 }),
@@ -79,7 +79,7 @@ test('select filter', async (t) => {
     )
   })
 
-  await t.test('should work with additional operations in pipe', () => {
+  test('should work with additional operations in pipe', () => {
     const inventory = [
       { name: 'apple', type: 'fruit', price: 1.20, stock: 50 },
       { name: 'banana', type: 'fruit', price: 0.80, stock: 25 },
