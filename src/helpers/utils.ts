@@ -4,25 +4,16 @@
 
 /**
  * Preserve nested array structure for tests that need specific array wrapping behavior
+ * This function handles cases where nested arrays need to be presented consistently
+ * Simplified for the new approach - arrays are returned as is without special handling
  * @param arr The array to format consistently
- * @returns Correctly nested array for compatibility with tests
+ * @returns The array itself without special wrapping
  */
-export const preserveNestedArrays = <T>(arr: T[]): T[][] => {
-  if (!Array.isArray(arr)) return [[arr]];
+export const preserveNestedArrays = <T>(arr: T[]): T[] => {
+  if (!Array.isArray(arr)) return [arr];
   
-  // Handle the specific test case for object property access returning arrays
-  if (arr.length === 1 && Array.isArray(arr[0]) && Array.isArray(arr[0][0])) {
-    // Already in the correct format like [[[1,2], [3,4]]]
-    return arr as unknown as T[][];
-  }
-  
-  // Arrays containing arrays should be wrapped as expected by tests
-  if (arr.every(item => Array.isArray(item))) {
-    return [arr as unknown as T[]];
-  }
-  
-  // Standard array handling - just wrap it once
-  return [arr];
+  // Return the array as is - no special handling needed
+  return arr;
 }
 
 /**

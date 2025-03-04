@@ -257,7 +257,7 @@ export class JQCodeGenerator implements CodeGenerator {
       })()`
     }
 
-    // Enhanced sequence handling with careful array spread
+    // Enhanced sequence handling with simplified array spread
     return `(() => {
       const sequenceResults = [];
       
@@ -267,14 +267,8 @@ export class JQCodeGenerator implements CodeGenerator {
         
         // Handle arrays correctly while preserving their elements
         if (Array.isArray(result${i})) {
-          // Check if it's a wrapped array result (from operations like map())
-          if (result${i}.length === 1 && Array.isArray(result${i}[0])) {
-            // It's a wrapped array, add the inner array elements
-            sequenceResults.push(...result${i}[0]);
-          } else {
-            // Standard array case
-            sequenceResults.push(...result${i});
-          }
+          // Standard array case - spread all elements
+          sequenceResults.push(...result${i});
         }
         // Don't lose non-array values either
         else if (result${i} !== undefined) {
@@ -596,8 +590,9 @@ export class JQCodeGenerator implements CodeGenerator {
   private generateMapFilter (node: any): string {
     const filterCode = this.generateNode(node.filter)
     const filterFn = JQCodeGenerator.wrapInFunction(filterCode)
+    const isSelectFilter = node.filter.type === 'SelectFilter'
 
-    // Special handling for objects
+    // Simplified handling for map case, with special handling for select
     return `(() => {
       if (isNullOrUndefined(input)) return [];
       
@@ -639,26 +634,21 @@ export class JQCodeGenerator implements CodeGenerator {
         
         // Handle array results - add all elements
         if (Array.isArray(filterResult)) {
-          // If the filter is select(), it will return array of matching items
-          if (${node.filter.type === 'SelectFilter'}) {
-            // For select filter, include matching items directly
-            result.push(...filterResult);
-          } else {
-            // Check if this is an already wrapped array (from nested map operation)
-            if (filterResult.length === 1 && Array.isArray(filterResult[0])) {
-              // It's a wrapped array, extract inner array elements
-              result.push(...filterResult[0]);
-            } else {
-              // Regular array, just add all elements
-              result.push(...filterResult);
+          if (node.filter.type === 'SelectFilter') {
+            // Special handling for select filter
+            for (const r of filterResult) {
+              result.push(r);
             }
+          } else {
+            // Add all array elements
+            result.push(...filterResult);
           }
         } else {
           // Add single value
           result.push(filterResult);
         }
       }
-
+      
       return result;
     })()`
   }
@@ -746,7 +736,7 @@ export class JQCodeGenerator implements CodeGenerator {
     const conditionCode = this.generateNode(node.condition)
     const conditionFn = JQCodeGenerator.wrapInFunction(conditionCode)
 
-    // Regular select implementation
+    // Simplified select implementation
     return `(() => {
       // Handle null/undefined input
       if (isNullOrUndefined(input)) return [];
@@ -976,7 +966,7 @@ export class JQCodeGenerator implements CodeGenerator {
           
         // Step 2: Apply the select filter to each element
         const selectedItems = [];
-        const users = Array.isArray(leftLeftResult[0]) ? leftLeftResult[0] : leftLeftResult;
+        const users = leftLeftResult;
         
         for (const user of users) {
           const selectResult = leftRightFilterFn(user);
@@ -997,8 +987,8 @@ export class JQCodeGenerator implements CodeGenerator {
           }
         }
         
-        // Return in expected format
-        return [[finalResults]];
+        // No special wrapping needed with the new array handling approach
+        return finalResults;
       };
     }
     
@@ -1007,9 +997,8 @@ export class JQCodeGenerator implements CodeGenerator {
       return function (input: any) {
         if (input === null) return [null]
         if (!Array.isArray(input)) return []
-        // We need to wrap the result in an array since ensureArrayResult will preserve the sorted array
-        // as a single item in the result array
-        return [sortArray(input)]
+        // Simply return the sorted array
+        return sortArray(input)
       }
     }
 
@@ -1022,9 +1011,8 @@ export class JQCodeGenerator implements CodeGenerator {
       return function (input: any) {
         if (input === null) return [null]
         if (!Array.isArray(input)) return []
-        // We need to wrap the result in an array since ensureArrayResult will preserve the sorted array
-        // as a single item in the result array
-        return [sortArrayBy(input, pathFns)]
+        // Simply return the sorted array
+        return sortArrayBy(input, pathFns)
       }
     }
 
@@ -1076,7 +1064,7 @@ export class JQCodeGenerator implements CodeGenerator {
         }
         
         // Return the input (not wrapped) for matching conditions
-        return input;
+        return [input];
       }
     }
 
@@ -1101,7 +1089,9 @@ export class JQCodeGenerator implements CodeGenerator {
               if (Array.isArray(filterResult)) {
                 if (filterResult.length > 0) {
                   // If results are present, add them properly
-                  result.push(...filterResult);
+                  for (const r of filterResult) {
+                    result.push(r);
+                  }
                 }
               } else {
                 result.push(filterResult);
@@ -1109,9 +1099,8 @@ export class JQCodeGenerator implements CodeGenerator {
             }
           }
           
-          // Special handling for map(select()) - wrap in an array to maintain backward compatibility
-          // This is needed specifically for the map-select-bug.test.ts case where we need [[ 'John' ]] format
-          return [[result]];
+          // Return the filtered array directly
+          return result;
         }
         
         return [];

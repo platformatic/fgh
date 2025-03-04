@@ -20,34 +20,30 @@ export const handlePipe = (
   const leftResult = leftFn(input)
   if (isNullOrUndefined(leftResult)) return undefined
 
-  // Check if this is a wrapped array result from operations that return nested arrays
-  if (Array.isArray(leftResult) && leftResult.length === 1 && Array.isArray(leftResult[0])) {
-    // Process the inner array elements
+  // Handle array results from the left function
+  if (Array.isArray(leftResult)) {
+    // Process each element in the array
     const results: any[] = []
     
-    for (const item of leftResult[0]) {
+    for (const item of leftResult) {
       // Apply the right function to each item
       const rightResult = rightFn(item)
       
       // Skip undefined results
       if (isNullOrUndefined(rightResult)) continue
       
-      // Handle arrays from the right function
+      // Handle array results from the right function
       if (Array.isArray(rightResult)) {
-        if (rightResult.length === 1 && Array.isArray(rightResult[0])) {
-          // Unwrap doubly wrapped arrays
-          results.push(...rightResult[0])
-        } else {
-          // Spread the array elements
-          results.push(...rightResult)
-        }
+        // Spread array elements into the results
+        results.push(...rightResult)
       } else {
-        // Single values added directly
+        // Add single values directly
         results.push(rightResult)
       }
     }
     
-    return [results]
+    // Return the results as a direct array - standardizeResult will handle the rest
+    return results
   }
 
   // Ensure we have an array to iterate over
@@ -64,14 +60,8 @@ export const handlePipe = (
 
     // Handle arrays from the right function
     if (Array.isArray(rightResult)) {
-      // Check if this is a wrapped array result
-      if (rightResult.length === 1 && Array.isArray(rightResult[0])) {
-        // Unwrap the nested array
-        results.push(...rightResult[0])
-      } else {
-        // Spread the array elements
-        results.push(...rightResult)
-      }
+      // Spread the array elements
+      results.push(...rightResult)
     } else {
       // Single values added directly
       results.push(rightResult)
