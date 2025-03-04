@@ -100,6 +100,7 @@ export const ensureArrayResult = (result: any): any[] => {
     if ((result as any)._fromSelectFilter && result.length === 0) {
       return [result]
     }
+
     
     // If array is from map or map_values filter, we need to wrap the entire array
     if ((result as any)._fromMapFilter || (result as any)._fromMapValuesFilter) {

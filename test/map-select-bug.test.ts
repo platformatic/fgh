@@ -1,9 +1,9 @@
-import { test } from 'node:test'
+import { test, describe } from 'node:test'
 import assert from 'node:assert'
 import { query } from '../src/fgh.ts'
 
-test('map(select()) bug', async (t) => {
-  await t.test('should extract admin names from users array', () => {
+describe('map(select()) bug', async (t) => {
+  test.only('should extract admin names from users array', () => {
     const filter = '.users | map(select(.role == "admin")) | map(.name)'
     
     // Case 1
@@ -35,7 +35,7 @@ test('map(select()) bug', async (t) => {
   
   // Test each individual part to identify where the bug occurs
   
-  await t.test('map(select()) part works correctly', () => {
+  test('map(select()) part works correctly', () => {
     const filter = '.users | map(select(.role == "admin"))'
     
     const input = {
@@ -68,7 +68,7 @@ test('map(select()) bug', async (t) => {
               JSON.stringify(query('.users | map(select(.role == "admin")) | map(.name)', input)))
   })
   
-  await t.test('map(.name) works correctly on array', () => {
+  test('map(.name) works correctly on array', () => {
     const filter = 'map(.name)'
     
     const input = [

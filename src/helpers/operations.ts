@@ -20,8 +20,6 @@ export const handlePipe = (
   const leftResult = leftFn(input)
   if (isNullOrUndefined(leftResult)) return undefined
 
-
-
   // Special handling for recursive descent with property access
   // This prevents accessing properties on array values from recursive descent
   if (Array.isArray(leftResult) && (leftResult as any)._fromRecursiveDescent) {
@@ -77,9 +75,12 @@ export const handlePipe = (
     return rightResult 
   }
 
+  const leftIsFromArrayResult = leftResult._fromArrayConstruction
+
   // Ensure we have an array to iterate over
   const leftArray = ensureArray(leftResult)
   const results: any[] = []
+  let preserveFromMapFiter = false
 
   // Process each item from the left result
   for (const item of leftArray) {
@@ -104,13 +105,17 @@ export const handlePipe = (
         _fromRecursiveDescent?: boolean;
       }
 
+      process._rawDebug(rightResult, rightResult._fromArrayConstruction)
+
       if ((rightResult as ArrayWithConstruction)._fromArrayConstruction) {
         // Add the array elements
         results.push(...rightResult);
       }
-      // Normal arrays should be spread too
-      else {
+      // Normal arrays should be spread too if they come _fromArrayConstruction
+      else if (leftIsFromArrayResult) {
         results.push(...rightResult);
+      } else {
+        results.push(rightResult);
       }
 
       // Single values added directly

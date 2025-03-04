@@ -314,6 +314,7 @@ export class JQCodeGenerator implements CodeGenerator {
   }
 
   private generatePipe (node: PipeNode): string {
+    process._rawDebug('Pipe node', node);
     // Special handling for keys | select(...) pipe pattern
     if (node.left.type === 'Keys' && node.right.type === 'SelectFilter') {
       const rightNode = node.right as any;
@@ -339,7 +340,7 @@ export class JQCodeGenerator implements CodeGenerator {
             result.push(key);
           }
         }
-        
+
         // Mark as a final result
         try {
           Object.defineProperty(result, '_isFinalResult', { value: true });
@@ -636,12 +637,14 @@ export class JQCodeGenerator implements CodeGenerator {
 
     // Regular implementation for other map filters
     return `(() => {
+      process._rawDebug('Map filter', input);
       if (isNullOrUndefined(input)) return [];
       
       const result = [];
-      const inputValues = Array.isArray(input) ? input : Object.values(input);
+      const inputValues = Array.isArray(input) ? input : [input];
       
       for (const item of inputValues) {
+        process._rawDebug('Map filter item', item);
         // Apply the filter function to each item
         const filterResult = ${filterFn}(item);
         
@@ -658,10 +661,12 @@ export class JQCodeGenerator implements CodeGenerator {
       }
 
       // Mark as array construction to preserve its structure
-      Object.defineProperty(result, "_fromArrayConstruction", { value: true });
+      // Object.defineProperty(result, "_fromArrayConstruction", { value: true });
       // Mark as map filter result for proper wrapping
       Object.defineProperty(result, "_fromMapFilter", { value: true });
-      
+
+    process._rawDebug('Map filter result', result);
+
       return result;
     })()`
   }
@@ -741,6 +746,7 @@ export class JQCodeGenerator implements CodeGenerator {
 
     // Regular select implementation
     return `(() => {
+      process._rawDebug('Select filter', input);
       // Handle null/undefined input
       if (isNullOrUndefined(input)) return null;
       
