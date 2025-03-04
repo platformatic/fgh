@@ -54,12 +54,7 @@ export const getNestedValue = (
         }
       }
 
-      if (results.length > 0) {
-        // Mark as array construction to preserve
-        Object.defineProperty(results, '_fromArrayConstruction', { value: true })
-        return results
-      }
-      return undefined
+      return results.length > 0 ? results : undefined
     }
 
     // For objects, access normally
@@ -68,59 +63,4 @@ export const getNestedValue = (
   }
 
   return value
-}
-
-/**
- * Ensure the final result is always an array according to the new FGH API
- * @param result The result to convert to an array
- * @returns The result as an array
- */
-export const ensureArrayResult = (result: any): any[] => {
-  // Special handling for null from select filter - return empty array
-  if (result === null && (result as any)?._fromSelectFilter) {
-    return []
-  }
-  
-  // For other null values, we want to return [null], not an empty array
-  if (result === null) return [null]
-  
-  // If result is undefined, return an empty array
-  if (result === undefined) return []
-  
-  // If result is already an array, we need to decide based on whether we're dealing
-  // with a direct array input or array elements
-  if (Array.isArray(result)) {
-    // Handle arrays that are final results (like from keys/keys_unsorted)
-    // which should be returned without additional wrapping
-    if ((result as any)._isFinalResult) {
-      return result
-    }
-    
-    // Special handling for empty array from select filter - we need to wrap it
-    if ((result as any)._fromSelectFilter && result.length === 0) {
-      return [result]
-    }
-
-    
-    // If array is from map or map_values filter, we need to wrap the entire array
-    if ((result as any)._fromMapFilter || (result as any)._fromMapValuesFilter) {
-      return [result]
-    }
-    
-    // Arrays that need to be preserved as-is (from default operator)
-    if ((result as any)._preserveArray) {
-      return [result]
-    }
-    
-    // If array is from array iteration, return as-is
-    if ((result as any)._fromArrayConstruction || result.length === 0) {
-      return [...result]
-    }
-    
-    // If it's the original input, wrap it
-    return [result]
-  }
-  
-  // If result is a scalar value, wrap it in an array
-  return [result]
 }

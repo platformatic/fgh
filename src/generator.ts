@@ -14,7 +14,6 @@ import {
   isNullOrUndefined,
   ensureArray,
   getNestedValue,
-  ensureArrayResult,
   accessProperty,
   accessIndex,
   accessSlice,
@@ -192,9 +191,8 @@ export class JQCodeGenerator implements CodeGenerator {
           }
         }
         
-        // Mark as construction to preserve in later operations
+        // Return results if we found any
         if (propResults.length > 0) {
-          Object.defineProperty(propResults, '_fromArrayConstruction', { value: true });
           return propResults;
         }
         
@@ -217,34 +215,20 @@ export class JQCodeGenerator implements CodeGenerator {
     // Special case for '[]' which is parsed as ArrayIteration without input
     // We need to check if this is a direct [] without a preceding input, which means empty array construction
     if (!node.input && node.position === 0) {
-      // Return an empty array with proper construction marker
-      return 'Object.defineProperty([], "_fromArrayConstruction", { value: true })'
+      // Return an empty array
+      return '[]'
     }
 
     if (node.input) {
       const inputCode = this.generateNode(node.input)
-      // Need to preserve array for correct handling in comma operator
-      return `((input) => {
-        const result = iterateArray(${inputCode});
-        if (Array.isArray(result)) {
-          Object.defineProperty(result, "_fromArrayConstruction", { value: true });
-        }
-        return result;
-      })(input)`
+      return `iterateArray(${inputCode})`
     }
-    return `((input) => {
-      const result = iterateArray(input);
-      if (Array.isArray(result)) {
-        Object.defineProperty(result, "_fromArrayConstruction", { value: true });
-      }
-      return result;
-    })(input)`
+    return 'iterateArray(input)'
   }
 
   private generateSequence (node: SequenceNode): string {
     // Create an array with all expression results,
-    // flatten array items as needed, and mark it as an array construction
-    // so it's preserved by flattenResult
+    // flatten array items as needed
     const expressions = node.expressions.map(expr => this.generateNode(expr))
 
     // Check if all expressions are IndexAccess nodes. If so, we have array index syntax like [1,2,3]
@@ -269,13 +253,11 @@ export class JQCodeGenerator implements CodeGenerator {
           }`
         }).join('')}
         
-        // Mark as array construction result
-        Object.defineProperty(results, "_fromArrayConstruction", { value: true });
         return results;
       })()`
     }
 
-    // Enhanced sequence handling with careful array spread and preservation of structure
+    // Enhanced sequence handling with careful array spread
     return `(() => {
       const sequenceResults = [];
       
@@ -285,25 +267,13 @@ export class JQCodeGenerator implements CodeGenerator {
         
         // Handle arrays correctly while preserving their elements
         if (Array.isArray(result${i})) {
-          // For arrays from array iteration and property access, always spread
-          if (result${i}._fromArrayConstruction) {
-            sequenceResults.push(...result${i});
-          }
-          // For regular arrays, also spread them to maintain consistency
-          else {
-            sequenceResults.push(...result${i});
-          }
+          sequenceResults.push(...result${i});
         }
         // Don't lose non-array values either
         else if (result${i} !== undefined) {
           sequenceResults.push(result${i});
         }
       `).join('')}
-      
-      // Always mark the result array as a construction to preserve its structure
-      if (sequenceResults.length > 0) {
-        Object.defineProperty(sequenceResults, "_fromArrayConstruction", { value: true });
-      }
       
       return sequenceResults;
     })()`
@@ -314,7 +284,6 @@ export class JQCodeGenerator implements CodeGenerator {
   }
 
   private generatePipe (node: PipeNode): string {
-    process._rawDebug('Pipe node', node);
     // Special handling for keys | select(...) pipe pattern
     if (node.left.type === 'Keys' && node.right.type === 'SelectFilter') {
       const rightNode = node.right as any;
@@ -341,10 +310,7 @@ export class JQCodeGenerator implements CodeGenerator {
           }
         }
 
-        // Mark as a final result
-        try {
-          Object.defineProperty(result, '_isFinalResult', { value: true });
-        } catch (e) {}
+        // No special marking needed
         
         return result;
       })()`;
@@ -376,10 +342,7 @@ export class JQCodeGenerator implements CodeGenerator {
           }
         }
         
-        // Mark as a final result
-        try {
-          Object.defineProperty(result, '_isFinalResult', { value: true });
-        } catch (e) {}
+        // No special marking needed
         
         return result;
       })()`;
@@ -417,10 +380,7 @@ export class JQCodeGenerator implements CodeGenerator {
           }
         }
         
-        // Mark as array construction to preserve its structure
-        if (results.length > 0) {
-          Object.defineProperty(results, '_fromArrayConstruction', { value: true });
-        }
+        // No special marking needed
         
         return results.length > 0 ? results : undefined;
       })()`
@@ -432,7 +392,8 @@ export class JQCodeGenerator implements CodeGenerator {
       const rightSelectConditionCode = this.generateNode((node.right as any).condition)
       return `(() => {
         const leftResult = ${leftCode};
-        return handleArrayIterationToSelectPipe(leftResult, ${JQCodeGenerator.wrapInFunction(rightSelectConditionCode)});
+        const result = handleArrayIterationToSelectPipe(leftResult, ${JQCodeGenerator.wrapInFunction(rightSelectConditionCode)});
+        return result;
       })()`
     }
 
@@ -501,8 +462,8 @@ export class JQCodeGenerator implements CodeGenerator {
   private generateArrayConstruction (node: any): string {
     // Handle empty array construction
     if (!node.elements || node.elements.length === 0) {
-      // Return an empty array that will be preserved by flattenResult
-      return 'Object.defineProperty([], "_fromArrayConstruction", { value: true })'
+      // Just return an empty array
+      return '[]'
     }
 
     const elements = node.elements.map((element: ASTNode) => {
@@ -538,8 +499,7 @@ export class JQCodeGenerator implements CodeGenerator {
           if (!Array.isArray(arr)) return arr;
           const toRemove = [${stringElements.join(', ')}];
           const result = arr.filter(item => !toRemove.includes(item));
-          // Mark as a difference result to preserve array structure
-          Object.defineProperty(result, '_fromDifference', { value: true });
+          // No special marking needed
           return result;
         })(${leftCode})`
       }
@@ -622,11 +582,6 @@ export class JQCodeGenerator implements CodeGenerator {
       // Start the collection process with the input
       collectAllValues(input);
       
-      // Mark as array construction to preserve its structure
-      Object.defineProperty(result, '_fromArrayConstruction', { value: true });
-      // Mark as recursive descent to help with property access filtering
-      Object.defineProperty(result, '_fromRecursiveDescent', { value: true });
-      
       return result;
     })()`
   }
@@ -651,18 +606,33 @@ export class JQCodeGenerator implements CodeGenerator {
         
         // Handle array results - add all elements
         if (Array.isArray(filterResult)) {
-          result.push(...filterResult);
+          // If the filter is select(), it will return array of matching items
+          if (${node.filter.type === 'SelectFilter'}) {
+            // For select filter, include matching items directly
+            result.push(...filterResult);
+          } else {
+            // For other filters, check if the array is already wrapped
+            if (filterResult.some(item => Array.isArray(item))) {
+              // It's a nested array, extract the inner arrays
+              for (const item of filterResult) {
+                if (Array.isArray(item)) {
+                  result.push(...item);
+                } else {
+                  result.push(item);
+                }
+              }
+            } else {
+              // It's a flat array, add all elements
+              result.push(...filterResult);
+            }
+          }
         } else {
           // Add single value
           result.push(filterResult);
         }
       }
 
-      // Mark as map filter result for proper wrapping
-      Object.defineProperty(result, "_fromMapFilter", { value: true });
-
-      process._rawDebug('|| Map filter result', result, result._fromMapFilter);
-
+      // Return the result directly without extra wrapping
       return result;
     })()`
   }
@@ -696,10 +666,7 @@ export class JQCodeGenerator implements CodeGenerator {
           }
         }
         
-        // Mark as array construction to preserve its structure
-        Object.defineProperty(result, "_fromArrayConstruction", { value: true });
-        // Mark as map_values filter result for proper wrapping
-        Object.defineProperty(result, "_fromMapValuesFilter", { value: true });
+        // No special marking needed
         
         return result;
       }
@@ -726,8 +693,7 @@ export class JQCodeGenerator implements CodeGenerator {
           }
         }
         
-        // Mark as map_values filter result for proper wrapping
-        Object.defineProperty(result, "_fromMapValuesFilter", { value: true });
+        // No special marking needed
         
         return Object.keys(result).length > 0 ? result : {};
       }
@@ -742,12 +708,11 @@ export class JQCodeGenerator implements CodeGenerator {
 
     // Regular select implementation
     return `(() => {
-      process._rawDebug('Select filter', input);
       // Handle null/undefined input
-      if (isNullOrUndefined(input)) return null;
+      if (isNullOrUndefined(input)) return [];
       
-      // Handle array iteration input - when select is used with map(select(...))
-      if (input && input._fromArrayConstruction) {
+      // Handle array input
+      if (Array.isArray(input)) {
         // Filter the elements that match the condition
         const result = [];
         
@@ -761,38 +726,16 @@ export class JQCodeGenerator implements CodeGenerator {
           }
         }
         
-        // Mark as array construction to preserve its structure
-        if (result.length > 0) {
-          Object.defineProperty(result, "_fromArrayConstruction", { value: true });
-        }
-        
-        // Mark as a select filter result so we can handle it specially in ensureArrayResult
-        Object.defineProperty(result, "_fromSelectFilter", { value: true });
-        
         return result;
       }
       
       // When used directly on a single object input
       const conditionResult = ${conditionFn}(input);
 
-      // Return the input unchanged if condition is true, otherwise null
-      const result = (conditionResult !== null && conditionResult !== undefined && conditionResult !== false) 
-        ? input 
-        : null;
-
-      // Special handling for null result
-      if (result === null || result === undefined) {
-        // If we can't mark null (which we can't in strict mode), return an empty array
-        // that's marked as a select filter result
-        const emptyArray = [];
-        Object.defineProperty(emptyArray, "_fromSelectFilter", { value: true });
-        return emptyArray;
-      } else if (typeof result === 'object') {
-        // Mark non-null result as a select filter result
-        Object.defineProperty(result, "_fromSelectFilter", { value: true });
-      }
-      
-      return result;
+      // Return the input unchanged if condition is true, otherwise empty array
+      return (conditionResult !== null && conditionResult !== undefined && conditionResult !== false) 
+        ? [input] 
+        : [];
     })()`
   }
 
@@ -843,13 +786,7 @@ export class JQCodeGenerator implements CodeGenerator {
           }
         }
         
-        // Mark as construction array to preserve in later operations
-        if (results.length > 0) {
-          Object.defineProperty(results, '_fromArrayConstruction', { value: true });
-          return results;
-        }
-        
-        return undefined;
+        return results.length > 0 ? results : undefined;
       }
       
       // Handle single result case
@@ -960,9 +897,8 @@ export class JQCodeGenerator implements CodeGenerator {
   }
 
   private generateEmpty (node: any): string {
-    // Return an empty array directly to fix the empty operation
-    // Mark it as both a construction array and as coming from the 'empty' keyword
-    return 'Object.defineProperty(Object.defineProperty([], "_fromArrayConstruction", { value: true }), "_fromEmpty", { value: true })'
+    // Return an empty array directly without any special marking
+    return '[]'
   }
 
   generate (ast: ASTNode): Function {
@@ -994,95 +930,100 @@ export class JQCodeGenerator implements CodeGenerator {
 
     // Special case for select filter when used standalone
     if (ast.type === 'SelectFilter') {
-      const conditionFn = this.generate((ast as any).condition);
+    const conditionFn = this.generate((ast as any).condition);
+    
+    return function (input: any) {
+    if (input === null || input === undefined) return [];
+    
+    // Special handling for arrays
+    if (Array.isArray(input)) {
+    // Filter the array elements based on the condition
+    const filtered = input.filter(item => {
+    const conditionResult = conditionFn(item);
+    return conditionResult !== null && 
+    conditionResult !== undefined && 
+    conditionResult !== false;
+    });
+    
+    // Always return the filtered array (not wrapped)
+    return filtered;
+    }
+    
+    // Apply the condition function
+    const conditionResult = conditionFn(input);
+    
+    // Check the condition result
+    let matches = false;
+    
+    // If the result is an array (from condition evaluation), check if it has truthy values
+    if (Array.isArray(conditionResult)) {
+    matches = conditionResult.some(r => r !== null && r !== undefined && r !== false);
+    } else {
+    // For scalar values, it must be truthy and not null/undefined/false
+    matches = conditionResult !== null && conditionResult !== undefined && conditionResult !== false;
+    }
+    
+    // Return empty array for non-matching conditions
+    if (!matches) {
+    return [];
+    }
+    
+    // Return the input (not wrapped) for matching conditions
+    return input;
+    }
+    }
+
+    // Special case for MapFilter with SelectFilter
+    if (ast.type === 'MapFilter' && (ast as any).filter?.type === 'SelectFilter') {
+      const filterFn = this.generate((ast as any).filter);
       
       return function (input: any) {
         if (input === null || input === undefined) return [];
         
-        // Special handling for arrays that are final results (like from keys/keys_unsorted)
-        // or other simple arrays of strings/numbers
-        if (Array.isArray(input) && 
-            ((input as any)._isFinalResult || 
-             input.length === 0 || 
-             typeof input[0] === 'string' || 
-             typeof input[0] === 'number')) {
-          // Filter the array elements based on the condition
-          const result = input.filter(item => {
-            const conditionResult = conditionFn(item);
-            return conditionResult !== null && 
-                   conditionResult !== undefined && 
-                   conditionResult !== false;
-          });
+        // For arrays, apply the filter to each element
+        if (Array.isArray(input)) {
+          const result = [];
           
-          // For final results, maintain their status
-          if ((input as any)._isFinalResult && result && typeof result === 'object') {
-            try {
-              Object.defineProperty(result, '_isFinalResult', { value: true })
-            } catch (e) {
-              // If we can't set the property (rare case with frozen objects), still continue
+          for (const item of input) {
+            // Apply the filter function to each item
+            const filterResult = filterFn(item);
+            
+            // Only include non-null/undefined results
+            if (filterResult !== null && filterResult !== undefined) {
+              if (Array.isArray(filterResult)) {
+                result.push(...filterResult);
+              } else {
+                result.push(filterResult);
+              }
             }
           }
           
-          return result;
+          // Special handling for map(select()) - always wrap in another array
+          return [result];
         }
         
-        // Apply the condition function
-        const conditionResult = conditionFn(input);
-        
-        // Check the condition result
-        let matches = false;
-        
-        // If the result is an array (from condition evaluation), check if it has truthy values
-        if (Array.isArray(conditionResult)) {
-          matches = conditionResult.some(r => r !== null && r !== undefined && r !== false);
-        } else {
-          // For scalar values, it must be truthy and not null/undefined/false
-          matches = conditionResult !== null && conditionResult !== undefined && conditionResult !== false;
-        }
-        
-        // Return empty array for non-matching conditions
-        if (!matches) {
-          return [];
-        }
-        
-        // Return the input in an array for matching conditions
-        return [input];
+        return [];
       }
     }
-
-    // Functions that inherently return arrays need special handling
-    // to ensure consistent behavior with the compiled function's array wrapping
+    
+    // Functions that inherently return arrays don't need special handling anymore
     if (ast.type === 'Keys') {
       return function (input: any) {
-        const result = getKeys(input)
-        if (Array.isArray(result)) {
-          // Mark this as a final result that should not be wrapped again
-          Object.defineProperty(result, '_isFinalResult', { value: true })
-          return result
-        }
-        return []
+        return getKeys(input) || [];
       }
     }
 
     if (ast.type === 'KeysUnsorted') {
       return function (input: any) {
-        const result = getKeysUnsorted(input)
-        if (Array.isArray(result)) {
-          // Mark this as a final result that should not be wrapped again
-          Object.defineProperty(result, '_isFinalResult', { value: true })
-          return result
-        }
-        return []
+        return getKeysUnsorted(input) || [];
       }
     }
 
     // Special case for 'empty' operation to return empty array instead of null
     if (ast.type === 'Empty') {
       return function (input: any) {
-        // Return empty array marked as coming from 'empty' keyword
-        const emptyArray = [];
-        Object.defineProperty(emptyArray, '_fromEmpty', { value: true });
-        return emptyArray;
+        // Return empty array directly
+        return [];
       }
     }
 
@@ -1093,17 +1034,14 @@ export class JQCodeGenerator implements CodeGenerator {
 // Execute the generated expression
 const result = ${body};
 
-// Return the result as an array
-return ensureArrayResult(result);`
-
-console.log(code)
+// Return the result directly
+return result;`
 
     // Create a function factory that receives all helper functions as parameters
     const functionFactory = new Function(
       'isNullOrUndefined',
       'ensureArray',
       'getNestedValue',
-      'ensureArrayResult',
       'accessProperty',
       'accessIndex',
       'accessSlice',
@@ -1140,7 +1078,6 @@ console.log(code)
       isNullOrUndefined,
       ensureArray,
       getNestedValue,
-      ensureArrayResult,
       accessProperty,
       accessIndex,
       accessSlice,

@@ -3,7 +3,7 @@ import assert from 'node:assert'
 import * as helpers from '../../src/helpers/index.ts'
 
 describe('Helper Functions Integration', () => {
-  it.only('should correctly chain multiple helper operations', () => {
+  it('should correctly chain multiple helper operations', () => {
     // Start with a complex object
     const input = {
       users: [
@@ -25,9 +25,8 @@ describe('Helper Functions Integration', () => {
     const allRoles = helpers.handlePipe(input, getUsers, getRoles)
     assert.deepStrictEqual(allRoles, ['admin', 'editor', 'user', 'editor'])
 
-    // Create a proper construction array with a single element to remove
+    // Create a simple array with a single element to remove
     const editorArray = ['editor']
-    Object.defineProperty(editorArray, '_fromArrayConstruction', { value: true })
 
     // Now perform the subtraction
     const uniqueRoles = helpers.subtractValues(allRoles, editorArray)
@@ -58,8 +57,6 @@ describe('Helper Functions Integration', () => {
     // Test with array spread/flatten
     const arr1 = [1, 2]
     const arr2 = [3, 4]
-    Object.defineProperty(arr1, '_fromArrayConstruction', { value: true })
-    Object.defineProperty(arr2, '_fromArrayConstruction', { value: true })
 
     // Test array construction preserving structure
     const combined = helpers.constructArray({}, [
@@ -67,10 +64,9 @@ describe('Helper Functions Integration', () => {
       () => arr2
     ])
     assert.deepStrictEqual(combined, [1, 2, 3, 4])
-    assert.ok(combined._fromArrayConstruction)
+    // Flag removed: property construction markers no longer needed
 
-    // Test flattening results
-    assert.deepStrictEqual(helpers.ensureArrayResult([42]), [[42]])
-    assert.deepStrictEqual(helpers.ensureArrayResult(combined), [1, 2, 3, 4])
+    // ensureArrayResult has been removed
+    // Test array standardization in fgh.ts instead
   })
 })

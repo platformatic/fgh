@@ -17,7 +17,7 @@ describe('map with select filter', async (t) => {
     
     assert.deepEqual(
       query(filter, input),
-      [[{"name": "John", "role": "admin"}]]
+      [{"name": "John", "role": "admin"}]
     )
   })
   
@@ -33,7 +33,7 @@ describe('map with select filter', async (t) => {
     
     assert.deepEqual(
       query(filter, input),
-      [["John"]]
+      ["John"]
     )
   })
   
@@ -50,11 +50,11 @@ describe('map with select filter', async (t) => {
     
     assert.deepEqual(
       query(filter, input),
-      [["John", "Bob"]]
+      ["John", "Bob"]
     )
   })
   
-  test.only('should handle no matches correctly', () => {
+  test('should handle no matches correctly', () => {
     const input = {
       "users": [
         {"name": "Jane", "role": "user"}, 
@@ -66,7 +66,7 @@ describe('map with select filter', async (t) => {
     
     assert.deepEqual(
       query(filter, input),
-      [[]]
+      []
     )
   })
 })

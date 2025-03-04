@@ -44,14 +44,8 @@ export const accessProperty = (
       }
     }
 
-    // If we found any values, return them as a special array that won't be flattened
-    if (results.length > 0) {
-      // Mark the array so it will be preserved through future operations
-      Object.defineProperty(results, '_fromArrayConstruction', { value: true })
-      return results
-    }
-
-    return undefined
+    // Return the array of results or undefined if empty
+    return results.length > 0 ? results : undefined
   }
 
   // Regular property access on an object
@@ -142,19 +136,13 @@ export const iterateArray = (input: any): any => {
   if (isNullOrUndefined(input)) return undefined
 
   if (Array.isArray(input)) {
-    // Make sure to preserve the array structure
-    const result = [...input]
-    // Mark the array to preserve it as a sequence
-    Object.defineProperty(result, '_fromArrayConstruction', { value: true })
-    return result
+    // Just return a copy of the array
+    return [...input]
   }
 
   if (typeof input === 'object' && input !== null) {
-    // Get object values
-    const result = Object.values(input)
-    // Mark the array to preserve it as a sequence
-    Object.defineProperty(result, '_fromArrayConstruction', { value: true })
-    return result
+    // Get object values as an array
+    return Object.values(input)
   }
 
   return undefined

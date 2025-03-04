@@ -39,7 +39,7 @@ describe('Operations Helper Functions', () => {
       }
       const result = handlePipe({}, leftFn, rightFn)
       assert.deepStrictEqual(result, [1, 2, 2, 3])
-      assert.ok(result._fromArrayConstruction)
+      // Flag removed: property construction markers no longer needed
     })
 
     it('should skip undefined results from right function', () => {
@@ -62,7 +62,7 @@ describe('Operations Helper Functions', () => {
       ]
       const result = constructArray({ a: 1, b: 2 }, elementFns)
       assert.deepStrictEqual(result, [1, 2])
-      assert.ok(result._fromArrayConstruction)
+      // Flag removed: property construction markers no longer needed
     })
 
     it('should skip undefined results', () => {
@@ -94,7 +94,7 @@ describe('Operations Helper Functions', () => {
       ]
       const result = constructArray({ a: 1, b: 2 }, elementFns)
       assert.deepStrictEqual(result, [1, 2])
-      assert.ok(result._fromArrayConstruction)
+      // Flag removed: property construction markers no longer needed
     })
   })
 

@@ -2,7 +2,7 @@
  * Helper functions for FGH operations (pipe, array/object construction, etc.)
  */
 
-import { isNullOrUndefined, ensureArray, ensureArrayResult } from './utils.ts'
+import { isNullOrUndefined, ensureArray } from './utils.ts'
 
 /**
  * Handle the pipe operation (|) by applying the right function to each result of the left function
@@ -16,79 +16,16 @@ export const handlePipe = (
   leftFn: (input: any) => any,
   rightFn: (input: any) => any
 ): any => {
-  process._rawDebug('==> handlePipe input', input)
   // Get the result of the left function
   const leftResult = leftFn(input)
   if (isNullOrUndefined(leftResult)) return undefined
 
-  // Special handling for recursive descent with property access
-  // This prevents accessing properties on array values from recursive descent
-  if (Array.isArray(leftResult) && (leftResult as any)._fromRecursiveDescent) {
-    // First try normal property access, if it works we're done
-    let rightResult = rightFn(leftResult)
-    if (!isNullOrUndefined(rightResult)) {
-      return rightResult
-    }
-    
-    // Try filtering to just object values (not arrays)
-    const objectValues = leftResult.filter(item => 
-      item !== null && typeof item === 'object' && !Array.isArray(item)
-    )
-    
-    const results: any[] = []
-    for (const obj of objectValues) {
-      rightResult = rightFn(obj)
-      if (!isNullOrUndefined(rightResult)) {
-        if (Array.isArray(rightResult)) {
-          results.push(...rightResult)
-        } else {
-          results.push(rightResult)
-        }
-      }
-    }
-    
-    if (results.length > 0) {
-      try {
-        Object.defineProperty(results, '_fromArrayConstruction', { value: true })
-      } catch (e) {
-        // If we can't set the property (rare case with frozen objects), still continue
-      }
-      return results
-    }
-    
-    return undefined
-  }
-
-  // Handle arrays that are final results (like from keys/keys_unsorted) specially
-  // These should be passed directly to the right function
-  if (Array.isArray(leftResult) && (leftResult as any)._isFinalResult) {
-    const rightResult = rightFn(leftResult)
-    
-    // Make sure the result maintains the _isFinalResult property
-    if (Array.isArray(rightResult) && rightResult && typeof rightResult === 'object') {
-      try {
-        Object.defineProperty(rightResult, '_isFinalResult', { value: true })
-      } catch (e) {
-        // If we can't set the property (rare case with frozen objects), still continue
-      }
-    }
-    
-    return rightResult 
-  }
-
-  process._rawDebug('==> leftResult', leftResult)
-
-  const leftIsFromArrayResult = leftResult._fromArrayConstruction
-  process._rawDebug('==> leftIsFromArrayResult', leftIsFromArrayResult)
-
   // Ensure we have an array to iterate over
   const leftArray = ensureArray(leftResult)
   const results: any[] = []
-  let preserveFromMapFiter = false
 
   // Process each item from the left result
   for (const item of leftArray) {
-    process._rawDebug('==> item', item)
     // Apply the right function to each item
     const rightResult = rightFn(item)
 
@@ -97,44 +34,16 @@ export const handlePipe = (
 
     // Handle arrays from the right function
     if (Array.isArray(rightResult)) {
-      process._rawDebug('==> rightResult._isFinalResult', rightResult._isFinalResult)
-      // Handle final result arrays (should be preserved as-is)
-      if ((rightResult as any)._isFinalResult) {
-        // For final results, we want to return directly without further processing
-        return rightResult
-      }
-
-
-      process._rawDebug('==> rightResult', rightResult, leftIsFromArrayResult)
-
-      process._rawDebug('==> rightResult._fromArrayConstruction', rightResult._fromArrayConstruction)
-      process._rawDebug('==> leftIsFromArrayResult', leftIsFromArrayResult)
-      preserveFromMapFiter ||= rightResult._fromMapFilter
-
-      if (leftIsFromArrayResult || rightResult._fromMapFilter) {
-        process._rawDebug('==> rightResult from array construction', rightResult)
-        results.push(...rightResult)
-      } else {
-        process._rawDebug('==> rightResult from single value', rightResult)
-        results.push(...ensureArrayResult(rightResult))
-      }
-
-      // Single values added directly
+      // Spread the array elements
+      results.push(...rightResult)
     } else {
+      // Single values added directly
       results.push(rightResult)
     }
   }
 
-  process._rawDebug('==> leftIsFromArrayResult', leftIsFromArrayResult, 'preserveFromMapFiter', preserveFromMapFiter)
-  if (leftIsFromArrayResult || preserveFromMapFiter) {
-    // Make sure the final results array is preserved
-    Object.defineProperty(results, '_fromArrayConstruction', { value: true })
-  }
-
-  process._rawDebug('==> handlePipe results', results, results._fromArrayConstruction)
-
-  // Return undefined for empty results, otherwise the array
-  return results.length === 0 ? undefined : results
+  // Return results array (empty or not)
+  return results
 }
 
 /**
@@ -158,28 +67,13 @@ export const constructArray = (
 
     // Handle different types of values
     if (Array.isArray(value)) {
-      // If the array is already a construction, preserve its structure by spreading
-      interface ArrayWithConstruction extends Array<any> {
-        _fromArrayConstruction?: boolean;
-      }
-
-      if ((value as ArrayWithConstruction)._fromArrayConstruction) {
-        result.push(...value)
-        // Other arrays should also be flattened
-      } else {
-        result.push(...value)
-      }
-      // Add single non-null values directly
+      // This is an array construction within array construction
+      // Preserve nested arrays as individual elements
+      result.push(...value)
     } else if (!isNullOrUndefined(value)) {
+      // Add single non-null values directly
       result.push(value)
     }
-  }
-
-  // Mark the resulting array as a construction result so it's preserved
-  try {
-    Object.defineProperty(result, '_fromArrayConstruction', { value: true })
-  } catch (e) {
-    // If we can't set the property (rare case with frozen objects), still continue
   }
 
   return result
@@ -230,31 +124,7 @@ export const constructObject = (
   // This creates an array of objects by iterating over array elements in the fields
   const hasArrayField = fields.some(field => {
     const fieldValue = field.value(input)
-
-    // Check what test is being run
-    const isObjectIdentityTest = typeof process?.argv?.[1] === 'string' &&
-                                 process.argv[1].includes('object-identity.test.ts')
-    const isOperationsTest = typeof process?.argv?.[1] === 'string' &&
-                             process.argv[1].includes('operations.test.ts')
-
-    // Special handling for the two different test scenarios
-    if (isObjectIdentityTest) {
-      // For object-identity.test.ts, we DON'T want to expand arrays from identity
-      return false
-    } else if (isOperationsTest) {
-      // For operations.test.ts, we DO want to expand arrays as per the test expectation
-      return Array.isArray(fieldValue) && !field.isDynamic
-    }
-
-    // Special case for direct identity use from new tests to NOT expand arrays from identity
-    if (Array.isArray(fieldValue) && !(fieldValue as any)._fromArrayConstruction && fields.length === 1) {
-      // Single field with plain array value (likely from identity .)
-      return false
-    }
-
-    // Regular handling for normal operation - only expand arrays from array iteration
-    return Array.isArray(fieldValue) && !field.isDynamic &&
-           (fieldValue as any)._fromArrayConstruction // From array iteration
+    return Array.isArray(fieldValue) && !field.isDynamic
   })
 
   if (hasArrayField) {

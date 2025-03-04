@@ -24,19 +24,8 @@ export const handleArrayIterationToSelectPipe = (
     }
   }
 
-  // Handle special case: if there's only one match, return the item directly
-  // instead of wrapping it in an array
-  if (results.length === 1) {
-    return results[0]
-  }
-
-  // Otherwise, return the entire array with proper construction marking
-  if (results.length > 0) {
-    Object.defineProperty(results, '_fromArrayConstruction', { value: true })
-    return results
-  }
-
-  return null
+  // Return the filtered array directly
+  return results
 }
 
 /**
@@ -64,9 +53,7 @@ export const handleArrayIterationToKeysPipe = (
 
   // If this is an empty array, return an empty array
   if (input.length === 0) {
-    const result: any[] = []
-    Object.defineProperty(result, '_fromArrayConstruction', { value: true })
-    return result
+    return []
   }
 
   // For each item in the array, get the keys
@@ -77,7 +64,5 @@ export const handleArrayIterationToKeysPipe = (
     results.push(keys)
   }
 
-  // Mark the result as an array construction
-  Object.defineProperty(results, '_fromArrayConstruction', { value: true })
   return results
 }

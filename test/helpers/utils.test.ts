@@ -1,6 +1,6 @@
 import { describe, it } from 'node:test'
 import assert from 'node:assert'
-import { isNullOrUndefined, ensureArray, getNestedValue, ensureArrayResult } from '../../src/helpers/utils.ts'
+import { isNullOrUndefined, ensureArray, getNestedValue } from '../../src/helpers/utils.ts'
 
 describe('Utils Helper Functions', () => {
   describe('isNullOrUndefined', () => {
@@ -74,7 +74,6 @@ describe('Utils Helper Functions', () => {
       const result = getNestedValue(arr, ['a'])
       assert.ok(Array.isArray(result))
       assert.deepStrictEqual(result, [1, 2])
-      assert.ok(result._fromArrayConstruction)
     })
 
     it('should handle objects with nested arrays', () => {
@@ -91,36 +90,5 @@ describe('Utils Helper Functions', () => {
     })
   })
 
-  describe('ensureArrayResult', () => {
-    it('should wrap null in an array', () => {
-      assert.deepStrictEqual(ensureArrayResult(null), [null])
-    })
-
-    it('should return empty array for undefined', () => {
-      assert.deepStrictEqual(ensureArrayResult(undefined), [])
-    })
-
-    it('should wrap non-array values in an array', () => {
-      assert.deepStrictEqual(ensureArrayResult(5), [5])
-      assert.deepStrictEqual(ensureArrayResult('test'), ['test'])
-      assert.deepStrictEqual(ensureArrayResult({ a: 1 }), [{ a: 1 }])
-    })
-
-    it('should preserve array-marked with _fromArrayConstruction', () => {
-      const arr = [1, 2, 3]
-      Object.defineProperty(arr, '_fromArrayConstruction', { value: true })
-      const result = ensureArrayResult(arr)
-      assert.deepStrictEqual(result, [1, 2, 3])
-      assert.notStrictEqual(result, arr) // Should be a new array
-    })
-
-    it('should preserve empty arrays', () => {
-      assert.deepStrictEqual(ensureArrayResult([]), [])
-    })
-
-    it('should wrap regular arrays', () => {
-      // Regular arrays without special marking should be wrapped
-      assert.deepStrictEqual(ensureArrayResult([1, 2, 3]), [[1, 2, 3]])
-    })
-  })
+  // ensureArrayResult has been removed in favor of standardizeResult in fgh.ts
 })

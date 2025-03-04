@@ -3,7 +3,27 @@ import { JQCodeGenerator } from './generator.ts'
 import type { JQFunction, CompileOptions } from './types.ts'
 import { ParseError } from './types.ts'
 import { safeExecute, attemptErrorRecovery, ExecutionError } from './helpers/error-handling.ts'
-import { ensureArrayResult } from './helpers/utils.ts'
+
+/**
+* Convert any result to a consistent array format according to API requirements
+* @param result The result to convert to a consistent array format
+* @returns The result in a consistent array format
+*/
+export const standardizeResult = (result: unknown): unknown[] => {
+  // Handle undefined
+  if (result === undefined) return []
+
+  // Handle null
+  if (result === null) return [null]
+
+  // Handle arrays
+  if (Array.isArray(result)) {
+    return result
+  }
+  
+  // Non-array values are always wrapped in an array
+  return [result]
+}
 
 /**
  * Compiles a JQ expression into a reusable function
@@ -22,9 +42,15 @@ export function compile (expression: string, options?: CompileOptions): JQFuncti
     const generator = new JQCodeGenerator()
 
     const ast = parser.parse()
-    const fn = generator.generate(ast)
+    const rawFn = generator.generate(ast)
 
-    return fn as JQFunction
+    // Create a new function that ensures consistent array result
+    const wrappedFn = (input: unknown) => {
+      const result = rawFn(input)
+      return standardizeResult(result)
+    }
+    
+    return wrappedFn as JQFunction
   } catch (error) {
     // Attempt error recovery
     if (error instanceof ParseError) {
@@ -38,9 +64,15 @@ export function compile (expression: string, options?: CompileOptions): JQFuncti
           const parser = new JQParser(recovery.fixedExpression)
           const generator = new JQCodeGenerator()
           const ast = parser.parse()
-          const fn = generator.generate(ast)
+          const rawFn = generator.generate(ast)
 
-          return fn as JQFunction
+          // Create a new function that ensures consistent array result
+          const wrappedFn = (input: unknown) => {
+            const result = rawFn(input)
+            return standardizeResult(result)
+          }
+          
+          return wrappedFn as JQFunction
         } catch (secondError) {
           // If recovery also fails, throw a more informative error
           // but preserve the original error as the cause

@@ -35,7 +35,7 @@ describe('Access Helper Functions', () => {
       const result = accessProperty(arr, 'name')
       assert.ok(Array.isArray(result))
       assert.deepStrictEqual(result, ['Alice', 'Bob'])
-      assert.ok(result._fromArrayConstruction)
+      // Flag removed: property construction markers no longer needed
     })
 
     it('should handle optional property access', () => {
@@ -128,14 +128,14 @@ describe('Access Helper Functions', () => {
       const result = iterateArray(arr)
       assert.notStrictEqual(result, arr) // Not the same reference
       assert.deepStrictEqual(result, arr) // But same content
-      assert.ok(result._fromArrayConstruction)
+      // Flag removed: property construction markers no longer needed
     })
 
     it('should return object values as an array', () => {
       const obj = { a: 1, b: 2, c: 3 }
       const result = iterateArray(obj)
       assert.deepStrictEqual(result, [1, 2, 3])
-      assert.ok(result._fromArrayConstruction)
+      // Flag removed: property construction markers no longer needed
     })
 
     it('should return undefined for primitives', () => {
