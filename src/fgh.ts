@@ -9,24 +9,20 @@ import { safeExecute, attemptErrorRecovery, ExecutionError } from './helpers/err
 * @param result The result to convert to a consistent array format
 * @returns The result in a consistent array format
 */
-export const standardizeResult = (result: unknown): unknown[] => {
+export const standardizeResult = (result: unknown, wrap: boolean): unknown[] => {
   // Handle undefined
   if (result === undefined) return []
 
   // Handle null
   if (result === null) return [null]
 
-  // Handle arrays - they need to be wrapped in an outer array to preserve structure
-  if (Array.isArray(result)) {
-    // Special case: empty array is returned as is
-    if (result.length === 0) return []
-    
-    // Return array as is, no flags needed now
+  if (wrap) {
+    return [result]
+  } else if (Array.isArray(result)) {
     return result
+  } else {
+    return [result]
   }
-  
-  // Non-array values are always wrapped in an array
-  return [result]
 }
 
 /**
@@ -48,12 +44,15 @@ export function compile (expression: string, options?: CompileOptions): JQFuncti
     const ast = parser.parse()
     const rawFn = generator.generate(ast)
 
+    console.log('expression:', expression, 'AST root type:', ast.type)
+
     // Create a new function that ensures consistent array result
     const wrappedFn = (input: unknown) => {
       const result = rawFn(input)
       
       // Use the standardizeResult for consistent array handling
-      return standardizeResult(result)
+      return standardizeResult(result,
+        ast.type === 'Identity')
     }
     
     return wrappedFn as JQFunction
