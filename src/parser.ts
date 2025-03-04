@@ -1059,9 +1059,8 @@ export class JQParser {
         const pos = this.currentToken.position
         this.advance() // Consume 'empty'
         return {
-          type: 'Literal',
-          position: pos,
-          value: null // Use null to represent empty
+          type: 'Empty',
+          position: pos
         }
       }
 

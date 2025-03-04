@@ -82,6 +82,8 @@ export class JQCodeGenerator implements CodeGenerator {
         return this.generateModulo(node)
       case 'Literal':
         return this.generateLiteral(node)
+      case 'Empty':
+        return this.generateEmpty(node)
       case 'RecursiveDescent':
         return this.generateRecursiveDescent(node)
       case 'MapFilter':
@@ -1025,6 +1027,11 @@ export class JQCodeGenerator implements CodeGenerator {
     return 'getKeysUnsorted(input)'
   }
 
+  private generateEmpty (node: any): string {
+    // Return an empty array directly to fix the empty operation
+    return 'Object.defineProperty([], "_fromArrayConstruction", { value: true })'
+  }
+
   generate (ast: ASTNode): Function {
     // Special case for map(select(...))
     if (ast.type === 'MapFilter' && (ast as any).filter.type === 'SelectFilter') {
@@ -1167,6 +1174,14 @@ export class JQCodeGenerator implements CodeGenerator {
           return result
         }
         return []
+      }
+    }
+
+    // Special case for 'empty' operation to return empty array instead of null
+    if (ast.type === 'Empty') {
+      return function (input: any) {
+        // Return empty array that will not be wrapped in another array
+        return [] 
       }
     }
 

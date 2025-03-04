@@ -158,3 +158,6 @@ test('if-then-else-end operator', async (t) => {
   })
 })
 
+test('empty', async (t) => {
+  assert.deepStrictEqual(query('empty', { value: 5 }), [])
+})
