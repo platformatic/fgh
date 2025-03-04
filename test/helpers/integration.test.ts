@@ -70,7 +70,7 @@ describe('Helper Functions Integration', () => {
     assert.ok(combined._fromArrayConstruction)
 
     // Test flattening results
-    assert.deepStrictEqual(helpers.flattenResult([42]), [[42]])
-    assert.deepStrictEqual(helpers.flattenResult(combined), [1, 2, 3, 4])
+    assert.deepStrictEqual(helpers.ensureArrayResult([42]), [[42]])
+    assert.deepStrictEqual(helpers.ensureArrayResult(combined), [1, 2, 3, 4])
   })
 })

@@ -1,6 +1,6 @@
 import { describe, it } from 'node:test'
 import assert from 'node:assert'
-import { isNullOrUndefined, ensureArray, getNestedValue, ensureArrayResult, flattenResult } from '../../src/helpers/utils.ts'
+import { isNullOrUndefined, ensureArray, getNestedValue, ensureArrayResult } from '../../src/helpers/utils.ts'
 
 describe('Utils Helper Functions', () => {
   describe('isNullOrUndefined', () => {
@@ -16,7 +16,7 @@ describe('Utils Helper Functions', () => {
       assert.strictEqual(isNullOrUndefined(0), false)
     })
 
-    it('should return false for empty string', () => {
+      it('should return false for empty string', () => {
       assert.strictEqual(isNullOrUndefined(''), false)
     })
 
@@ -121,25 +121,6 @@ describe('Utils Helper Functions', () => {
     it('should wrap regular arrays', () => {
       // Regular arrays without special marking should be wrapped
       assert.deepStrictEqual(ensureArrayResult([1, 2, 3]), [[1, 2, 3]])
-    })
-  })
-
-  describe('flattenResult', () => {
-    it('should be an alias for ensureArrayResult', () => {
-      assert.strictEqual(flattenResult, ensureArrayResult)
-    })
-
-    it('should wrap null in an array', () => {
-      assert.deepStrictEqual(flattenResult(null), [null])
-    })
-
-    it('should return empty array for undefined', () => {
-      assert.deepStrictEqual(flattenResult(undefined), [])
-    })
-
-    it('should wrap non-array values in an array', () => {
-      assert.deepStrictEqual(flattenResult(5), [5])
-      assert.deepStrictEqual(flattenResult('test'), ['test'])
     })
   })
 })

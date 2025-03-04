@@ -123,9 +123,3 @@ export const ensureArrayResult = (result: any): any[] => {
   // If result is a scalar value, wrap it in an array
   return [result]
 }
-
-/**
- * Legacy function for backward compatibility
- * @deprecated Use ensureArrayResult instead
- */
-export const flattenResult = ensureArrayResult
