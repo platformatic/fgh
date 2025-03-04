@@ -20,6 +20,36 @@ export const handlePipe = (
   const leftResult = leftFn(input)
   if (isNullOrUndefined(leftResult)) return undefined
 
+  // Check if this is a wrapped array result from operations that return nested arrays
+  if (Array.isArray(leftResult) && leftResult.length === 1 && Array.isArray(leftResult[0])) {
+    // Process the inner array elements
+    const results: any[] = []
+    
+    for (const item of leftResult[0]) {
+      // Apply the right function to each item
+      const rightResult = rightFn(item)
+      
+      // Skip undefined results
+      if (isNullOrUndefined(rightResult)) continue
+      
+      // Handle arrays from the right function
+      if (Array.isArray(rightResult)) {
+        if (rightResult.length === 1 && Array.isArray(rightResult[0])) {
+          // Unwrap doubly wrapped arrays
+          results.push(...rightResult[0])
+        } else {
+          // Spread the array elements
+          results.push(...rightResult)
+        }
+      } else {
+        // Single values added directly
+        results.push(rightResult)
+      }
+    }
+    
+    return [results]
+  }
+
   // Ensure we have an array to iterate over
   const leftArray = ensureArray(leftResult)
   const results: any[] = []
@@ -34,8 +64,14 @@ export const handlePipe = (
 
     // Handle arrays from the right function
     if (Array.isArray(rightResult)) {
-      // Spread the array elements
-      results.push(...rightResult)
+      // Check if this is a wrapped array result
+      if (rightResult.length === 1 && Array.isArray(rightResult[0])) {
+        // Unwrap the nested array
+        results.push(...rightResult[0])
+      } else {
+        // Spread the array elements
+        results.push(...rightResult)
+      }
     } else {
       // Single values added directly
       results.push(rightResult)
