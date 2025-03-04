@@ -37,7 +37,7 @@ describe('map with select filter', async (t) => {
     )
   })
   
-  test.only('should handle multiple matches correctly', () => {
+  test('should handle multiple matches correctly', () => {
     const input = {
       "users": [
         {"name": "John", "role": "admin"}, 
