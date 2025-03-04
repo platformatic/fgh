@@ -1,11 +1,11 @@
 // Tests for proper map(select(...)) and compound filter behavior
 
-import { test } from 'node:test'
+import { test, describe } from 'node:test'
 import assert from 'node:assert'
 import { query } from '../src/fgh.ts'
 
-test('map with select filter', async (t) => {
-  await t.test('should filter objects in an array based on a condition with map(select())', () => {
+describe('map with select filter', async (t) => {
+  test('should filter objects in an array based on a condition with map(select())', () => {
     const input = {
       "users": [
         {"name": "John", "role": "admin"}, 
@@ -21,7 +21,7 @@ test('map with select filter', async (t) => {
     )
   })
   
-  await t.test('should extract specific fields from filtered objects', () => {
+  test('should extract specific fields from filtered objects', () => {
     const input = {
       "users": [
         {"name": "John", "role": "admin"}, 
@@ -37,7 +37,7 @@ test('map with select filter', async (t) => {
     )
   })
   
-  await t.test('should handle multiple matches correctly', () => {
+  test.only('should handle multiple matches correctly', () => {
     const input = {
       "users": [
         {"name": "John", "role": "admin"}, 
@@ -54,7 +54,7 @@ test('map with select filter', async (t) => {
     )
   })
   
-  await t.test('should handle no matches correctly', () => {
+  test('should handle no matches correctly', () => {
     const input = {
       "users": [
         {"name": "Jane", "role": "user"}, 
