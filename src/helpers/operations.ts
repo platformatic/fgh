@@ -89,7 +89,9 @@ export const constructArray = (
   // Process each element function
   for (const elementFn of elementFns) {
     // Apply the element function to the input
-    const value = elementFn(input)
+    const { type, value } = elementFn(input)
+
+    console.log(type, value)
 
     // Handle different types of values
     if (Array.isArray(value)) {
@@ -100,6 +102,8 @@ export const constructArray = (
       result.push(value)
     }
   }
+
+  console.log('==>', result)
 
   // Return the constructed array directly - no special handling needed
   return result

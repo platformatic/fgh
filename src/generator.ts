@@ -284,6 +284,10 @@ export class JQCodeGenerator implements CodeGenerator {
     return `((input) => ${expr})`
   }
 
+  private static wrapInFunctionWithAstType (expr: string, type: string): string {
+    return `((input) => { return { value: ${expr}, type: '${type}' } })`
+  }
+
   private generatePipe (node: PipeNode): string {
     // Special handling for keys | select(...) pipe pattern
     if (node.left.type === 'Keys' && node.right.type === 'SelectFilter') {
@@ -469,7 +473,7 @@ export class JQCodeGenerator implements CodeGenerator {
 
     const elements = node.elements.map((element: ASTNode) => {
       const elementCode = this.generateNode(element)
-      return JQCodeGenerator.wrapInFunction(elementCode)
+      return JQCodeGenerator.wrapInFunctionWithAstType(elementCode, element.type)
     }).join(', ')
 
     return `constructArray(input, [${elements}])`

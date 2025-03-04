@@ -16,6 +16,7 @@ export const accessProperty = (
   prop: string,
   optional = false
 ): any => {
+  process._rawDebug('accessProperty', obj, prop, optional)
   if (isNullOrUndefined(obj)) return undefined
 
   // Special case for array elements - critical for array iteration with property access
@@ -50,12 +51,6 @@ export const accessProperty = (
 
   // Regular property access on an object
   const value = getNestedValue(obj, prop.split('.'), optional)
-  
-  // Handle arrays of arrays consistently
-  if (Array.isArray(value)) {
-    // Return wrapped in an array to preserve structure
-    return [value]
-  }
   
   return value
 }
@@ -141,6 +136,7 @@ export const accessSlice = (
  * @returns The array of values, or undefined
  */
 export const iterateArray = (input: any): any => {
+  process._rawDebug('iterateArray', input)
   if (isNullOrUndefined(input)) return undefined
 
   if (Array.isArray(input)) {

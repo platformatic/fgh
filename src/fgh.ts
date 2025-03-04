@@ -44,6 +44,8 @@ export function compile (expression: string, options?: CompileOptions): JQFuncti
     const ast = parser.parse()
     const rawFn = generator.generate(ast)
 
+    console.log(JSON.stringify(ast, null, 2))
+
     console.log('expression:', expression, 'AST root type:', ast.type)
 
     // Create a new function that ensures consistent array result
