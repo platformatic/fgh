@@ -55,7 +55,7 @@ test('greater than operator >', async (t) => {
     // Array filtering (with map function)
     assert.deepEqual(
       query('map(. > 5)', [3, 5, 7, 9]),
-      [false, false, true, true]
+      [[false, false, true, true]]
     )
   })
 })
