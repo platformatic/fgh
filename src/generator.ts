@@ -1029,7 +1029,8 @@ export class JQCodeGenerator implements CodeGenerator {
 
   private generateEmpty (node: any): string {
     // Return an empty array directly to fix the empty operation
-    return 'Object.defineProperty([], "_fromArrayConstruction", { value: true })'
+    // Mark it as both a construction array and as coming from the 'empty' keyword
+    return 'Object.defineProperty(Object.defineProperty([], "_fromArrayConstruction", { value: true }), "_fromEmpty", { value: true })'
   }
 
   generate (ast: ASTNode): Function {
@@ -1180,8 +1181,10 @@ export class JQCodeGenerator implements CodeGenerator {
     // Special case for 'empty' operation to return empty array instead of null
     if (ast.type === 'Empty') {
       return function (input: any) {
-        // Return empty array that will not be wrapped in another array
-        return [] 
+        // Return empty array marked as coming from 'empty' keyword
+        const emptyArray = [];
+        Object.defineProperty(emptyArray, '_fromEmpty', { value: true });
+        return emptyArray;
       }
     }
 
