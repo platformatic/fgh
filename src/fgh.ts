@@ -16,8 +16,12 @@ export const standardizeResult = (result: unknown): unknown[] => {
   // Handle null
   if (result === null) return [null]
 
-  // Handle arrays - arrays are returned as is
+  // Handle arrays - they need to be wrapped in an outer array to preserve structure
   if (Array.isArray(result)) {
+    // Special case: empty array is returned as is
+    if (result.length === 0) return []
+    
+    // Return array as is, no flags needed now
     return result
   }
   
@@ -48,19 +52,7 @@ export function compile (expression: string, options?: CompileOptions): JQFuncti
     const wrappedFn = (input: unknown) => {
       const result = rawFn(input)
       
-      // Special handling for map(select()) pattern
-      if (ast.type === 'Pipe' && 
-          ast.left.type === 'PropertyAccess' && 
-          ast.right.type === 'MapFilter' && 
-          ast.right.filter.type === 'SelectFilter') {
-        if (Array.isArray(result) && result.length === 0) {
-          return []
-        }
-        // We need to preserve the array structure for this specific case
-        return result
-      }
-      
-      // Standard case - use the simplified standardizeResult
+      // Use the standardizeResult for consistent array handling
       return standardizeResult(result)
     }
     
@@ -84,19 +76,7 @@ export function compile (expression: string, options?: CompileOptions): JQFuncti
           const wrappedFn = (input: unknown) => {
             const result = rawFn(input)
             
-            // Special handling for map(select()) pattern
-            if (ast.type === 'Pipe' && 
-                ast.left.type === 'PropertyAccess' && 
-                ast.right.type === 'MapFilter' && 
-                ast.right.filter.type === 'SelectFilter') {
-              if (Array.isArray(result) && result.length === 0) {
-                return []
-              }
-              // We need to preserve the array structure for this specific case
-              return result
-            }
-            
-            // Standard case - use the simplified standardizeResult
+            // Use the standardizeResult for consistent array handling
             return standardizeResult(result)
           }
           

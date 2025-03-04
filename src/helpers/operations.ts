@@ -42,7 +42,7 @@ export const handlePipe = (
       }
     }
     
-    // Return the results as a direct array - standardizeResult will handle the rest
+    // Return the results array directly
     return results
   }
 
@@ -93,8 +93,7 @@ export const constructArray = (
 
     // Handle different types of values
     if (Array.isArray(value)) {
-      // This is an array construction within array construction
-      // Preserve nested arrays as individual elements
+      // For arrays, flatten one level
       result.push(...value)
     } else if (!isNullOrUndefined(value)) {
       // Add single non-null values directly
@@ -102,6 +101,7 @@ export const constructArray = (
     }
   }
 
+  // Return the constructed array directly - no special handling needed
   return result
 }
 

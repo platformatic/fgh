@@ -1107,20 +1107,18 @@ export class JQCodeGenerator implements CodeGenerator {
       }
     }
     
-    // Functions that inherently return arrays don't need special handling anymore
+    // Keys and KeysUnsorted return arrays directly with consistent handling
     if (ast.type === 'Keys') {
       return function (input: any) {
-        const result = getKeys(input) || [];
-        // Always preserve array return type for API consistency
-        return [result];
+        // getKeys already returns an array
+        return getKeys(input) || [];
       }
     }
 
     if (ast.type === 'KeysUnsorted') {
       return function (input: any) {
-        const result = getKeysUnsorted(input) || [];
-        // Always preserve array return type for API consistency
-        return [result];
+        // getKeysUnsorted already returns an array
+        return getKeysUnsorted(input) || [];
       }
     }
 
