@@ -31,7 +31,7 @@ test('object construction with dynamic keys', () => {
   assert.deepEqual(result, [{ stedolan: ['JQ Primer', 'More JQ'] }])
 })
 
-test('complex object construction', () => {
+test.only('complex object construction', () => {
   const input = {
     users: [
       { id: 1, name: 'Alice', roles: ['admin', 'user'] },

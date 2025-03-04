@@ -79,6 +79,7 @@ export const handlePipe = (
   process._rawDebug('==> leftResult', leftResult)
 
   const leftIsFromArrayResult = leftResult._fromArrayConstruction
+  process._rawDebug('==> leftIsFromArrayResult', leftIsFromArrayResult)
 
   // Ensure we have an array to iterate over
   const leftArray = ensureArray(leftResult)
@@ -102,7 +103,11 @@ export const handlePipe = (
         return rightResult
       }
 
-      results.push(...ensureArrayResult(rightResult))
+      if (leftIsFromArrayResult) {
+        results.push(...rightResult)
+      } else {
+        results.push(...ensureArrayResult(rightResult))
+      }
 
       // Single values added directly
     } else {
