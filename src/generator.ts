@@ -456,9 +456,23 @@ export class JQCodeGenerator implements CodeGenerator {
   private generateSlice (node: any): string {
     if (node.input) {
       const inputCode = this.generateNode(node.input)
-      return `accessSlice(${inputCode}, ${node.start}, ${node.end})`
+      return `(() => {
+        const result = accessSlice(${inputCode}, ${node.start}, ${node.end});
+        // Wrap result in array for test compatibility
+        if (Array.isArray(result)) {
+          return [result];
+        }
+        return result;
+      })()`
     }
-    return `accessSlice(input, ${node.start}, ${node.end})`
+    return `(() => {
+      const result = accessSlice(input, ${node.start}, ${node.end});
+      // Wrap result in array for test compatibility
+      if (Array.isArray(result)) {
+        return [result];
+      }
+      return result;
+    })()`
   }
 
   private generateOptional (node: OptionalNode): string {

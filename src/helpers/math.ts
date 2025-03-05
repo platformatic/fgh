@@ -67,21 +67,6 @@ export const subtractValues = (left: any, right: any): any => {
 
   // If both are arrays, remove elements from left that are in right
   if (Array.isArray(left) && Array.isArray(right)) {
-    // Define interface for arrays with _fromArrayConstruction property
-    interface ArrayWithConstruction extends Array<any> {
-      _fromArrayConstruction?: boolean;
-    }
-
-    // Special handling for array construction with a single element to remove
-    if ((right as ArrayWithConstruction)._fromArrayConstruction && right.length === 1) {
-      // Remove ALL instances of the value, not just the first one
-      const elementToRemove = right[0]
-      const result = left.filter(item => item !== elementToRemove)
-      // Mark as a difference result to preserve array structure
-      Object.defineProperty(result, '_fromDifference', { value: true })
-      return result
-    }
-
     // Handle string array case differently to ensure proper comparison
     // Also handle null/undefined values in the arrays
     const isRightStringArray = right.every(item =>
@@ -91,7 +76,6 @@ export const subtractValues = (left: any, right: any): any => {
       // Make sure we preserve the array type
       const result = left.filter(item => !right.includes(item))
       // Mark as a difference result to preserve array structure
-      Object.defineProperty(result, '_fromDifference', { value: true })
       return result // Always return as array, never unwrap
     }
 
@@ -100,7 +84,6 @@ export const subtractValues = (left: any, right: any): any => {
     // Make sure we preserve the array type
     const result = left.filter(item => !rightSet.has(item))
     // Mark as a difference result to preserve array structure
-    Object.defineProperty(result, '_fromDifference', { value: true })
     return result // Always return as array, never unwrap
   }
 
@@ -108,7 +91,6 @@ export const subtractValues = (left: any, right: any): any => {
   if (Array.isArray(left) && !Array.isArray(right)) {
     const result = left.filter(item => item !== right)
     // Mark as a difference result to preserve array structure
-    Object.defineProperty(result, '_fromDifference', { value: true })
     return result
   }
 

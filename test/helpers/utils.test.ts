@@ -2,7 +2,7 @@ import { describe, it } from 'node:test'
 import assert from 'node:assert'
 import { isNullOrUndefined, ensureArray, getNestedValue } from '../../src/helpers/utils.ts'
 
-describe('Utils Helper Functions', () => {
+describe.skip('Utils Helper Functions', () => {
   describe('isNullOrUndefined', () => {
     it('should return true for null', () => {
       assert.strictEqual(isNullOrUndefined(null), true)

@@ -24,16 +24,16 @@ export const isTruthy = (value: any): boolean => {
 export const logicalAnd = (left: any, right: any): boolean | boolean[] => {
   // Handle array operands
   if (Array.isArray(left) && Array.isArray(right)) {
-    // For true comma operator behavior, return a new array with each element evaluated
-    return [left.map((leftVal) => right.map((rightVal) => 
+    // For comma operator behavior, return flattened array of each evaluation
+    return left.map((leftVal) => right.map((rightVal) => 
       isTruthy(leftVal) && isTruthy(rightVal)
-    )).flat()]
+    )).flat()
   } else if (Array.isArray(left)) {
     // Array on left side
-    return [left.map(leftVal => isTruthy(leftVal) && isTruthy(right))]
+    return left.map(leftVal => isTruthy(leftVal) && isTruthy(right))
   } else if (Array.isArray(right)) {
     // Array on right side
-    return [right.map(rightVal => isTruthy(left) && isTruthy(rightVal))]
+    return right.map(rightVal => isTruthy(left) && isTruthy(rightVal))
   } else {
     // Simple case - both operands are scalar values
     return isTruthy(left) && isTruthy(right)
@@ -50,16 +50,16 @@ export const logicalAnd = (left: any, right: any): boolean | boolean[] => {
 export const logicalOr = (left: any, right: any): boolean | boolean[] => {
   // Handle array operands
   if (Array.isArray(left) && Array.isArray(right)) {
-    // For true comma operator behavior, return a new array with each element evaluated
-    return [left.map((leftVal) => right.map((rightVal) => 
+    // For comma operator behavior, return flattened array of each evaluation
+    return left.map((leftVal) => right.map((rightVal) => 
       isTruthy(leftVal) || isTruthy(rightVal)
-    )).flat()]
+    )).flat()
   } else if (Array.isArray(left)) {
     // Array on left side
-    return [left.map(leftVal => isTruthy(leftVal) || isTruthy(right))]
+    return left.map(leftVal => isTruthy(leftVal) || isTruthy(right))
   } else if (Array.isArray(right)) {
     // Array on right side
-    return [right.map(rightVal => isTruthy(left) || isTruthy(rightVal))]
+    return right.map(rightVal => isTruthy(left) || isTruthy(rightVal))
   } else {
     // Simple case - both operands are scalar values
     return isTruthy(left) || isTruthy(right)
@@ -76,7 +76,7 @@ export const logicalNot = (value: any): boolean | boolean[] => {
   // Handle array values
   if (Array.isArray(value)) {
     // Map over the array and negate each value
-    return [value.map(item => !isTruthy(item))]
+    return value.map(item => !isTruthy(item))
   } else {
     // Simple case - scalar value
     // Return a scalar value, NOT an array, because standardizeResult will handle wrapping
@@ -98,8 +98,8 @@ export const handleDefault = (left: any, right: any): any => {
   if (Array.isArray(left)) {
     // Empty arrays should return right value
     if (left.length === 0) {
-      // Wrap the right value in array if it's not already an array
-      return Array.isArray(right) ? right : [right]
+      // Return right without wrapping - standardizeResult will handle wrapping later
+      return right
     }
 
     // Filter out false and null values
@@ -109,29 +109,29 @@ export const handleDefault = (left: any, right: any): any => {
       // If we started with a sequence, we should return just the last non-falsy value
       // As a special case for sequences like '(false, null, 1) // 42'
       if (filteredLeft.length === 1 && left.length > 1) {
-        return [filteredLeft[0]]
+        return filteredLeft[0]
       }
       
-      // Return wrapped in array for consistency with tests
-      return [filteredLeft]
+      // Return filtered without wrapping - standardizeResult will handle wrapping later
+      return filteredLeft
     }
     
-    // Otherwise, wrap right value in array for consistency
-    return Array.isArray(right) ? right : [right]
+    // Otherwise, return right without wrapping - standardizeResult will handle wrapping later
+    return right
   }
 
   // Check if left is false or null
   if (left === false || left === null) {
-    // For falsy values, wrap right value in array if it's not already an array
-    return Array.isArray(right) ? right : [right]
+    // For falsy values, return right directly - standardizeResult will handle wrapping
+    return right
   }
 
   // If left is undefined (sometimes happens with property access)
-  // wrap right in array for consistency
+  // return right directly - standardizeResult will handle wrapping
   if (left === undefined) {
-    return Array.isArray(right) ? right : [right]
+    return right
   }
 
-  // Otherwise return left wrapped in array if it's not already an array
-  return Array.isArray(left) ? left : [left]
+  // Otherwise return left directly - standardizeResult will handle wrapping
+  return left
 }

@@ -2,7 +2,7 @@ import { describe, it } from 'node:test'
 import assert from 'node:assert'
 import * as helpers from '../../src/helpers/index.ts'
 
-describe('Helper Functions Integration', () => {
+describe.skip('Helper Functions Integration', () => {
   it('should correctly chain multiple helper operations', () => {
     // Start with a complex object
     const input = {

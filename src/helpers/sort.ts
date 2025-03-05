@@ -144,8 +144,7 @@ export const sortArrayBy = (
     return 0
   })
 
-  // Flatten the result to match expected test format
-  return result.flat()
+  return result
 }
 
 /**

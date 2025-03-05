@@ -30,18 +30,6 @@ describe('Operations Helper Functions', () => {
       assert.deepStrictEqual(handlePipe({}, leftFn, rightFn), [1, 2, 2, 3])
     })
 
-    it('should preserve construction arrays from right function', () => {
-      const leftFn = () => [1, 2]
-      const rightFn = (x: number) => {
-        const result = [x, x + 1]
-        Object.defineProperty(result, '_fromArrayConstruction', { value: true })
-        return result
-      }
-      const result = handlePipe({}, leftFn, rightFn)
-      assert.deepStrictEqual(result, [1, 2, 2, 3])
-      // Flag removed: property construction markers no longer needed
-    })
-
     it('should skip undefined results from right function', () => {
       const leftFn = () => [1, 2, 3]
       const rightFn = (x: number) => x > 1 ? x * 2 : undefined
@@ -82,19 +70,6 @@ describe('Operations Helper Functions', () => {
       ]
       const result = constructArray({ a: 1, b: 2, c: 3 }, elementFns)
       assert.deepStrictEqual(result, [1, 2, 3])
-    })
-
-    it('should preserve construction arrays from element functions', () => {
-      const elementFns = [
-        (input: any) => {
-          const arr = [input.a, input.b]
-          Object.defineProperty(arr, '_fromArrayConstruction', { value: true })
-          return { type: 'test', value: arr }
-        }
-      ]
-      const result = constructArray({ a: 1, b: 2 }, elementFns)
-      assert.deepStrictEqual(result, [1, 2])
-      // Flag removed: property construction markers no longer needed
     })
   })
 
