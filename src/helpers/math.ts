@@ -20,7 +20,6 @@ export const addValues = (left: any, right: any): Array<any> => {
   for (let i = 0; i < maxLength; i++) {
     if (left[i] === undefined) {
       results[i] = right[i]
-      continue
     } else if (right[i] === undefined) {
       results[i] = left[i]
     } else {
@@ -48,81 +47,32 @@ export const addValues = (left: any, right: any): Array<any> => {
  * @returns The result of subtracting the values
  */
 export const subtractValues = (left: any, right: any): any => {
-  // If left is undefined, treat as 0 for numeric subtraction
-  if (isNullOrUndefined(left)) {
-    // For array subtraction, nothing to subtract from
-    if (Array.isArray(right)) return []
-    // For numeric subtraction, treat as 0 - right
-    if (typeof right === 'number') return -right
-    // Default: return undefined for other types
-    return undefined
-  }
+  left = ensureArray(left)
+  right = ensureArray(right)
 
-  // If right is undefined, return left unchanged
-  if (isNullOrUndefined(right)) return left
+  const maxLength = Math.max(left.length, right.length)
 
-  // If both are arrays, remove elements from left that are in right
-  if (Array.isArray(left) && Array.isArray(right)) {
-    // Handle string array case differently to ensure proper comparison
-    // Also handle null/undefined values in the arrays
-    const isRightStringArray = right.every(item =>
-      typeof item === 'string' || item === null || item === undefined)
+  const results: any[] = Array(maxLength)
 
-    if (isRightStringArray) {
-      // Make sure we preserve the array type
-      const result = left.filter(item => !right.includes(item))
-      // Mark as a difference result to preserve array structure
-      return result // Always return as array, never unwrap
+  for (let i = 0; i < maxLength; i++) {
+    if (left[i] === undefined) {
+      if (typeof right[i] === 'number') {
+        results[i] = - right[i]
+      } else {
+        results[i] = undefined
+      }
+    } else if (right[i] === undefined) {
+      results[i] = left[i]
+    } else {
+      if (Array.isArray(left[i]) && Array.isArray(right[i])) {
+        results[i] = left[i].filter((item) => !right[i].includes(item))
+      } else {
+        results[i] = left[i] - right[i]
+      }
     }
-
-    // Convert right array to a Set for O(1) lookups - for non-string arrays
-    const rightSet = new Set(right)
-    // Make sure we preserve the array type
-    const result = left.filter(item => !rightSet.has(item))
-    // Mark as a difference result to preserve array structure
-    return result // Always return as array, never unwrap
   }
 
-  // If left is an array but right is not, still remove the element from array
-  if (Array.isArray(left) && !Array.isArray(right)) {
-    const result = left.filter(item => item !== right)
-    // Mark as a difference result to preserve array structure
-    return result
-  }
-
-  // If left is not an array but right is, can't meaningfully subtract
-  if (!Array.isArray(left) && Array.isArray(right)) {
-    // For numeric, treat right as empty and return left
-    if (typeof left === 'number') return left
-    // Otherwise return left unchanged
-    return left
-  }
-
-  // For numeric subtraction
-  if (typeof left === 'number' && typeof right === 'number') {
-    return left - right
-  }
-
-  // For objects, remove keys that exist in right from left
-  if (typeof left === 'object' && left !== null &&
-      typeof right === 'object' && right !== null &&
-      !Array.isArray(left) && !Array.isArray(right)) {
-    const result = { ...left }
-    for (const key in right) {
-      delete result[key]
-    }
-    return result
-  }
-
-  // Default: convert to numbers and subtract if possible
-  const leftNum = Number(left)
-  const rightNum = Number(right)
-  if (!isNaN(leftNum) && !isNaN(rightNum)) {
-    return leftNum - rightNum
-  }
-
-  // If all else fails, return left unchanged
-  return left
+  return results
 }
 
 /**

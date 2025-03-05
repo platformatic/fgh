@@ -4,7 +4,7 @@ import { test, describe } from 'node:test'
 import assert from 'node:assert'
 import { query } from '../src/fgh.ts'
 
-describe.only('sum operator', async (t) => {
+describe('sum operator', async (t) => {
   test('should add numeric values', () => {
     assert.deepEqual(query('.a + 1', { a: 7 }), [8])
     assert.deepEqual(query('.a + 1', {}), [1]) // When .a is undefined, the result should be 1
@@ -48,7 +48,7 @@ describe.only('sum operator', async (t) => {
   })
 })
 
-test('difference operator', async (t) => {
+describe('difference operator', async (t) => {
   test('should subtract numeric values', () => {
     assert.deepEqual(query('4 - 3', {}), [1])
     assert.deepEqual(query('4 - .a', { a: 3 }), [1])
