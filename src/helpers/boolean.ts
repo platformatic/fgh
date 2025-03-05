@@ -2,6 +2,8 @@
  * Boolean and default operations for FGH
  */
 
+import { ensureArray } from './utils.ts'
+
 /**
  * Helper function to determine if a value is considered "truthy" in Boolean operations
  * According to spec: false and null are considered "false values", and anything else is a "true value"
@@ -94,9 +96,8 @@ export const logicalNot = (value: any): boolean | boolean[] => {
  * @returns left if left produces values that are not false or null, otherwise right
  */
 export const handleDefault = (left: Array<any>, right: Array<any>): any => {
-  if (left.length === 0) {
-    return right
-  }
+  left = ensureArray(left)
+  right = ensureArray(right)
 
   for (const item of left) {
     console.log(item, isTruthy(item))
