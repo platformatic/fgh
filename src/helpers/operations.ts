@@ -22,6 +22,8 @@ export const handlePipe = (
   for (const item of input) {
     const leftResult = leftFn([item])
 
+    console.log('leftResult', leftResult)
+
     const rightResult = rightFn(leftResult)
     if (!isNullOrUndefined(rightResult)) {
       results.push(...rightResult)

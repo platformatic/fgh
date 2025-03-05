@@ -64,7 +64,7 @@ describe('Array elements keys extraction', () => {
     }
 
     const result = query('.users[0] | keys', input)
-    assert.deepStrictEqual(result, ['id', 'name', 'role'])
+    assert.deepStrictEqual(result, [['id', 'name', 'role']])
   })
 
   test('empty array - returns empty result', () => {
@@ -74,14 +74,12 @@ describe('Array elements keys extraction', () => {
     assert.deepStrictEqual(result, [])
   })
 
-  test('array with non-object elements - returns empty arrays', () => {
+  test('array with non-object elements throws', () => {
     const input = { values: [1, 'string', true] }
-
-    const result = query('.values[] | keys', input)
-    assert.deepStrictEqual(result, [[], [], []])
+    assert.throws(() => { query('.values[] | keys', input) })
   })
 
-  test('array with mixed content - handles mixed object and non-object elements', () => {
+  test('array with mixed content - throw when mixing object and non-object elements', () => {
     const input = {
       mixed: [
         { id: 1 },
@@ -90,7 +88,6 @@ describe('Array elements keys extraction', () => {
       ]
     }
 
-    const result = query('.mixed[] | keys', input)
-    assert.deepStrictEqual(result, [['id'], [], ['name']])
+    assert.throws(() => query('.mixed[] | keys', input))
   })
 })

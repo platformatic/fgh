@@ -13,25 +13,8 @@ import { isNullOrUndefined } from './utils.ts'
  * @param input The input object or array
  * @returns Array of keys (sorted) or indices
  */
-export const getKeys = (input: unknown): string[] | number[] => {
-  // Handle null and undefined
-  if (isNullOrUndefined(input)) {
-    return []
-  }
-
-  // Handle arrays - return indices directly as we expect in the tests
-  // No wrapping here as standardizeResult will handle it
-  if (Array.isArray(input)) {
-    return Array.from({ length: input.length }, (_, i) => i)
-  }
-
-  // Handle objects - return sorted keys
-  if (typeof input === 'object' && input !== null) {
-    return Object.keys(input).sort()
-  }
-
-  // Non-object types have no keys - return empty array
-  return []
+export const getKeys = (input: Array<any>): Array<string> => {
+  return getKeysUnsorted(input).sort()
 }
 
 /**
@@ -43,23 +26,21 @@ export const getKeys = (input: unknown): string[] | number[] => {
  * @param input The input object or array
  * @returns Array of keys (unsorted) or indices
  */
-export const getKeysUnsorted = (input: unknown): string[] | number[] => {
-  // Handle null and undefined
-  if (isNullOrUndefined(input)) {
-    return []
+export const getKeysUnsorted = (input: Array<any>): Array<string> => {
+  console.log('getKeys', input)
+
+  const results: string[] = []
+
+  for (const item of input) {
+    // Handle objects - return sorted keys
+    if (typeof item === 'object' && item !== null) {
+      results.push(Object.keys(item))
+    } else {
+      throw new Error(`Cannot get keys from ${item}`)
+    }
   }
 
-  // Handle arrays - return indices directly as we expect in the tests
-  // No wrapping here as standardizeResult will handle it
-  if (Array.isArray(input)) {
-    return Array.from({ length: input.length }, (_, i) => i)
-  }
+  console.log('getKeys', input, results)
 
-  // Handle objects - return keys in insertion order (not sorted)
-  if (typeof input === 'object' && input !== null) {
-    return Object.keys(input)
-  }
-
-  // Non-object types have no keys - return empty array
-  return []
+  return results
 }

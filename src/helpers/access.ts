@@ -66,6 +66,8 @@ export const accessIndex = (obj: Array<any>, idx: number): any => {
     }
   }
 
+  console.log('accessIndex', obj, idx, results)
+
   return results
 }
 

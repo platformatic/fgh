@@ -48,35 +48,3 @@ export const handleArrayIterationToSelectPipe = (
   // Return results directly for array iteration case
   return results
 }
-
-/**
- * Special helper for handling array iteration to keys piping
- * Ensures array structure is consistent with test expectations
- *
- * @param input The array from array iteration, containing objects to extract keys from
- * @param isSorted Whether to return keys in sorted order (true) or insertion order (false)
- * @returns Array of arrays of keys, preserving the nested structure
- */
-export const handleArrayIterationToKeysPipe = (
-  input: any,
-  isSorted: boolean = true
-): any => {
-  if (!Array.isArray(input)) {
-    // For non-array inputs, just return keys directly
-    const result = isSorted ? getKeys(input) : getKeysUnsorted(input)
-    // Return the keys array directly without wrapping
-    return result
-  }
-
-  // If this is an empty array, return an empty array
-  if (input.length === 0) {
-    return []
-  }
-
-  // For each item in the array, get the keys in a nested array structure
-  // This matches the expected test format for .users[] | keys
-  const result = input.map(item => isSorted ? getKeys(item) : getKeysUnsorted(item))
-  
-  // Return array of array results - maintain the nested structure
-  return result
-}

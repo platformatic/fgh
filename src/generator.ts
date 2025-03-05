@@ -36,7 +36,6 @@ import {
   equal,
   notEqual,
   handleArrayIterationToSelectPipe,
-  handleArrayIterationToKeysPipe,
   logicalAnd,
   logicalOr,
   logicalNot,
@@ -221,141 +220,6 @@ export class JQCodeGenerator implements CodeGenerator {
   }
 
   private generatePipe (node: PipeNode): string {
-    // Special handling for keys | select(...) pipe pattern
-    if (node.left.type === 'Keys' && node.right.type === 'SelectFilter') {
-      const rightNode = node.right as any;
-      const conditionCode = this.generateNode(rightNode.condition);
-      
-      return `(() => {
-        // Get the original object keys
-        const input_obj = input;
-        const keys_array = getKeys(input_obj);
-        
-        // Filter the keys based on the condition
-        const result = [];
-        for (const key of keys_array) {
-          // For each key, evaluate if it passes the condition
-          // Using 'key' as the input to the condition
-          const passes = ((item) => {
-            const input = item; // Set input to the current key
-            return ${conditionCode};
-          })(key);
-          
-          // If the key passes the condition, add it to results
-          if (passes) {
-            result.push(key);
-          }
-        }
-
-        // Test compatibility requires specific array structure
-        // Return keys directly, not wrapped in extra array
-        return result;
-      })()`;
-    }
-    
-    // Special handling for keys_unsorted | select(...) pipe pattern
-    if (node.left.type === 'KeysUnsorted' && node.right.type === 'SelectFilter') {
-      const rightNode = node.right as any;
-      const conditionCode = this.generateNode(rightNode.condition);
-      
-      return `(() => {
-        // Get the original object keys
-        const input_obj = input;
-        const keys_array = getKeysUnsorted(input_obj);
-        
-        // Filter the keys based on the condition
-        const result = [];
-        for (const key of keys_array) {
-          // For each key, evaluate if it passes the condition
-          // Using 'key' as the input to the condition
-          const passes = ((item) => {
-            const input = item; // Set input to the current key
-            return ${conditionCode};
-          })(key);
-          
-          // If the key passes the condition, add it to results
-          if (passes) {
-            result.push(key);
-          }
-        }
-        
-        // Test compatibility requires specific array structure
-        // Return keys directly, not wrapped in extra array
-        return result;
-      })()`;
-    }
-    // Special handling for .. | .prop? pattern
-    // This handles accessing properties on objects returned by recursive descent
-    if (node.left.type === 'RecursiveDescent' && 
-        node.right.type === 'Optional' &&
-        node.right.expression.type === 'PropertyAccess' &&
-        !node.right.expression.input) { // Only if it's a direct property access
-      const leftCode = this.generateNode(node.left)
-      const propName = (node.right.expression as any).property
-      
-      return `(() => {
-        const leftResult = ${leftCode};
-        if (isNullOrUndefined(leftResult)) return undefined;
-        
-        const results = [];
-        
-        // Process all values returned by recursive descent
-        const allValues = Array.isArray(leftResult) ? leftResult : [leftResult];
-        
-        // Access the property on each object
-        for (const item of allValues) {
-          // Only try to access properties on objects, not arrays or primitives
-          if (item !== null && typeof item === 'object' && !Array.isArray(item)) {
-            // For objects, check if the property exists
-            if (Object.prototype.hasOwnProperty.call(item, '${propName}')) {
-              const propValue = item['${propName}'];
-              // Only include non-null/undefined values
-              if (propValue !== null && propValue !== undefined) {
-                results.push(propValue);
-              }
-            }
-          }
-        }
-        
-        // No special marking needed
-        
-        return results.length > 0 ? results : undefined;
-      })()`
-    }
-
-    // Special handling for .[] | select(...) pattern
-    if (node.left.type === 'ArrayIteration' && node.right.type === 'SelectFilter') {
-      const leftCode = this.generateNode(node.left)
-      const rightSelectConditionCode = this.generateNode((node.right as any).condition)
-      return `(() => {
-        const leftResult = ${leftCode};
-        const result = handleArrayIterationToSelectPipe(leftResult, ${JQCodeGenerator.wrapInFunction(rightSelectConditionCode)});
-        return result;
-      })()`
-    }
-
-    // Special handling for .[] | keys pattern
-    // This allows extracting keys from each object in an array while preserving the array structure
-    // e.g., '.users[] | keys' returns [["id","name"],["id","name"]] instead of flattening to ["id","name","id","name"]
-    if (node.left.type === 'ArrayIteration' && node.right.type === 'Keys') {
-      const leftCode = this.generateNode(node.left)
-      return `(() => {
-        const leftResult = ${leftCode};
-        return handleArrayIterationToKeysPipe(leftResult, true);
-      })()`
-    }
-
-    // Special handling for .[] | keys_unsorted pattern
-    // This allows extracting keys in insertion order from each object in an array while preserving the array structure
-    // e.g., '.users[] | keys_unsorted' returns [["id","name"],["id","name"]] but in insertion order for each object
-    if (node.left.type === 'ArrayIteration' && node.right.type === 'KeysUnsorted') {
-      const leftCode = this.generateNode(node.left)
-      return `(() => {
-        const leftResult = ${leftCode};
-        return handleArrayIterationToKeysPipe(leftResult, false);
-      })()`
-    }
-
     const leftCode = this.generateNode(node.left)
     const rightCode = this.generateNode(node.right)
     return `handlePipe(input, ${JQCodeGenerator.wrapInFunction(leftCode)}, ${JQCodeGenerator.wrapInFunction(rightCode)})`
@@ -951,7 +815,6 @@ console.log(code)
       'equal',
       'notEqual',
       'handleArrayIterationToSelectPipe',
-      'handleArrayIterationToKeysPipe',
       'logicalAnd',
       'logicalOr',
       'logicalNot',
@@ -987,7 +850,6 @@ console.log(code)
       equal,
       notEqual,
       handleArrayIterationToSelectPipe,
-      handleArrayIterationToKeysPipe,
       logicalAnd,
       logicalOr,
       logicalNot,
