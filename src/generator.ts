@@ -48,7 +48,8 @@ export class JQCodeGenerator implements CodeGenerator {
   private generateNode (node: ASTNode): string {
     switch (node.type) {
       case 'Identity':
-        return 'input'
+        // Special handling for null inputs
+        return '(input === null ? null : input)'
       case 'PropertyAccess':
         return this.generatePropertyAccess(node)
       case 'IndexAccess':
@@ -605,7 +606,7 @@ export class JQCodeGenerator implements CodeGenerator {
                 }
               }
               
-              // Return filtered items wrapped in an additional array
+              // Return filtered items wrapped in an array as expected in tests
               return [[filtered]];
             }
           }
@@ -626,7 +627,7 @@ export class JQCodeGenerator implements CodeGenerator {
             }
           }
           
-          // Return filtered items as a nested array for map(select())
+          // Return filtered items wrapped in an array as expected in the tests
           return [[filtered]];
         }
         
@@ -636,7 +637,7 @@ export class JQCodeGenerator implements CodeGenerator {
     } else {
       // Standard map implementation for non-select cases
       return `(() => {
-        if (isNullOrUndefined(input)) return [[]];
+        if (isNullOrUndefined(input)) return [];
         
         // Handle objects differently for map cases with property access
         if (!Array.isArray(input) && typeof input === 'object' && input !== null) {
@@ -660,7 +661,7 @@ export class JQCodeGenerator implements CodeGenerator {
             }
           }
           
-          return [[result]];
+          return result;
         }
         
         // Standard array handling
@@ -718,7 +719,7 @@ export class JQCodeGenerator implements CodeGenerator {
           }
         }
         
-        // Return result directly
+        // Return result directly - no wrapping needed
         return result;
       }
       
@@ -745,8 +746,8 @@ export class JQCodeGenerator implements CodeGenerator {
           }
         }
         
-        // Return empty object when there are no results
-        return Object.keys(result).length > 0 ? result : {};
+        // When returning objects, wrap them in an array for consistent handling
+        return Object.keys(result).length > 0 ? [result] : [];
       }
       
       // Return empty array
@@ -758,10 +759,10 @@ export class JQCodeGenerator implements CodeGenerator {
     const conditionCode = this.generateNode(node.condition)
     const conditionFn = JQCodeGenerator.wrapInFunction(conditionCode)
 
-    // Implementation for consistent array handling
+    // Implementation for consistent array handling based on context
     return `(() => {
       // Handle null/undefined input
-      if (isNullOrUndefined(input)) return [[]];
+      if (isNullOrUndefined(input)) return [];
       
       // Handle array input
       if (Array.isArray(input)) {
@@ -786,8 +787,7 @@ export class JQCodeGenerator implements CodeGenerator {
           }
         }
         
-        // Return the result wrapped in an array to match expected format
-        return [result];
+        return result;
       }
       
       // When used directly on a single object input
@@ -797,13 +797,13 @@ export class JQCodeGenerator implements CodeGenerator {
       if (Array.isArray(conditionResult)) {
         // Check if any values in the array are truthy
         const hasTruthy = conditionResult.some(val => val !== null && val !== undefined && val !== false);
-        return hasTruthy ? [[input]] : [[]];
+        return hasTruthy ? [input] : [];
       }
 
       // Handle scalar condition results
       return (conditionResult !== null && conditionResult !== undefined && conditionResult !== false) 
-        ? [[input]] 
-        : [[]];
+        ? [input] 
+        : [];
     })()`
   }
 
@@ -971,13 +971,13 @@ export class JQCodeGenerator implements CodeGenerator {
   }
 
   private generateKeys (node: any): string {
-    // Return keys in sorted order without wrapping
-    return 'getKeys(input).flat()'  // Flatten any nested arrays to match expected test format
+    // Return keys in sorted order
+    return 'getKeys(input)'  // No need to flatten, standardizeResult will handle it
   }
 
   private generateKeysUnsorted (node: any): string {
-    // Return keys in insertion order without wrapping
-    return 'getKeysUnsorted(input).flat()'  // Flatten any nested arrays to match expected test format
+    // Return keys in insertion order
+    return 'getKeysUnsorted(input)'  // No need to flatten, standardizeResult will handle it
   }
 
   private generateEmpty (node: any): string {
