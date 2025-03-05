@@ -13,7 +13,7 @@ describe('Array Return API', () => {
     assert.deepStrictEqual(result, ['bob'])
   })
 
-  it.skip('should return an array for multiple results', () => {
+  it('should return an array for multiple results', () => {
     const gen = compile('.users[] | .name')
     const result = gen({ users: [{ name: 'bob' }, { name: 'alice' }] })
     

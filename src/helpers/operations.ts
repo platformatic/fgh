@@ -24,9 +24,11 @@ export const handlePipe = (
 
     console.log('leftResult', leftResult)
 
-    const rightResult = rightFn(leftResult)
-    if (!isNullOrUndefined(rightResult)) {
-      results.push(...rightResult)
+    for (const leftItem of leftResult) {
+      const rightResult = rightFn([leftItem])
+      if (!isNullOrUndefined(rightResult)) {
+        results.push(...rightResult)
+      }
     }
   }
 

@@ -23,7 +23,7 @@ describe('default operator', async (t) => {
     assert.deepEqual(query('.a.b // .a.c', { a: { b: 'value', c: 'ignored' } }), ['value'])
   })
 
-  test.skip('should work with pipe operator correctly', () => {
+  test('should work with pipe operator correctly', () => {
     assert.deepEqual(
       query('(false, null, 1) | . // 42', null),
       [42, 42, 1]
