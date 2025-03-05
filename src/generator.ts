@@ -463,7 +463,7 @@ export class JQCodeGenerator implements CodeGenerator {
   }
 
   private generateLiteral (node: any): string {
-    return JSON.stringify([node.value])
+    return JSON.stringify(node.value)
   }
 
   private generateRecursiveDescent (node: any): string {

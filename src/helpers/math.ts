@@ -2,7 +2,7 @@
  * Mathematical operations for FGH
  */
 
-import { isNullOrUndefined } from './utils.ts'
+import { isNullOrUndefined, ensureArray } from './utils.ts'
 
 /**
  * Add two values together, handling various types appropriately
@@ -10,39 +10,35 @@ import { isNullOrUndefined } from './utils.ts'
  * @param right The right value
  * @returns The result of adding the values
  */
-export const addValues = (left: any, right: any): any => {
-  // If either value is undefined, use the other one (handles null + val cases)
-  if (isNullOrUndefined(left)) return right
-  if (isNullOrUndefined(right)) return left
+export const addValues = (left: any, right: any): Array<any> => {
+  left = ensureArray(left)
+  right = ensureArray(right)
+  const maxLength = Math.max(left.length, right.length)
 
-  // If both are arrays, concatenate them
-  if (Array.isArray(left) && Array.isArray(right)) {
-    return [...left, ...right]
+  const results: any[] = Array(maxLength)
+
+  for (let i = 0; i < maxLength; i++) {
+    if (left[i] === undefined) {
+      results[i] = right[i]
+      continue
+    } else if (right[i] === undefined) {
+      results[i] = left[i]
+    } else {
+      if (Array.isArray(left[i]) && Array.isArray(right[i])) {
+        results[i] = [...left[i], ...right[i]]
+      } else if (Array.isArray(left[i]) && right[i] !== null && right[i] !== undefined) {
+        results[i] = [...left[i], right[i]]
+      } else if (Array.isArray(right[i]) && left[i] !== null && left[i] !== undefined) {
+        results[i] = [left[i], ...right[i]]
+      } else if (typeof left[i] === 'object' && typeof right[i] === 'object' && left[i] !== null && right[i] !== null) {
+        results[i] = { ...left[i], ...right[i] }
+      } else {
+        results[i] = left[i] + right[i]
+      }
+    }
   }
 
-  // If both are objects, merge them with right taking precedence for duplicate keys
-  if (typeof left === 'object' && left !== null &&
-      typeof right === 'object' && right !== null &&
-      !Array.isArray(left) && !Array.isArray(right)) {
-    return { ...left, ...right }
-  }
-
-  // If one is an array and the other isn't, convert the non-array to an array and concatenate
-  if (Array.isArray(left) && !Array.isArray(right)) {
-    return [...left, right]
-  }
-
-  if (!Array.isArray(left) && Array.isArray(right)) {
-    return [left, ...right]
-  }
-
-  // For numeric addition
-  if (typeof left === 'number' && typeof right === 'number') {
-    return left + right
-  }
-
-  // Default string concatenation
-  return String(left) + String(right)
+  return results
 }
 
 /**

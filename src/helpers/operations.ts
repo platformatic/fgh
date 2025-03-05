@@ -91,8 +91,12 @@ export const constructArray = (
   const result: any[] = [];
   
   for (const elementFn of elementFns) {
-    const { values } = elementFn(input);
+    let { values } = elementFn(input);
     console.log('values', values)
+
+    if (!Array.isArray(values)) {
+      values = [values]
+    }
 
     for (const item of values) {
       console.log('item', item)
