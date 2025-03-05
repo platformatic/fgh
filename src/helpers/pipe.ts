@@ -40,8 +40,12 @@ export const handleArrayIterationToSelectPipe = (
     }
   }
 
+  // For empty results, return an empty array
+  if (results.length === 0) {
+    return []
+  }
+  
   // Return results directly for array iteration case
-  // This fixes the .[] | select(.role == "admin") pattern
   return results
 }
 
@@ -60,7 +64,7 @@ export const handleArrayIterationToKeysPipe = (
   if (!Array.isArray(input)) {
     // For non-array inputs, just return keys directly
     const result = isSorted ? getKeys(input) : getKeysUnsorted(input)
-    // Return the keys array directly - tests expect this format
+    // Return the keys array directly without wrapping
     return result
   }
 
@@ -69,7 +73,10 @@ export const handleArrayIterationToKeysPipe = (
     return []
   }
 
-  // For each item in the array, get the keys
-  // This handles the case of .users[] | keys to extract keys from all objects
-  return input.map(item => isSorted ? getKeys(item) : getKeysUnsorted(item))
+  // For each item in the array, get the keys in a nested array structure
+  // This matches the expected test format for .users[] | keys
+  const result = input.map(item => isSorted ? getKeys(item) : getKeysUnsorted(item))
+  
+  // Return array of array results - maintain the nested structure
+  return result
 }

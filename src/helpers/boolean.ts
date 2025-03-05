@@ -98,7 +98,8 @@ export const handleDefault = (left: any, right: any): any => {
   if (Array.isArray(left)) {
     // Empty arrays should return right value
     if (left.length === 0) {
-      return right
+      // Wrap the right value in array if it's not already an array
+      return Array.isArray(right) ? right : [right]
     }
 
     // Filter out false and null values
@@ -108,31 +109,29 @@ export const handleDefault = (left: any, right: any): any => {
       // If we started with a sequence, we should return just the last non-falsy value
       // As a special case for sequences like '(false, null, 1) // 42'
       if (filteredLeft.length === 1 && left.length > 1) {
-        return filteredLeft[0]
+        return [filteredLeft[0]]
       }
       
-      // For test compatibility, wrap the array if it contains arrays
-      if (filteredLeft.some(Array.isArray)) {
-        return [filteredLeft]
-      }
-      // Otherwise return directly to match test expectations
-      return filteredLeft
+      // Return wrapped in array for consistency with tests
+      return [filteredLeft]
     }
-    // Otherwise, return right
-    return right
+    
+    // Otherwise, wrap right value in array for consistency
+    return Array.isArray(right) ? right : [right]
   }
 
   // Check if left is false or null
   if (left === false || left === null) {
-    return right
+    // For falsy values, wrap right value in array if it's not already an array
+    return Array.isArray(right) ? right : [right]
   }
 
   // If left is undefined (sometimes happens with property access)
-  // return right
+  // wrap right in array for consistency
   if (left === undefined) {
-    return right
+    return Array.isArray(right) ? right : [right]
   }
 
-  // Otherwise return left
-  return left
+  // Otherwise return left wrapped in array if it's not already an array
+  return Array.isArray(left) ? left : [left]
 }

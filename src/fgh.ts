@@ -11,9 +11,6 @@ import { safeExecute, attemptErrorRecovery, ExecutionError } from './helpers/err
 * @returns The result in a consistent array format
 */
 export const standardizeResult = (result: unknown, wrap: boolean = false): unknown[] => {
-  // For generator tests - these need to always return arrays of scalar values
-  const forceWrapping = process.env.NODE_ENV === 'test' || wrap;
-  
   // Handle undefined
   if (result === undefined) return []
 

@@ -19,15 +19,14 @@ export const getKeys = (input: unknown): string[] | number[] => {
     return []
   }
 
-  // Handle arrays - return indices
+  // Handle arrays - return indices directly as we expect in the tests
+  // No wrapping here as standardizeResult will handle it
   if (Array.isArray(input)) {
-    // Simply return array of indices - no special marking needed
     return Array.from({ length: input.length }, (_, i) => i)
   }
 
   // Handle objects - return sorted keys
   if (typeof input === 'object' && input !== null) {
-    // Return sorted keys array - no special marking needed
     return Object.keys(input).sort()
   }
 
@@ -50,15 +49,14 @@ export const getKeysUnsorted = (input: unknown): string[] | number[] => {
     return []
   }
 
-  // Handle arrays - return indices
+  // Handle arrays - return indices directly as we expect in the tests
+  // No wrapping here as standardizeResult will handle it
   if (Array.isArray(input)) {
-    // Simply return array of indices - no special marking needed
     return Array.from({ length: input.length }, (_, i) => i)
   }
 
   // Handle objects - return keys in insertion order (not sorted)
   if (typeof input === 'object' && input !== null) {
-    // Return keys array without sorting - no special marking needed
     return Object.keys(input)
   }
 
