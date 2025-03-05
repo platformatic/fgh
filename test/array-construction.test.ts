@@ -23,6 +23,7 @@ describe('array construction', async (t) => {
 
     assert.deepStrictEqual(result, [['stedolan', 'jq', 'wikiflow']])
   })
+
   test('should handle nested array construction', () => {
     const input = { a: [1, 2], b: [3, 4], c: 5 }
     const result = query('[.a[], .b[], .c]', input)
@@ -34,7 +35,7 @@ describe('array construction', async (t) => {
     const input = { a: 1 }
     const result = query('[]', input)
 
-    assert.deepStrictEqual(result, [])
+    assert.deepStrictEqual(result, [[]])
   })
 
   test('should handle property access within array elements', () => {

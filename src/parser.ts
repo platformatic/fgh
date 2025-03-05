@@ -1382,8 +1382,9 @@ export class JQParser {
         const pos = this.basePos === 0 ? this.currentToken.position : this.basePos
         this.advance() // Consume []
         return {
-          type: 'ArrayIteration',
-          position: pos
+          type: 'ArrayConstruction',
+          position: pos,
+          elements: []
         }
       }
 

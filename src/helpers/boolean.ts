@@ -11,7 +11,7 @@
  */
 export const isTruthy = (value: any): boolean => {
   // false and null are the only false values
-  return value !== false && value !== null
+  return value !== false && value !== null && value !== undefined
 }
 
 /**
@@ -93,19 +93,17 @@ export const logicalNot = (value: any): boolean | boolean[] => {
  * @param right The right operand
  * @returns left if left produces values that are not false or null, otherwise right
  */
-export const handleDefault = (left: any, right: any): any => {
-  // Check if left is false or null
-  if (left === false || left === null) {
-    // For falsy values, return right directly - standardizeResult will handle wrapping
+export const handleDefault = (left: Array<any>, right: Array<any>): any => {
+  if (left.length === 0) {
     return right
   }
 
-  // If left is undefined (sometimes happens with property access)
-  // return right directly - standardizeResult will handle wrapping
-  if (left === undefined) {
-    return right
+  for (const item of left) {
+    console.log(item, isTruthy(item))
+    if (isTruthy(item)) {
+      return [item]
+    }
   }
 
-  // Otherwise return left directly - standardizeResult will handle wrapping
-  return left
+  return right
 }

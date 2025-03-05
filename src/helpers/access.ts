@@ -12,49 +12,27 @@ import { isNullOrUndefined, getNestedValue } from './utils.ts'
  * @returns The property value if found, or undefined
  */
 export const accessProperty = (
-  obj: any,
+  input: Array<any>,
   prop: string,
   optional = false
-): any => {
-  if (isNullOrUndefined(obj)) return undefined
+): Array<any> => {
+  const results: any[] = []
 
-  // Special case for array elements - critical for array iteration with property access
-  if (Array.isArray(obj)) {
-    // Create a collector for all the values
-    const results: any[] = []
-
-    // Process each item in the array
-    for (const item of obj) {
-      // Skip non-objects
-      if (isNullOrUndefined(item) || typeof item !== 'object') continue
-
-      // Get the property value
-      const value = getNestedValue(item, prop.split('.'), optional)
-
-      // Only add non-null values
-      if (!isNullOrUndefined(value)) {
-        // Handle nested arrays - flatten one level
-        if (Array.isArray(value)) {
-          // Push each item from the array - preserve array structure
-          results.push(...value)
-        } else {
-          // Push the single value
-          results.push(value)
-        }
-      }
+  for (const obj of input) {
+    if (isNullOrUndefined(obj)) {
+      results.push(obj)
+      continue
     }
 
-    // Return the array of results or undefined if empty
-    // No special array flags needed
-    return results.length > 0 ? results : undefined
+    console.log('accessProperty', obj, prop, optional)
+
+    const value = getNestedValue(obj, prop.split('.'), optional)
+    results.push(value)
   }
 
-  // Regular property access on an object
-  const value = getNestedValue(obj, prop.split('.'), optional)
+  console.log('accessProperty', input, prop, results)
   
-  // Return the value directly - it will be handled by standardizeResult if needed
-  // Don't modifying arrays - Identity will wrap if needed by standardizeResult
-  return value
+  return results
 }
 
 /**
@@ -137,18 +115,17 @@ export const accessSlice = (
  * @param input The array or object to iterate over
  * @returns The array of values, or undefined
  */
-export const iterateArray = (input: any): any => {
-  if (isNullOrUndefined(input)) return undefined
+export const iterateArray = (input: Array<any>): Array<any> => {
+  const results: any[] = []
 
-  if (Array.isArray(input)) {
-    // Just return a shallow copy of the array - no special flags needed
-    return [...input]
+  for (const item of input) {
+    if (Array.isArray(item)) {
+      results.push(...item)
+    } else if (typeof input === 'object' && input !== null) {
+      results.push(...Object.values(input))
+    }
   }
+  console.log('iterateArray', input, results)
 
-  if (typeof input === 'object' && input !== null) {
-    // Get object values as an array - no special flags needed
-    return Object.values(input)
-  }
-
-  return undefined
+  return results
 }

@@ -79,7 +79,7 @@ export const handlePipe = (
  * @returns The constructed array
  */
 export const constructArray = (
-  input: any,
+  input: Array<any>,
   elementFns: ((input: any) => any)[]
 ): any[] => {
   // Handle empty arrays
@@ -91,31 +91,15 @@ export const constructArray = (
   const result: any[] = [];
   
   for (const elementFn of elementFns) {
-    try {
-      // Apply the element function to the input
-      const fnResult = elementFn(input);
-      
-      // Skip undefined/null results
-      if (isNullOrUndefined(fnResult)) continue;
-      
-      // Handle different result formats consistently
-      if (!Array.isArray(fnResult) && typeof fnResult === 'object' && fnResult !== null) {
-        // Handle value/type structure from AST
-        const { value, type } = fnResult;
+    const { values } = elementFn(input);
+    console.log('values', values)
 
-        if (Array.isArray(value)) {
-          // Flatten arrays from value property
-          result.push(...value);
-        } else if (!isNullOrUndefined(value)) {
-          // Add single non-null values directly
-          result.push(value);
-        }
-      } else {
-        // Add other values directly
-        result.push(fnResult);
-      }
-    } catch (error) {
-      // Skip elements that cause errors
+    for (const item of values) {
+      console.log('item', item)
+      // Skip undefined/null results
+      if (isNullOrUndefined(item)) continue;
+      
+      result.push(item);
     }
   }
   
@@ -138,11 +122,11 @@ interface FieldDefinition {
  * @returns The constructed object or array of objects
  */
 export const constructObject = (
-  input: any,
+  input: Array<any>,
   fields: FieldDefinition[]
-): any => {
-  // Special case for null input with object construction - just create the object
-  if (input === null) {
+): Array<any> => {
+  // Special case for empty input
+  if (input.length === 0 || input[0] == null || input[0] === undefined) {
     const result: Record<string, any> = {}
 
     for (const field of fields) {
@@ -158,10 +142,8 @@ export const constructObject = (
       }
     }
 
-    return result
+    return [result]
   }
-
-  if (isNullOrUndefined(input)) return undefined
 
   // Handle array input for object construction: { user, title: .titles[] }
   // This creates an array of objects by iterating over array elements in the fields
@@ -223,7 +205,6 @@ export const constructObject = (
       }
     }
 
-    // Return object directly without wrapping
-    return result
+    return [result]
   }
 }

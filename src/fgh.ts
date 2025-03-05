@@ -4,45 +4,6 @@ import type { JQFunction, CompileOptions } from './types.ts'
 import { ParseError } from './types.ts'
 import { safeExecute, attemptErrorRecovery, ExecutionError } from './helpers/error-handling.ts'
 
-// These node types return arrays wrapped in an extra array level
-const wrapArrayTypes = [
-  'ArrayReturnAPI',       // Tests expect [[1,2,3]]
-  'Sort',                // sort gets wrapped
-  'SortBy',              // sort_by gets wrapped
-  'Sum',                 // + gets wrapped
-  'Difference',          // - gets wrapped
-  'Slice',               // slice gets wrapped
-  'Plus',                // Arithmetic operations
-  'ObjectConstruction',  // Object construction gets wrapped
-];
-
-/**
-* Convert any result to a consistent array format according to API requirements.
-* Now that we've removed array flags, we handle array wrapping through the AST node type.
-* 
-* @param result The result to convert to a consistent array format
-* @param wrap Whether to wrap arrays based on AST node type:
-*             - true for nodes that should wrap arrays in another array (Identity, etc)
-*             - false for nodes that should return arrays directly (PropertyAccess, etc)
-* @returns The result in a consistent array format
-*/
-export const standardizeResult = (result: unknown, wrap: boolean = false): unknown[] => {
-  // Handle undefined - always return empty array
-  if (result === undefined) return []
-
-  // Handle null - always return [null]
-  if (result === null) return [null]
-
-  // Basic approach: 
-  // - For wrap=true: always wrap in an array (even if already an array)
-  // - For wrap=false: only wrap if not already an array
-  if (wrap) {
-    return [result];
-  } else {
-    return result;
-  }
-}
-
 /**
  * Compiles a JQ expression into a reusable function
  *
@@ -60,20 +21,9 @@ export function compile (expression: string, options?: CompileOptions): JQFuncti
     const generator = new JQCodeGenerator()
 
     const ast = parser.parse()
-    const rawFn = generator.generate(ast)
+    const fn = generator.generate(ast)
 
-    // Create a new function that ensures consistent array result
-    const wrappedFn = (input: unknown) => {
-      const result = rawFn(input)
-      
-      // Determine whether to wrap the result based on the AST node type
-      const shouldWrap = wrapArrayTypes.includes(ast.type);
-      
-      // Use standardizeResult for consistent array handling
-      return standardizeResult(result, shouldWrap);
-    }
-    
-    return wrappedFn as JQFunction
+    return fn as JQFunction
   } catch (error) {
     // Attempt error recovery
     if (error instanceof ParseError) {
@@ -87,20 +37,9 @@ export function compile (expression: string, options?: CompileOptions): JQFuncti
           const parser = new JQParser(recovery.fixedExpression)
           const generator = new JQCodeGenerator()
           const ast = parser.parse()
-          const rawFn = generator.generate(ast)
-
-          // Create a new function that ensures consistent array result
-          const wrappedFn = (input: unknown) => {
-            const result = rawFn(input)
-
-            // Determine whether to wrap the result based on the AST node type
-            const shouldWrap = wrapArrayTypes.includes(ast.type);
-            
-            // Use standardizeResult for consistent array handling
-            return standardizeResult(result, shouldWrap);
-          }
+          const fn = generator.generate(ast)
           
-          return wrappedFn as JQFunction
+          return fn as JQFunction
         } catch (secondError) {
           // If recovery also fails, throw a more informative error
           // but preserve the original error as the cause

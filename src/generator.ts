@@ -49,7 +49,7 @@ export class JQCodeGenerator implements CodeGenerator {
     switch (node.type) {
       case 'Identity':
         // Special handling for null inputs
-        return '(input === null ? null : input)'
+        return 'input'
       case 'PropertyAccess':
         return this.generatePropertyAccess(node)
       case 'IndexAccess':
@@ -130,78 +130,11 @@ export class JQCodeGenerator implements CodeGenerator {
 
   private generatePropertyAccess (node: PropertyAccessNode): string {
     const properties: string[] = [node.property]
-    let current = node.input
-    let hasArrayIteration = false
-
-    // Check if there's an array iteration in the chain
-    if (current && current.type === 'ArrayIteration') {
-      hasArrayIteration = true
+    let input: string = 'input'
+    if (node.input) {
+      input = this.generateNode(node.input)
     }
-
-    while (current && current.type === 'PropertyAccess') {
-      properties.unshift((current as PropertyAccessNode).property)
-      current = (current as PropertyAccessNode).input
-
-      // Check for array iteration in parent nodes
-      if (current && current.type === 'ArrayIteration') {
-        hasArrayIteration = true
-      }
-    }
-
-    if (current && current.type === 'IndexAccess') {
-      const indexCode = this.generateIndexAccess(current)
-      return `accessProperty(${indexCode}, '${properties.join('.')}')`
-    }
-
-    // If we have an ArrayIteration in the property access chain, we need special handling
-    if (hasArrayIteration) {
-      const inputCode = current ? this.generateNode(current) : 'input'
-      const joined = properties.join('.')
-
-      return `(() => {
-        const inputVal = ${inputCode};
-        if (isNullOrUndefined(inputVal)) return undefined;
-        
-        // Find all properties
-        const propResults = [];
-        const propStack = [inputVal];
-        
-        // Process the property path
-        while (propStack.length > 0) {
-          const currentItem = propStack.pop();
-          
-          if (Array.isArray(currentItem)) {
-            // For arrays, process each element in order
-            // Important: reverse the array to maintain original order when using stack
-            const arrayElements = [...currentItem].filter(item => item !== null && item !== undefined);
-            // Add in reverse order to maintain original order when popping from stack
-            for (let i = arrayElements.length - 1; i >= 0; i--) {
-              propStack.push(arrayElements[i]);
-            }
-          } 
-          else if (typeof currentItem === 'object' && currentItem !== null) {
-            // Access the property from the object
-            const propValue = getNestedValue(currentItem, '${joined}'.split('.'));
-            if (!isNullOrUndefined(propValue)) {
-              if (Array.isArray(propValue)) {
-                propResults.push(...propValue);
-              } else {
-                propResults.push(propValue);
-              }
-            }
-          }
-        }
-        
-        // Return results if we found any
-        if (propResults.length > 0) {
-          return propResults;
-        }
-        
-        return undefined;
-      })()`
-    }
-
-    return `accessProperty(input, '${properties.join('.')}')`
+    return `accessProperty(${input}, '${properties.join('.')}')`
   }
 
   private generateIndexAccess (node: IndexAccessNode): string {
@@ -213,13 +146,6 @@ export class JQCodeGenerator implements CodeGenerator {
   }
 
   private generateArrayIteration (node: ArrayIterationNode): string {
-    // Special case for '[]' which is parsed as ArrayIteration without input
-    // We need to check if this is a direct [] without a preceding input, which means empty array construction
-    if (!node.input && node.position === 0) {
-      // Return an empty array
-      return '[]'
-    }
-
     if (node.input) {
       const inputCode = this.generateNode(node.input)
       return `iterateArray(${inputCode})`
@@ -291,7 +217,7 @@ export class JQCodeGenerator implements CodeGenerator {
   }
 
   private static wrapInFunctionWithAstType (expr: string, type: string): string {
-    return `((input) => { return { value: ${expr}, type: '${type}' } })`
+    return `((input) => { return { values: ${expr}, type: '${type}' } })`
   }
 
   private generatePipe (node: PipeNode): string {
@@ -437,7 +363,7 @@ export class JQCodeGenerator implements CodeGenerator {
 
   private generateObjectConstruction (node: any): string {
     const fields = node.fields.map((field: any) => this.generateObjectField(field)).join(', ')
-    return `(input === null ? constructObject(null, [${fields}]) : constructObject(input, [${fields}]))`
+    return `constructObject(input, [${fields}])`
   }
 
   private generateObjectField (node: any): string {
@@ -488,7 +414,7 @@ export class JQCodeGenerator implements CodeGenerator {
     // Handle empty array construction
     if (!node.elements || node.elements.length === 0) {
       // Return an empty array directly
-      return '[]'
+      return '[[]]'
     }
 
     const elements = node.elements.map((element: ASTNode) => {
@@ -537,13 +463,7 @@ export class JQCodeGenerator implements CodeGenerator {
   }
 
   private generateLiteral (node: any): string {
-    // For null literals, return null directly
-    if (node.value === null) {
-      return 'null'
-    }
-
-    // Return the literal value directly
-    return JSON.stringify(node.value)
+    return JSON.stringify([node.value])
   }
 
   private generateRecursiveDescent (node: any): string {
@@ -981,7 +901,8 @@ export class JQCodeGenerator implements CodeGenerator {
     const leftCode = this.generateNode(node.left)
     const rightCode = this.generateNode(node.right)
 
-    return `handleDefault(${leftCode}, ${rightCode})`
+    const res = `handleDefault(${leftCode}, ${rightCode})`
+    return res
   }
 
   private generateKeys (node: any): string {
@@ -1000,30 +921,13 @@ export class JQCodeGenerator implements CodeGenerator {
   }
 
   generate (ast: ASTNode): Function {
-    // Special case for 'empty' operation to return empty array instead of null
-    if (ast.type === 'Empty') {
-      return function (input: any) {
-        // Return empty array directly
-        return [];
-      }
-    }
-
+    console.log(JSON.stringify(ast, null, 2))
     const body = this.generateNode(ast)
 
     // Create a function that uses the helper functions
     const code = `
 // Execute the generated expression
 const result = ${body};
-
-// Make sure we always return arrays for consistency
-if (result === undefined) {
-  return [];
-}
-
-// For scalar values, wrap them
-if (!Array.isArray(result)) {
-  return [result];
-}
 
 // For arrays, return them directly
 return result;`
@@ -1061,7 +965,7 @@ return result;`
       'handleDefault',
       'getKeys',
       'getKeysUnsorted',
-      `return function(input) { ${code} }`
+      `return function(_input) { const input = [_input]; ${code} }`
     )
 
     // Return a function that uses the imported helper functions
