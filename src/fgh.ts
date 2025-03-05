@@ -18,7 +18,7 @@ export const standardizeResult = (result: unknown, wrap: boolean = false): unkno
   if (result === null) return [null]
 
   // Special handling for generator tests - always wrap scalar values
-  if (forceWrapping && !Array.isArray(result)) {
+  if (wrap && !Array.isArray(result)) {
     return [result]
   }
   // For arrays, determine if they should be returned directly or wrapped
