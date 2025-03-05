@@ -19,6 +19,7 @@ import {
   accessSlice,
   iterateArray,
   handlePipe,
+  handleSequence,
   constructArray,
   constructObject,
   addValues,
@@ -153,62 +154,12 @@ export class JQCodeGenerator implements CodeGenerator {
   }
 
   private generateSequence (node: SequenceNode): string {
-    // Create an array with all expression results,
-    // flatten array items as needed
-    const expressions = node.expressions.map(expr => this.generateNode(expr))
+    const expressions= node.expressions.map((element: ASTNode) => {
+      const elementCode = this.generateNode(element)
+      return JQCodeGenerator.wrapInFunction(elementCode)
+    }).join(', ')
 
-    // Check if all expressions are IndexAccess nodes. If so, we have array index syntax like [1,2,3]
-    const allIndexAccess = node.expressions.every(expr => expr.type === 'IndexAccess')
-
-    if (allIndexAccess && node.expressions.length > 0 && (node.expressions[0] as IndexAccessNode).input) {
-      // This is a comma-separated list of array indices like .array[1,2,3]
-      // Generate more efficient special-case code
-      return `(() => {
-        const target = ${this.generateNode((node.expressions[0] as IndexAccessNode).input!)};
-        if (isNullOrUndefined(target)) return [];
-        
-        const results = [];
-        ${node.expressions.map(expr => {
-          const index = (expr as IndexAccessNode).index
-          return `
-          // Handle index ${index}
-          {
-            const idx = ${index};
-            const value = accessIndex(target, idx);
-            if (!isNullOrUndefined(value)) results.push(value);
-          }`
-        }).join('')}
-        
-        return results;
-      })()`
-    }
-
-    // Enhanced sequence handling - returns a flat array of all results
-    return `(() => {
-      const sequenceResults = [];
-      
-      ${expressions.map((expr, i) => `
-        // Process expression ${i + 1}
-        const result${i} = ${expr};
-        
-        // Handle arrays correctly while preserving their elements
-        if (Array.isArray(result${i})) {
-          // For arrays that are wrapped as [[...]], unwrap them once
-          if (result${i}.length === 1 && Array.isArray(result${i}[0])) {
-            sequenceResults.push(...result${i}[0]);
-          } else {
-            // Standard array case - spread all elements
-            sequenceResults.push(...result${i});
-          }
-        }
-        // Don't lose non-array values either
-        else if (result${i} !== undefined) {
-          sequenceResults.push(result${i});
-        }
-      `).join('')}
-      
-      return sequenceResults;
-    })()`
+    return 'handleSequence(input, [' + expressions + '])'
   }
 
   private static wrapInFunction (expr: string): string {
@@ -799,6 +750,7 @@ console.log(code)
       'accessSlice',
       'iterateArray',
       'handlePipe',
+      'handleSequence',
       'constructArray',
       'constructObject',
       'addValues',
@@ -834,6 +786,7 @@ console.log(code)
       accessSlice,
       iterateArray,
       handlePipe,
+      handleSequence,
       constructArray,
       constructObject,
       addValues,

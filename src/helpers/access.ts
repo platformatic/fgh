@@ -60,7 +60,8 @@ export const accessIndex = (obj: Array<any>, idx: number): any => {
 
   for (const item of obj) {
     if (Array.isArray(item)) {
-      results.push(item[idx])
+      const index = idx < 0 ? item.length + idx : idx
+      results.push(item[index])
     } else if (typeof item === 'object' && item !== null) {
       results.push(Object.values(item)[idx])
     }

@@ -173,3 +173,18 @@ export const constructObject = (
     return [result]
   }
 }
+
+export const handleSequence = (input: Array<any>, fns: ((input: Array<any>) => Array<any>)[]): Array<any> => {
+  let results = []
+
+  for (const item of input) {
+    for (const fn of fns) {
+      const res = ensureArray(fn([item]))
+      results.push(...res)
+    }
+  }
+
+  console.log('handleSequence', input, 'results', results)
+
+  return results
+}
