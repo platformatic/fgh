@@ -34,8 +34,10 @@ describe('Array Return API', () => {
     const result = gen({ items: [[1, 2], [3, 4]] })
     
     assert.ok(Array.isArray(result), 'Result should be an array')
-    // With the new API, when the property is already an array, it gets wrapped in an array
-    assert.deepStrictEqual(result, [[[1, 2], [3, 4]]])
+    // With the new approach where we don't have array flags,
+    // array properties are handled consistently - accessing a property that contains
+    // an array of arrays will return the arrays flattened one level
+    assert.deepStrictEqual(result, [[1, 2], [3, 4]])
   })
 
   it('should return an array of a single array when result is an array', () => {

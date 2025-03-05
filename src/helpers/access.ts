@@ -16,7 +16,6 @@ export const accessProperty = (
   prop: string,
   optional = false
 ): any => {
-  process._rawDebug('accessProperty', obj, prop, optional)
   if (isNullOrUndefined(obj)) return undefined
 
   // Special case for array elements - critical for array iteration with property access
@@ -34,9 +33,9 @@ export const accessProperty = (
 
       // Only add non-null values
       if (!isNullOrUndefined(value)) {
-        // Handle nested arrays
+        // Handle nested arrays - flatten one level
         if (Array.isArray(value)) {
-          // Push each item
+          // Push each item from the array - preserve array structure
           results.push(...value)
         } else {
           // Push the single value
@@ -46,12 +45,15 @@ export const accessProperty = (
     }
 
     // Return the array of results or undefined if empty
+    // No special array flags needed
     return results.length > 0 ? results : undefined
   }
 
   // Regular property access on an object
   const value = getNestedValue(obj, prop.split('.'), optional)
   
+  // Return the value directly - it will be handled by standardizeResult if needed
+  // Don't modifying arrays - Identity will wrap if needed by standardizeResult
   return value
 }
 
@@ -136,16 +138,15 @@ export const accessSlice = (
  * @returns The array of values, or undefined
  */
 export const iterateArray = (input: any): any => {
-  process._rawDebug('iterateArray', input)
   if (isNullOrUndefined(input)) return undefined
 
   if (Array.isArray(input)) {
-    // Just return a copy of the array
+    // Just return a shallow copy of the array - no special flags needed
     return [...input]
   }
 
   if (typeof input === 'object' && input !== null) {
-    // Get object values as an array
+    // Get object values as an array - no special flags needed
     return Object.values(input)
   }
 

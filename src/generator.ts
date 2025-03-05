@@ -467,7 +467,7 @@ export class JQCodeGenerator implements CodeGenerator {
   private generateArrayConstruction (node: any): string {
     // Handle empty array construction
     if (!node.elements || node.elements.length === 0) {
-      // Just return an empty array
+      // Return an empty array directly - no special flags needed
       return '[]'
     }
 
@@ -476,6 +476,7 @@ export class JQCodeGenerator implements CodeGenerator {
       return JQCodeGenerator.wrapInFunctionWithAstType(elementCode, element.type)
     }).join(', ')
 
+    // Use the constructArray helper which now consistently handles arrays without flags
     return `constructArray(input, [${elements}])`
   }
 
@@ -594,9 +595,8 @@ export class JQCodeGenerator implements CodeGenerator {
   private generateMapFilter (node: any): string {
     const filterCode = this.generateNode(node.filter)
     const filterFn = JQCodeGenerator.wrapInFunction(filterCode)
-    const isSelectFilter = node.filter.type === 'SelectFilter'
 
-    // Simplified handling for map case, with special handling for select
+    // Updated implementation for consistent array handling
     return `(() => {
       if (isNullOrUndefined(input)) return [];
       
@@ -622,7 +622,8 @@ export class JQCodeGenerator implements CodeGenerator {
           }
         }
         
-        return result;
+        // Wrap the result in an array for consistent map output
+        return [result];
       }
       
       // Standard array handling
@@ -653,7 +654,8 @@ export class JQCodeGenerator implements CodeGenerator {
         }
       }
       
-      return result;
+      // Wrap the result in an array for consistent map output
+      return [result];
     })()`
   }
 
@@ -694,8 +696,8 @@ export class JQCodeGenerator implements CodeGenerator {
           }
         }
         
-        // Return for array inputs
-        return result;
+        // Wrap the result array for consistent map_values output
+        return [result];
       }
       
       // Handle object inputs
@@ -728,8 +730,8 @@ export class JQCodeGenerator implements CodeGenerator {
           }
         }
         
-        // Return for object inputs
-        return Object.keys(result).length > 0 ? result : {};
+        // Return for object inputs - wrap in array for consistent output
+        return [Object.keys(result).length > 0 ? result : {}];
       }
       
       return [];
@@ -740,7 +742,7 @@ export class JQCodeGenerator implements CodeGenerator {
     const conditionCode = this.generateNode(node.condition)
     const conditionFn = JQCodeGenerator.wrapInFunction(conditionCode)
 
-    // Simplified select implementation
+    // Simplified select implementation with consistent array handling
     return `(() => {
       // Handle null/undefined input
       if (isNullOrUndefined(input)) return [];
@@ -768,6 +770,7 @@ export class JQCodeGenerator implements CodeGenerator {
           }
         }
         
+        // Return the filtered array directly - no special marking needed
         return result;
       }
       

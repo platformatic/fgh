@@ -9,18 +9,23 @@ import { safeExecute, attemptErrorRecovery, ExecutionError } from './helpers/err
 * @param result The result to convert to a consistent array format
 * @returns The result in a consistent array format
 */
-export const standardizeResult = (result: unknown, wrap: boolean): unknown[] => {
+export const standardizeResult = (result: unknown, wrap: boolean = false): unknown[] => {
   // Handle undefined
   if (result === undefined) return []
 
   // Handle null
   if (result === null) return [null]
 
+  // Consistently handle Identity node by wrapping the result
   if (wrap) {
     return [result]
-  } else if (Array.isArray(result)) {
+  } 
+  // Handle arrays without any special flags
+  else if (Array.isArray(result)) {
     return result
-  } else {
+  } 
+  // Handle non-array values by wrapping them
+  else {
     return [result]
   }
 }
@@ -44,15 +49,13 @@ export function compile (expression: string, options?: CompileOptions): JQFuncti
     const ast = parser.parse()
     const rawFn = generator.generate(ast)
 
-    console.log('expression:', expression, 'AST root type:', ast.type)
-
     // Create a new function that ensures consistent array result
     const wrappedFn = (input: unknown) => {
       const result = rawFn(input)
       
       // Use the standardizeResult for consistent array handling
-      return standardizeResult(result,
-        ast.type === 'Identity')
+      // Identity nodes always wrap their result
+      return standardizeResult(result, ast.type === 'Identity')
     }
     
     return wrappedFn as JQFunction
@@ -76,7 +79,8 @@ export function compile (expression: string, options?: CompileOptions): JQFuncti
             const result = rawFn(input)
             
             // Use the standardizeResult for consistent array handling
-            return standardizeResult(result)
+            // Identity nodes always wrap their result
+            return standardizeResult(result, ast.type === 'Identity')
           }
           
           return wrappedFn as JQFunction

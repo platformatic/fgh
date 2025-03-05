@@ -11,7 +11,15 @@ export const handleArrayIterationToSelectPipe = (
   input: any,
   conditionFn: (item: any) => any
 ): any => {
-  if (!Array.isArray(input)) return input
+  // For non-array inputs, apply the condition but return in consistent array form
+  if (!Array.isArray(input)) {
+    const conditionResult = conditionFn(input)
+    const isTruthy = Array.isArray(conditionResult) 
+      ? conditionResult.some(val => val !== null && val !== undefined && val !== false)
+      : (conditionResult !== null && conditionResult !== undefined && conditionResult !== false)
+    
+    return isTruthy ? [input] : []
+  }
 
   // Get each result from applying the select function to each item in the array
   const results: any[] = []
@@ -32,7 +40,7 @@ export const handleArrayIterationToSelectPipe = (
     }
   }
 
-  // Return the filtered array directly
+  // Return the filtered array directly - no special marking needed
   return results
 }
 
@@ -50,6 +58,7 @@ export const handleArrayIterationToKeysPipe = (
 ): any => {
   if (!Array.isArray(input)) {
     // For non-array inputs, just return keys directly
+    // getKeys and getKeysUnsorted already return arrays
     return isSorted ? getKeys(input) : getKeysUnsorted(input)
   }
 
@@ -62,9 +71,11 @@ export const handleArrayIterationToKeysPipe = (
   const results: any[] = []
   for (const item of input) {
     const keys = isSorted ? getKeys(item) : getKeysUnsorted(item)
-    // Add the keys as a nested array
+    // Add the keys as a nested array - this preserves the structure correctly
+    // without needing special array markers
     results.push(keys)
   }
 
+  // Return the array of key arrays directly - no special marking needed
   return results
 }

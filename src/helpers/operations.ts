@@ -42,11 +42,11 @@ export const handlePipe = (
       }
     }
     
-    // Return the results array directly
+    // Return the results array directly - no special flags needed
     return results
   }
 
-  // Ensure we have an array to iterate over
+  // For non-array left results, ensure we have an array to iterate over
   const leftArray = ensureArray(leftResult)
   const results: any[] = []
 
@@ -68,7 +68,7 @@ export const handlePipe = (
     }
   }
 
-  // Return results array (empty or not)
+  // Return results array (empty or not) - no special flags needed
   return results
 }
 
@@ -91,11 +91,9 @@ export const constructArray = (
     // Apply the element function to the input
     const { type, value } = elementFn(input)
 
-    console.log(type, value)
-
-    // Handle different types of values
+    // Handle different types of values based on the result of the element function
     if (Array.isArray(value)) {
-      // For arrays, flatten one level
+      // For arrays, flatten one level to include all elements
       result.push(...value)
     } else if (!isNullOrUndefined(value)) {
       // Add single non-null values directly
@@ -103,9 +101,7 @@ export const constructArray = (
     }
   }
 
-  console.log('==>', result)
-
-  // Return the constructed array directly - no special handling needed
+  // Return the constructed array directly - no special flags needed
   return result
 }
 

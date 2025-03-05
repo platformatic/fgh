@@ -21,37 +21,18 @@ export const getKeys = (input: unknown): string[] | number[] => {
 
   // Handle arrays - return indices
   if (Array.isArray(input)) {
-    const result = Array.from({ length: input.length }, (_, i) => i)
-    // Mark as array construction to preserve its structure
-    try {
-      Object.defineProperty(result, '_fromArrayConstruction', { value: true })
-    } catch (e) {
-      // If we can't set the property (rare case with frozen objects), still continue
-    }
-    return result
+    // Simply return array of indices - no special marking needed
+    return Array.from({ length: input.length }, (_, i) => i)
   }
 
   // Handle objects - return sorted keys
   if (typeof input === 'object' && input !== null) {
-    const keys = Object.keys(input).sort()
-    // Mark as array construction to preserve its structure
-    try {
-      Object.defineProperty(keys, '_fromArrayConstruction', { value: true })
-    } catch (e) {
-      // If we can't set the property (rare case with frozen objects), still continue
-    }
-    return keys
+    // Return sorted keys array - no special marking needed
+    return Object.keys(input).sort()
   }
 
   // Non-object types have no keys - return empty array
-  const result: any[] = []
-  // Mark as array construction to preserve its structure
-  try {
-    Object.defineProperty(result, '_fromArrayConstruction', { value: true })
-  } catch (e) {
-    // If we can't set the property (rare case with frozen objects), still continue
-  }
-  return result
+  return []
 }
 
 /**
@@ -71,35 +52,16 @@ export const getKeysUnsorted = (input: unknown): string[] | number[] => {
 
   // Handle arrays - return indices
   if (Array.isArray(input)) {
-    const result = Array.from({ length: input.length }, (_, i) => i)
-    // Mark as array construction to preserve its structure
-    try {
-      Object.defineProperty(result, '_fromArrayConstruction', { value: true })
-    } catch (e) {
-      // If we can't set the property (rare case with frozen objects), still continue
-    }
-    return result
+    // Simply return array of indices - no special marking needed
+    return Array.from({ length: input.length }, (_, i) => i)
   }
 
   // Handle objects - return keys in insertion order (not sorted)
   if (typeof input === 'object' && input !== null) {
-    const keys = Object.keys(input)
-    // Mark as array construction to preserve its structure
-    try {
-      Object.defineProperty(keys, '_fromArrayConstruction', { value: true })
-    } catch (e) {
-      // If we can't set the property (rare case with frozen objects), still continue
-    }
-    return keys
+    // Return keys array without sorting - no special marking needed
+    return Object.keys(input)
   }
 
   // Non-object types have no keys - return empty array
-  const result: any[] = []
-  // Mark as array construction to preserve its structure
-  try {
-    Object.defineProperty(result, '_fromArrayConstruction', { value: true })
-  } catch (e) {
-    // If we can't set the property (rare case with frozen objects), still continue
-  }
-  return result
+  return []
 }

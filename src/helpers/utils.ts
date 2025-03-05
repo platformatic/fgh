@@ -3,17 +3,18 @@
  */
 
 /**
- * Preserve nested array structure for tests that need specific array wrapping behavior
- * This function handles cases where nested arrays need to be presented consistently
- * Simplified for the new approach - arrays are returned as is without special handling
- * @param arr The array to format consistently
- * @returns The array itself without special wrapping
+ * Preserve nested array structure for consistent array handling.
+ * For the new approach, we consistently handle arrays without special flags.
+ * 
+ * @param arr The value to format consistently as an array
+ * @returns The array itself or a wrapped non-array value
  */
-export const preserveNestedArrays = <T>(arr: T[]): T[] => {
-  if (!Array.isArray(arr)) return [arr];
+export const preserveNestedArrays = <T>(value: T | T[]): T[] => {
+  // If not an array, wrap it in an array
+  if (!Array.isArray(value)) return [value as T];
   
-  // Return the array as is - no special handling needed
-  return arr;
+  // Return the array as is - no special flags needed
+  return value;
 }
 
 /**

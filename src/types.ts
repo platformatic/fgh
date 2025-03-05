@@ -401,10 +401,8 @@ export class ExecutionError extends JQError {
 
 export type JQFunction = (input: unknown) => unknown[]
 
-// Interface for arrays with marker property
-export interface MarkedArray<T> extends Array<T> {
-  _fromArrayConstruction?: boolean;
-}
+// Following the refactoring to remove array flags, we no longer need the MarkedArray type
+// The standardizeResult function consistently handles arrays without the need for special flags
 
 export interface CompileOptions {
   /**
