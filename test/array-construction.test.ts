@@ -5,7 +5,11 @@ import assert from 'node:assert'
 import { query } from '../src/fgh.ts'
 
 describe('array construction', async (t) => {
-  test.only('should handle simple array construction', () => {
+  test('simple array construction', () => {
+    const result = query('[1, 2, 3]', null)
+    assert.deepStrictEqual(result, [[1, 2, 3]])
+  })
+  test('should handle simple array construction', () => {
     const input = { user: 'stedolan', projects: ['jq', 'wikiflow'] }
     const result = query('[.user, .projects[]]', input)
 
