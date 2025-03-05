@@ -4,7 +4,7 @@ import type { JQFunction, CompileOptions } from './types.ts'
 import { ParseError } from './types.ts'
 import { safeExecute, attemptErrorRecovery, ExecutionError } from './helpers/error-handling.ts'
 
-// These node types always return arrays wrapped in an extra array level
+// These node types return arrays wrapped in an extra array level
 const wrapArrayTypes = [
   'ArrayReturnAPI',       // Tests expect [[1,2,3]]
   'Sort',                // sort gets wrapped
@@ -14,41 +14,6 @@ const wrapArrayTypes = [
   'Slice',               // slice gets wrapped
   'Plus',                // Arithmetic operations
   'ObjectConstruction',  // Object construction gets wrapped
-];
-      
-// These node types require special handling to flatten arrays to match test expectations
-const flattenArrayTypes = [
-  'ArrayConstruction',  // [] flattens nested arrays to match tests
-  'Conditional',       // if-then-else flattens arrays
-  'ObjectConstruction', // {a: b} flattens arrays
-  'Sum',               // a + b flattens arrays 
-  'Difference',        // a - b flattens arrays
-  'Multiply',          // a * b flattens arrays
-  'Divide',            // a / b flattens arrays
-  'Modulo',           // a % b flattens arrays
-  'And',               // and flattens arrays
-  'Or',                // or flattens arrays
-  'Not',               // not flattens arrays
-  'Sort',              // sort flattens arrays
-  'SortBy',            // sort_by flattens arrays
-  'Slice',              // array[1:3] flattens arrays
-];
-
-// Some nodes will always preserve array structure as-is
-const preserveArrayTypes = [
-  'PropertyAccess',      // .prop preserves arrays
-  'IndexAccess',        // array[0] preserves arrays
-  'ArrayIteration',     // .[] preserves arrays
-  'Sequence',           // a,b,c preserves arrays
-  'MapValuesFilter',    // map_values(..) preserves arrays
-  'Keys',               // keys preserves arrays
-  'KeysUnsorted',       // keys_unsorted preserves arrays
-  'GreaterThan',        // > preserves arrays
-  'LessThan',           // < preserves arrays
-  'GreaterThanOrEqual', // >= preserves arrays 
-  'LessThanOrEqual',    // <= preserves arrays
-  'Equal',              // == preserves arrays
-  'NotEqual',            // != preserves arrays
 ];
 
 /**
@@ -68,15 +33,13 @@ export const standardizeResult = (result: unknown, wrap: boolean = false): unkno
   // Handle null - always return [null]
   if (result === null) return [null]
 
-  // When wrap is true (Identity, ArrayConstruction, etc.)
-  // we need to unwrap once if doubly nested or leave as is otherwise
+  // Basic approach: 
+  // - For wrap=true: always wrap in an array (even if already an array)
+  // - For wrap=false: only wrap if not already an array
   if (wrap) {
-    // Non-array values get wrapped
     return [result];
-  }
-  // All non-array values get wrapped in an array
-  else {
-    return result;
+  } else {
+    return Array.isArray(result) ? result : [result];
   }
 }
 
@@ -103,12 +66,11 @@ export function compile (expression: string, options?: CompileOptions): JQFuncti
     const wrappedFn = (input: unknown) => {
       const result = rawFn(input)
       
+      // Determine whether to wrap the result based on the AST node type
       const shouldWrap = wrapArrayTypes.includes(ast.type);
-
-      process._rawDebug(`expression: ${expression}, shouldWrap: ${shouldWrap}, ast.type: ${ast.type}, result: ${JSON.stringify(result)}`);
-
+      
       // Use standardizeResult for consistent array handling
-      return standardizeResult(result, shouldWrap)
+      return standardizeResult(result, shouldWrap);
     }
     
     return wrappedFn as JQFunction
@@ -131,11 +93,11 @@ export function compile (expression: string, options?: CompileOptions): JQFuncti
           const wrappedFn = (input: unknown) => {
             const result = rawFn(input)
 
-            // For all other node types, look at the actual result to determine wrapping
-            const shouldWrap = alwaysWrapTypes.includes(ast.type)
+            // Determine whether to wrap the result based on the AST node type
+            const shouldWrap = wrapArrayTypes.includes(ast.type);
             
             // Use standardizeResult for consistent array handling
-            return standardizeResult(result, shouldWrap)
+            return standardizeResult(result, shouldWrap);
           }
           
           return wrappedFn as JQFunction

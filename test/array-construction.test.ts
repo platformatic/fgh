@@ -9,25 +9,25 @@ describe('array construction', async (t) => {
     const result = query('[1, 2, 3]', null)
     assert.deepStrictEqual(result, [[1, 2, 3]])
   })
-  test('should handle simple array construction', () => {
-    const input = { user: 'stedolan', projects: ['jq', 'wikiflow'] }
-    const result = query('[.user, .projects[]]', input)
-
-    assert.deepStrictEqual(result, ['stedolan', 'jq', 'wikiflow'])
-  })
 
   test('should handle array construction with multiple elements', () => {
     const input = { a: 1, b: 2, c: 3 }
     const result = query('[.a, .b, .c]', input)
 
-    assert.deepStrictEqual(result, [1, 2, 3])
+    assert.deepStrictEqual(result, [[1, 2, 3]])
   })
 
+  test('should handle simple array construction', () => {
+    const input = { user: 'stedolan', projects: ['jq', 'wikiflow'] }
+    const result = query('[.user, .projects[]]', input)
+
+    assert.deepStrictEqual(result, [['stedolan', 'jq', 'wikiflow']])
+  })
   test('should handle nested array construction', () => {
     const input = { a: [1, 2], b: [3, 4], c: 5 }
     const result = query('[.a[], .b[], .c]', input)
 
-    assert.deepStrictEqual(result, [1, 2, 3, 4, 5])
+    assert.deepStrictEqual(result, [[1, 2, 3, 4, 5]])
   })
 
   test('should handle empty array construction', () => {
@@ -44,6 +44,6 @@ describe('array construction', async (t) => {
     }
     const result = query('[.user.name, .settings.theme]', input)
 
-    assert.deepStrictEqual(result, ['John', 'dark'])
+    assert.deepStrictEqual(result, [['John', 'dark']])
   })
 })

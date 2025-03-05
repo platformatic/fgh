@@ -82,66 +82,44 @@ export const constructArray = (
   input: any,
   elementFns: ((input: any) => any)[]
 ): any[] => {
-  if (isNullOrUndefined(input)) return []
-
-  // For test compatibility, handle mock functions in tests
-  if (typeof process !== 'undefined' && process.env.NODE_ENV === 'test') {
-    // In test environment, handle simple function mocks
-    const result: any[] = []
-    
-    for (const elementFn of elementFns) {
-      try {
-        // Handle mocking - if function takes direct input without type/value structure
-        const fnResult = elementFn(input)
-        
-        if (!isNullOrUndefined(fnResult)) {
-          if (Array.isArray(fnResult)) {
-            // For arrays, flatten one level to include all elements
-            result.push(...fnResult)
-          } else {
-            // Add single non-null values directly
-            result.push(fnResult)
-          }
-        }
-      } catch (error) {
-        // Skip element on error
-      }
-    }
-    
-    // Return result directly without wrapping to match expected test format
-    return result
+  // Handle empty arrays
+  if (elementFns.length === 0) {
+    return [];
   }
-
-  // Standard runtime behavior
-  const result: any[] = []
-
-  // Process each element function
+  
+  // Process each element function to get array elements
+  const result: any[] = [];
+  
   for (const elementFn of elementFns) {
     try {
       // Apply the element function to the input
-      const fnResult = elementFn(input)
-      if (isNullOrUndefined(fnResult)) continue
-
-      const { type, value } = fnResult
+      const fnResult = elementFn(input);
       
-      // Skip undefined values
-      if (isNullOrUndefined(value)) continue
+      // Skip undefined/null results
+      if (isNullOrUndefined(fnResult)) continue;
+      
+      // Handle different result formats consistently
+      if (!Array.isArray(fnResult) && typeof fnResult === 'object' && fnResult !== null) {
+        // Handle value/type structure from AST
+        const { value, type } = fnResult;
 
-      // Handle different types of values based on the result of the element function
-      if (Array.isArray(value)) {
-        // For arrays, flatten one level to include all elements
-        result.push(...value)
+        if (Array.isArray(value)) {
+          // Flatten arrays from value property
+          result.push(...value);
+        } else if (!isNullOrUndefined(value)) {
+          // Add single non-null values directly
+          result.push(value);
+        }
       } else {
-        // Add single non-null values directly
-        result.push(value)
+        // Add other values directly
+        result.push(fnResult);
       }
     } catch (error) {
-      // If an error occurs, just skip this element
-      continue
+      // Skip elements that cause errors
     }
   }
-
-  return result
+  
+  return [result];
 }
 
 /**

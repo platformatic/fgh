@@ -487,7 +487,7 @@ export class JQCodeGenerator implements CodeGenerator {
   private generateArrayConstruction (node: any): string {
     // Handle empty array construction
     if (!node.elements || node.elements.length === 0) {
-      // Return an empty array directly - no special flags needed
+      // Return an empty array directly
       return '[]'
     }
 
@@ -496,7 +496,7 @@ export class JQCodeGenerator implements CodeGenerator {
       return JQCodeGenerator.wrapInFunctionWithAstType(elementCode, element.type)
     }).join(', ')
 
-    // Use the constructArray helper which now consistently handles arrays without flags
+    // Use the constructArray helper which handles all array construction consistently
     return `constructArray(input, [${elements}])`
   }
 
