@@ -40,8 +40,9 @@ export const handleArrayIterationToSelectPipe = (
     }
   }
 
-  // Tests expect select filter results to be wrapped in an array
-  return [results]
+  // Return results directly for array iteration case
+  // This fixes the .[] | select(.role == "admin") pattern
+  return results
 }
 
 /**

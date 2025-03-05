@@ -871,8 +871,11 @@ export class JQCodeGenerator implements CodeGenerator {
           }
         }
         
-        // Tests expect select results to be wrapped in an array
-        return [result];
+        // For array iteration select tests, return the results directly 
+        if (result.length === 0) {
+          return [];
+        }
+        return result;
       }
       
       // When used directly on a single object input
