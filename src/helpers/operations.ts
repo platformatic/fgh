@@ -16,59 +16,18 @@ export const handlePipe = (
   leftFn: (input: any) => any,
   rightFn: (input: any) => any
 ): any => {
-  // Get the result of the left function
-  const leftResult = leftFn(input)
-  if (isNullOrUndefined(leftResult)) return undefined
 
-  // Handle array results from the left function
-  if (Array.isArray(leftResult)) {
-    // Process each element in the array
-    const results: any[] = []
-    
-    for (const item of leftResult) {
-      // Apply the right function to each item
-      const rightResult = rightFn(item)
-      
-      // Skip undefined results
-      if (isNullOrUndefined(rightResult)) continue
-      
-      // Handle array results from the right function
-      if (Array.isArray(rightResult)) {
-        // Standard array - spread elements into the results
-        results.push(...rightResult)
-      } else {
-        // Add single values directly
-        results.push(rightResult)
-      }
-    }
-    
-    // Return the results array directly - no special flags needed
-    return results
-  }
+  const results = []
 
-  // For non-array left results, ensure we have an array to iterate over
-  const leftArray = ensureArray(leftResult)
-  const results: any[] = []
+  for (const item of input) {
+    const leftResult = leftFn([item])
 
-  // Process each item from the left result
-  for (const item of leftArray) {
-    // Apply the right function to each item
-    const rightResult = rightFn(item)
-
-    // Skip undefined results
-    if (isNullOrUndefined(rightResult)) continue
-
-    // Handle arrays from the right function
-    if (Array.isArray(rightResult)) {
-      // Spread the array elements
+    const rightResult = rightFn(leftResult)
+    if (!isNullOrUndefined(rightResult)) {
       results.push(...rightResult)
-    } else {
-      // Single values added directly
-      results.push(rightResult)
     }
   }
 
-  // Return results array (empty or not) - no special flags needed
   return results
 }
 

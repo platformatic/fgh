@@ -35,7 +35,7 @@ test('generates array access', () => {
   assert.strictEqual(result[0], 'a', 'First element should be "a"')
 })
 
-test.skip('generates pipe', () => {
+test('generates pipe', () => {
   const parser = new JQParser('.foo | .bar')
   const generator = new JQCodeGenerator()
   const fn = generator.generate(parser.parse())
@@ -64,7 +64,7 @@ test('generates nested optional access', () => {
   assert.deepEqual(fn({ foo: { bar: 'baz' } }), ['baz'])
 })
 
-test.skip('generates complex expressions', () => {
+test('generates complex expressions', () => {
   const parser = new JQParser('.foo[0] | .bar?')
   const generator = new JQCodeGenerator()
   const fn = generator.generate(parser.parse())
@@ -79,7 +79,7 @@ test.skip('generates complex expressions', () => {
   )
 })
 
-test.skip('generate the example from the README', () => {
+test('generate the example from the README', () => {
   const parser = new JQParser('.users[] | .name.first')
   const generator = new JQCodeGenerator()
   const fn = generator.generate(parser.parse())
