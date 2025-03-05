@@ -321,9 +321,9 @@ export class JQCodeGenerator implements CodeGenerator {
           }
         }
 
-        // No special marking needed
-        
-        return [[result]];
+        // Test compatibility requires specific array structure
+        // Return keys directly, not wrapped in extra array
+        return result;
       })()`;
     }
     
@@ -353,9 +353,9 @@ export class JQCodeGenerator implements CodeGenerator {
           }
         }
         
-        // No special marking needed
-        
-        return [[result]];
+        // Test compatibility requires specific array structure
+        // Return keys directly, not wrapped in extra array
+        return result;
       })()`;
     }
     // Special handling for .. | .prop? pattern
