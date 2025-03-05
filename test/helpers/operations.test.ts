@@ -57,8 +57,8 @@ describe('Operations Helper Functions', () => {
 
     it('should apply element functions and collect results', () => {
       const elementFns = [
-        (input: any) => input.a,
-        (input: any) => input.b
+        (input: any) => ({ type: 'test', value: input.a }),
+        (input: any) => ({ type: 'test', value: input.b })
       ]
       const result = constructArray({ a: 1, b: 2 }, elementFns)
       assert.deepStrictEqual(result, [1, 2])
@@ -67,9 +67,9 @@ describe('Operations Helper Functions', () => {
 
     it('should skip undefined results', () => {
       const elementFns = [
-        (input: any) => input.a,
-        (input: any) => input.b,
-        (input: any) => input.c
+        (input: any) => ({ type: 'test', value: input.a }),
+        (input: any) => ({ type: 'test', value: input.b }),
+        (input: any) => ({ type: 'test', value: input.c })
       ]
       const result = constructArray({ a: 1, b: 2 }, elementFns)
       assert.deepStrictEqual(result, [1, 2])
@@ -77,8 +77,8 @@ describe('Operations Helper Functions', () => {
 
     it('should spread array results from element functions', () => {
       const elementFns = [
-        (input: any) => [input.a, input.b],
-        (input: any) => input.c
+        (input: any) => ({ type: 'test', value: [input.a, input.b] }),
+        (input: any) => ({ type: 'test', value: input.c })
       ]
       const result = constructArray({ a: 1, b: 2, c: 3 }, elementFns)
       assert.deepStrictEqual(result, [1, 2, 3])
@@ -89,7 +89,7 @@ describe('Operations Helper Functions', () => {
         (input: any) => {
           const arr = [input.a, input.b]
           Object.defineProperty(arr, '_fromArrayConstruction', { value: true })
-          return arr
+          return { type: 'test', value: arr }
         }
       ]
       const result = constructArray({ a: 1, b: 2 }, elementFns)
