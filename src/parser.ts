@@ -11,12 +11,6 @@ export class JQParser {
   constructor (input: string) {
     this.lexer = new JQLexer(input)
     this.advance()
-    // Mark if we're being called from a test file (for AST output format)
-    const isTestFile = typeof process?.argv?.[1] === 'string' && process.argv[1].includes('test')
-    if (isTestFile) {
-      // When in test mode, don't include input property in slice nodes
-      process.env.NODE_ENV = 'test'
-    }
   }
 
   parse (): ASTNode {
@@ -1279,9 +1273,6 @@ export class JQParser {
 
         // When called directly without context, treat '.' as implicit
         const isStandalone = !(this.basePos > 0)
-        // Check if we're in a test environment based on filename or assert is being used
-        const isTestFile = typeof process?.argv?.[1] === 'string' && process.argv[1].includes('test')
-        const isTestMode = isTestFile || (typeof process?.env?.NODE_ENV === 'string' && process?.env?.NODE_ENV.includes('test'))
 
         // Handle index access
         if (this.currentToken?.type === 'NUM' as TokenType) {
@@ -1305,13 +1296,6 @@ export class JQParser {
               position: pos,
               start: numValue,
               end
-            }
-
-            // Special case for the parser test
-            if (typeof process?.argv?.[1] === 'string' &&
-                process.argv[1].includes('parser.test.ts') &&
-                pos === 1) {
-              return sliceNode
             }
 
             // Only add input in production mode or when it's needed for execution
@@ -1347,18 +1331,6 @@ export class JQParser {
             end
           }
 
-          // Special case for the parser test
-          if (typeof process?.argv?.[1] === 'string' &&
-              process.argv[1].includes('parser.test.ts') &&
-              pos === 1) {
-            return sliceNode
-          }
-
-          // Only add input in production mode or when it's needed for execution
-          if (!isTestMode && isStandalone) {
-            sliceNode.input = { type: 'Identity', position: 0 }
-          }
-
           return sliceNode
         } else if (this.currentToken?.type === '-' as TokenType) {
           // It's a negative index or slice
@@ -1381,18 +1353,6 @@ export class JQParser {
               position: pos,
               start: num,
               end
-            }
-
-            // Special case for the parser test
-            if (typeof process?.argv?.[1] === 'string' &&
-                process.argv[1].includes('parser.test.ts') &&
-                pos === 1) {
-              return sliceNode
-            }
-
-            // Only add input in production mode or when it's needed for execution
-            if (!isTestMode && isStandalone) {
-              sliceNode.input = { type: 'Identity', position: 0 }
             }
 
             return sliceNode
