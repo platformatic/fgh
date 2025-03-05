@@ -23,23 +23,38 @@ export const isTruthy = (value: any): boolean => {
  * @param right The right operand
  * @returns true if both operands are truthy, false otherwise
  */
-export const logicalAnd = (left: any, right: any): boolean | boolean[] => {
-  // Handle array operands
-  if (Array.isArray(left) && Array.isArray(right)) {
-    // For comma operator behavior, return flattened array of each evaluation
-    return left.map((leftVal) => right.map((rightVal) => 
-      isTruthy(leftVal) && isTruthy(rightVal)
-    )).flat()
-  } else if (Array.isArray(left)) {
-    // Array on left side
-    return left.map(leftVal => isTruthy(leftVal) && isTruthy(right))
-  } else if (Array.isArray(right)) {
-    // Array on right side
-    return right.map(rightVal => isTruthy(left) && isTruthy(rightVal))
-  } else {
-    // Simple case - both operands are scalar values
-    return isTruthy(left) && isTruthy(right)
+export const logicalAnd = (leftArray: any, rightArray: any): boolean | boolean[] => {
+  leftArray = ensureArray(leftArray)
+  rightArray = ensureArray(rightArray)
+
+  const results = []
+
+  for (let i = 0; i < leftArray.length; i++) {
+    const left = leftArray[i]
+
+    for (let k = 0; k < rightArray.length; k++) {
+      const right = rightArray[k]
+
+      // Handle array operands
+      if (Array.isArray(left) && Array.isArray(right)) {
+        // For comma operator behavior, return flattened array of each evaluation
+        results.push(!!left.map((leftVal) => right.map((rightVal) => 
+          isTruthy(leftVal) && isTruthy(rightVal)
+        )).flat())
+      } else if (Array.isArray(left)) {
+        // Array on left side
+        results.push(!!left.map(leftVal => isTruthy(leftVal) && isTruthy(right)))
+      } else if (Array.isArray(right)) {
+        // Array on right side
+        results.push(!!right.map(rightVal => isTruthy(left) && isTruthy(rightVal)))
+      } else {
+        // Simple case - both operands are scalar values
+        results.push(isTruthy(left) && isTruthy(right))
+      }
+    }
   }
+
+  return results
 }
 
 /**
@@ -49,23 +64,37 @@ export const logicalAnd = (left: any, right: any): boolean | boolean[] => {
  * @param right The right operand
  * @returns true if either operand is truthy, false otherwise
  */
-export const logicalOr = (left: any, right: any): boolean | boolean[] => {
-  // Handle array operands
-  if (Array.isArray(left) && Array.isArray(right)) {
-    // For comma operator behavior, return flattened array of each evaluation
-    return left.map((leftVal) => right.map((rightVal) => 
-      isTruthy(leftVal) || isTruthy(rightVal)
-    )).flat()
-  } else if (Array.isArray(left)) {
-    // Array on left side
-    return left.map(leftVal => isTruthy(leftVal) || isTruthy(right))
-  } else if (Array.isArray(right)) {
-    // Array on right side
-    return right.map(rightVal => isTruthy(left) || isTruthy(rightVal))
-  } else {
-    // Simple case - both operands are scalar values
-    return isTruthy(left) || isTruthy(right)
+export const logicalOr = (leftArray: any, rightArray: any): boolean | boolean[] => {
+  leftArray = ensureArray(leftArray)
+  rightArray = ensureArray(rightArray)
+
+  const results = []
+
+  for (let i = 0; i < leftArray.length; i++) {
+    const left = leftArray[i]
+    for (let k = 0; k < rightArray.length; k++) {
+      const right = rightArray[k]
+
+      // Handle array operands
+      if (Array.isArray(left) && Array.isArray(right)) {
+        // For comma operator behavior, return flattened array of each evaluation
+        results.push(!!left.map((leftVal) => right.map((rightVal) => 
+                                               isTruthy(leftVal) || isTruthy(rightVal)
+                                              )).flat())
+      } else if (Array.isArray(left)) {
+        // Array on left side
+        results.push(!!left.map(leftVal => isTruthy(leftVal) || isTruthy(right)))
+      } else if (Array.isArray(right)) {
+        // Array on right side
+        results.push(!!right.map(rightVal => isTruthy(left) || isTruthy(rightVal)))
+      } else {
+        // Simple case - both operands are scalar values
+        results.push(isTruthy(left) || isTruthy(right))
+      }
+    }
   }
+
+  return results
 }
 
 /**
@@ -74,16 +103,11 @@ export const logicalOr = (left: any, right: any): boolean | boolean[] => {
  * @param value The value to negate
  * @returns true if the value is falsy, false if the value is truthy
  */
-export const logicalNot = (value: any): boolean | boolean[] => {
-  // Handle array values
-  if (Array.isArray(value)) {
-    // Map over the array and negate each value
-    return value.map(item => !isTruthy(item))
-  } else {
-    // Simple case - scalar value
-    // Return a scalar value, NOT an array, because standardizeResult will handle wrapping
-    return !isTruthy(value)
-  }
+export const logicalNot = (values: Array<any>): boolean[] => {
+  values = ensureArray(values)
+
+  // Map over the array and negate each value
+  return values.map(item => !isTruthy(item))
 }
 
 /**
