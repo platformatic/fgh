@@ -128,13 +128,13 @@ export class JQCodeGenerator implements CodeGenerator {
     }
   }
 
-  private generatePropertyAccess (node: PropertyAccessNode): string {
+  private generatePropertyAccess (node: PropertyAccessNode, optional: boolean = false): string {
     const properties: string[] = [node.property]
     let input: string = 'input'
     if (node.input) {
       input = this.generateNode(node.input)
     }
-    return `accessProperty(${input}, '${properties.join('.')}')`
+    return `accessProperty(${input}, '${properties.join('.')}', ${optional})`
   }
 
   private generateIndexAccess (node: IndexAccessNode): string {
@@ -384,27 +384,18 @@ export class JQCodeGenerator implements CodeGenerator {
       const inputCode = this.generateNode(node.input)
       return `(() => {
         const result = accessSlice(${inputCode}, ${node.start}, ${node.end});
-        // Wrap result in array for test compatibility
-        if (Array.isArray(result)) {
-          return [result];
-        }
         return result;
       })()`
     }
     return `(() => {
       const result = accessSlice(input, ${node.start}, ${node.end});
-      // Wrap result in array for test compatibility
-      if (Array.isArray(result)) {
-        return [result];
-      }
       return result;
     })()`
   }
 
   private generateOptional (node: OptionalNode): string {
     if (node.expression.type === 'PropertyAccess') {
-      const propNode = node.expression
-      return `accessProperty(input, '${propNode.property}', true)`
+      return this.generatePropertyAccess(node.expression, true)
     }
     const exprCode = this.generateNode(node.expression)
     return `(isNullOrUndefined(input) ? undefined : ${exprCode})`

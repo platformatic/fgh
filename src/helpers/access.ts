@@ -21,15 +21,27 @@ export const accessProperty = (
   console.log(input)
 
   for (const obj of input) {
-    if (isNullOrUndefined(obj)) {
-      results.push(obj)
+    if (Array.isArray(obj)) {
+      throw new Error(`Cannot index array with string ${prop}`)
       continue
     }
 
-    console.log('accessProperty', obj, prop, optional)
+    if (isNullOrUndefined(obj)) {
+      if (!optional) {
+        results.push(obj)
+      }
+      continue
+    }
 
-    const value = getNestedValue(obj, prop.split('.'), optional)
-    results.push(value)
+
+    const value = obj[prop]
+
+    console.log('accessProperty1', obj, prop, optional, value)
+
+    if (value !== undefined || !optional) {
+      results.push(value)
+      continue
+    }
   }
 
   console.log('accessProperty', input, prop, results)
@@ -65,26 +77,34 @@ export const accessIndex = (obj: Array<any>, idx: number): any => {
  * @returns The sliced array or string, or undefined
  */
 export const accessSlice = (
-  input: any,
+  input: Array<any>,
   start: number | null,
   end: number | null
-): any => {
-  if (isNullOrUndefined(input)) return undefined
+): Array<any> => {
 
-  // Convert null start/end to undefined for array slice operator
-  const startIdx = start !== null ? start : undefined
-  const endIdx = end !== null ? end : undefined
+  const results = []
+  for (const item of input) {
+    let currentStart = start
+    let currentEnd = end
+    if (currentEnd === null) {
+      currentEnd = item.length
+      if (currentStart < 0) {
+        currentStart = item.length + currentStart
+      }
+    }
 
-  if (Array.isArray(input)) {
-    const result = input.slice(startIdx, endIdx)
-    return result
+    if (Array.isArray(item)) {
+      results.push(item.slice(currentStart, currentEnd))
+    } else if (typeof item === 'string') {
+      results.push(item.slice(currentStart, currentEnd))
+    } else {
+      throw new Error(`Cannot slice ${item}`)
+    }
   }
 
-  if (typeof input === 'string') {
-    return input.slice(startIdx, endIdx)
-  }
+  console.log('accessSlice', input, start, end, results)
 
-  return undefined
+  return results
 }
 
 /**
@@ -99,7 +119,7 @@ export const iterateArray = (input: Array<any>): Array<any> => {
     if (Array.isArray(item)) {
       results.push(...item)
     } else if (typeof input === 'object' && input !== null) {
-      results.push(...Object.values(input))
+      results.push(...Object.values(item))
     }
   }
   console.log('iterateArray', input, results)
