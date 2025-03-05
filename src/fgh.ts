@@ -39,7 +39,7 @@ export const standardizeResult = (result: unknown, wrap: boolean = false): unkno
   if (wrap) {
     return [result];
   } else {
-    return Array.isArray(result) ? result : [result];
+    return result;
   }
 }
 

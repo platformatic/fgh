@@ -94,32 +94,6 @@ export const logicalNot = (value: any): boolean | boolean[] => {
  * @returns left if left produces values that are not false or null, otherwise right
  */
 export const handleDefault = (left: any, right: any): any => {
-  // Check if left is an array
-  if (Array.isArray(left)) {
-    // Empty arrays should return right value
-    if (left.length === 0) {
-      // Return right without wrapping - standardizeResult will handle wrapping later
-      return right
-    }
-
-    // Filter out false and null values
-    const filteredLeft = left.filter(item => item !== false && item !== null)
-    // If there are non-false, non-null values, return those
-    if (filteredLeft.length > 0) {
-      // If we started with a sequence, we should return just the last non-falsy value
-      // As a special case for sequences like '(false, null, 1) // 42'
-      if (filteredLeft.length === 1 && left.length > 1) {
-        return filteredLeft[0]
-      }
-      
-      // Return filtered without wrapping - standardizeResult will handle wrapping later
-      return filteredLeft
-    }
-    
-    // Otherwise, return right without wrapping - standardizeResult will handle wrapping later
-    return right
-  }
-
   // Check if left is false or null
   if (left === false || left === null) {
     // For falsy values, return right directly - standardizeResult will handle wrapping
