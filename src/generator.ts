@@ -932,6 +932,8 @@ const result = ${body};
 // For arrays, return them directly
 return result;`
 
+console.log(code)
+
     // Create a function factory that receives all helper functions as parameters
     const functionFactory = new Function(
       'isNullOrUndefined',

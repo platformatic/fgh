@@ -18,6 +18,8 @@ export const accessProperty = (
 ): Array<any> => {
   const results: any[] = []
 
+  console.log(input)
+
   for (const obj of input) {
     if (isNullOrUndefined(obj)) {
       results.push(obj)
@@ -41,43 +43,18 @@ export const accessProperty = (
  * @param idx The index to access
  * @returns The element at the specified index, or undefined
  */
-export const accessIndex = (obj: any, idx: number): any => {
-  if (isNullOrUndefined(obj)) return undefined
+export const accessIndex = (obj: Array<any>, idx: number): any => {
+  const results: any[] = []
 
-  if (Array.isArray(obj)) {
-    if (obj.some(Array.isArray)) {
-      const results = obj
-        .map(item => Array.isArray(item) ? item[idx] : undefined)
-        .filter(x => !isNullOrUndefined(x))
-
-      return results.length > 0 ? results : undefined
-    }
-
-    // Handle negative indices to access from the end of the array
-    if (idx < 0) {
-      const actualIdx = obj.length + idx
-      return actualIdx >= 0 && actualIdx < obj.length ? obj[actualIdx] : undefined
-    }
-
-    return idx >= 0 && idx < obj.length ? obj[idx] : undefined
-  }
-
-  if (typeof obj === 'object' && obj !== null) {
-    const arrays = Object.values(obj).filter(Array.isArray)
-    if (arrays.length > 0) {
-      const arr = arrays[0]
-
-      // Handle negative indices for nested arrays too
-      if (idx < 0) {
-        const actualIdx = arr.length + idx
-        return actualIdx >= 0 && actualIdx < arr.length ? arr[actualIdx] : undefined
-      }
-
-      return idx >= 0 && idx < arr.length ? arr[idx] : undefined
+  for (const item of obj) {
+    if (Array.isArray(item)) {
+      results.push(item[idx])
+    } else if (typeof item === 'object' && item !== null) {
+      results.push(Object.values(item)[idx])
     }
   }
 
-  return undefined
+  return results
 }
 
 /**
