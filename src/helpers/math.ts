@@ -11,6 +11,7 @@ import { isNullOrUndefined, ensureArray } from './utils.ts'
  * @returns The result of adding the values
  */
 export const addValues = (leftArray: any, rightArray: any): Array<any> => {
+  console.log('addValues', leftArray, rightArray)
   leftArray = ensureArray(leftArray)
   rightArray = ensureArray(rightArray)
 

@@ -21,6 +21,7 @@ import {
   handlePipe,
   handleSequence,
   handleMap,
+  handleMapValues,
   constructArray,
   constructObject,
   addValues,
@@ -330,66 +331,7 @@ export class JQCodeGenerator implements CodeGenerator {
     const filterCode = this.generateNode(node.filter)
     const filterFn = JQCodeGenerator.wrapInFunction(filterCode)
 
-    return `(() => {
-      if (isNullOrUndefined(input)) return [];
-      
-      // Handle array inputs
-      if (Array.isArray(input)) {
-        const result = [];
-        
-        for (const item of input) {
-          // Apply the filter function to each item
-          const filterResult = ${filterFn}(item);
-          
-          // Skip undefined/null results
-          if (isNullOrUndefined(filterResult)) continue;
-          
-          // For map_values, only take the first value from the filter result
-          if (Array.isArray(filterResult)) {
-            if (filterResult.length > 0) {
-              // Take first element of the array
-              result.push(filterResult[0]);
-            }
-          } else {
-            // Add single value
-            result.push(filterResult);
-          }
-        }
-        
-        // Return result directly - no wrapping needed
-        return result;
-      }
-      
-      // Handle object inputs
-      if (typeof input === 'object' && input !== null) {
-        const result = {};
-        
-        for (const key in input) {
-          // Apply the filter function to each value
-          const filterResult = ${filterFn}(input[key]);
-          
-          // Skip undefined/null results
-          if (isNullOrUndefined(filterResult)) continue;
-          
-          // For map_values, only take the first value from the filter result
-          if (Array.isArray(filterResult)) {
-            if (filterResult.length > 0) {
-              // Take first element of the array
-              result[key] = filterResult[0];
-            }
-          } else {
-            // Add single value
-            result[key] = filterResult;
-          }
-        }
-        
-        // When returning objects, wrap them in an array for consistent handling
-        return Object.keys(result).length > 0 ? [result] : [];
-      }
-      
-      // Return empty array
-      return [];
-    })()`
+    return `handleMapValues(input, ${filterFn})`
   }
 
   private generateSelectFilter (node: any): string {
@@ -632,6 +574,7 @@ console.log(code)
       'handlePipe',
       'handleSequence',
       'handleMap',
+      'handleMapValues',
       'constructArray',
       'constructObject',
       'addValues',
@@ -669,6 +612,7 @@ console.log(code)
       handlePipe,
       handleSequence,
       handleMap,
+      handleMapValues,
       constructArray,
       constructObject,
       addValues,

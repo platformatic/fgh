@@ -151,3 +151,36 @@ export const handleMap = (input: Array<any>, fn: (input: any) => any): Array<any
 
   return results
 }
+
+export const handleMapValues = (input: Array<any>, fn: (input: any) => any): Array<any> => {
+  let results = []
+  for (const item of input) {
+    console.log('item', item)
+    if (Array.isArray(item)) {
+      const partial = []
+      for (const subitem of item) {
+        const [result] = fn([subitem])
+        if (!isNullOrUndefined(result)) {
+          partial.push(result)
+        }
+      }
+      results.push(partial)
+    } else if (typeof item === 'object')  {
+      const keys = Object.keys(item)
+
+      const obj = {}
+      for (const key of keys) {
+        const fnResult = fn([item[key]])
+        const result = fnResult?.[0]
+
+        if (!isNullOrUndefined(result)) {
+          obj[key] = result
+        }
+      }
+      results.push(obj)
+    } else {
+      throw new Error('Cannot map over non-array or object')
+    }
+  }
+  return results
+}

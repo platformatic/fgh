@@ -12,6 +12,12 @@ describe('comma operator', async (t) => {
     assert.deepStrictEqual(result, [42, 'something else'])
   })
 
+  test('should handle simple comma operator on identity', () => {
+    const result = query('.,.', [1, 2])
+
+    assert.deepStrictEqual(result, [[1,2], [1,2]])
+  })
+
   test('should handle comma operator with array iteration', () => {
     const input = { user: 'stedolan', projects: ['jq', 'wikiflow'] }
     const result = query('.user, .projects[]', input)
