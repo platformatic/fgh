@@ -167,32 +167,48 @@ export const divideValues = (left: any, right: any): any => {
  * @param right The divisor
  * @returns The remainder after division
  */
-export const moduloValues = (left: any, right: any): any => {
-  // Handle null/undefined inputs
-  if (isNullOrUndefined(left)) return 0
-  if (isNullOrUndefined(right)) return left // Modulo by null treated as identity
+export const moduloValues = (leftArray: any, rightArray: any): any => {
+  console.log('addValues', leftArray, rightArray)
+  leftArray = ensureArray(leftArray)
+  rightArray = ensureArray(rightArray)
 
-  // Handle modulo by zero - return NaN rather than causing an error
-  if (right === 0) return NaN
+  const results: any[] = []
 
-  // For numeric modulo
-  if (typeof left === 'number' && typeof right === 'number') {
-    // JavaScript's % operator retains the sign of the dividend, but we want true mathematical modulo
-    // For modulo, we want to ensure the result is always in the range [0, abs(right)-1]
-    const mod = left % right
-    // If mod is negative, we add the absolute value of right to make it positive
-    return mod < 0 ? mod + Math.abs(right) : mod
+  for (let i = 0; i < leftArray.length; i++) {
+    for (let k = 0; k < rightArray.length; k++) {
+      const left = leftArray[i]
+      const right = rightArray[k]
+
+      // Handle null/undefined inputs
+      if (isNullOrUndefined(left)) {
+        results.push(0)
+      } else if (isNullOrUndefined(right)) {
+        results.push(left) // Modulo by null treated as identity
+        // Handle modulo by zero - return NaN rather than causing an error
+      } else if (right === 0) {
+        results.push(NaN)
+        // For numeric modulo
+      } else if (typeof left === 'number' && typeof right === 'number') {
+        // JavaScript's % operator retains the sign of the dividend, but we want true mathematical modulo
+        // For modulo, we want to ensure the result is always in the range [0, abs(right)-1]
+        const mod = left % right
+        // If mod is negative, we add the absolute value of right to make it positive
+        results.push(mod < 0 ? mod + Math.abs(right) : mod)
+      } else {
+        // Try to convert values to numbers if possible
+        const leftNum = Number(left)
+        const rightNum = Number(right)
+        if (!isNaN(leftNum) && !isNaN(rightNum)) {
+          if (rightNum === 0) return NaN
+            const mod = leftNum % rightNum
+          results.push(mod < 0 ? mod + Math.abs(rightNum) : mod)
+        }
+        // Default: return NaN for incompatible types
+        results.push(NaN)
+      }
+
+    }
   }
 
-  // Try to convert values to numbers if possible
-  const leftNum = Number(left)
-  const rightNum = Number(right)
-  if (!isNaN(leftNum) && !isNaN(rightNum)) {
-    if (rightNum === 0) return NaN
-    const mod = leftNum % rightNum
-    return mod < 0 ? mod + Math.abs(rightNum) : mod
-  }
-
-  // Default: return NaN for incompatible types
-  return NaN
+  return results
 }
