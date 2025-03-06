@@ -20,7 +20,7 @@ export const handlePipe = (
   const results = []
 
   for (const item of input) {
-    const leftResult = leftFn([item])
+    const leftResult = ensureArray(leftFn([item]))
 
     console.log('leftResult', leftResult)
 

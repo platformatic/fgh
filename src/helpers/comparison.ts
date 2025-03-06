@@ -3,6 +3,7 @@
  */
 
 import { compareValues, isDeepEqual } from './sort.ts'
+import { ensureArray } from './utils.ts'
 
 /**
  * Check if left value is greater than right value
@@ -12,25 +13,41 @@ import { compareValues, isDeepEqual } from './sort.ts'
  * @param right The right value to compare
  * @returns true if left > right, false otherwise
  */
-export const greaterThan = (left: any, right: any): boolean => {
-  // Handle special cases for null and undefined
-  // undefined is less than null in our ordering
-  if (left === undefined) return false
-  if (right === undefined) return true
-  if (left === null && right === null) return false
-  if (left === null) return false
-  if (right === null) return true
+export const greaterThan = (leftArray: any[], rightArray: any[]): boolean[] => {
+  console.log('greaterThan', leftArray, rightArray)
+  leftArray = ensureArray(leftArray)
+  rightArray = ensureArray(rightArray)
+  const results = []
+  const maxLen = Math.max(leftArray.length, rightArray.length)
 
-  // Handle boolean vs number ordering (boolean > number according to tests)
-  if (typeof left === 'boolean' && typeof right === 'number') {
-    return true
-  }
-  if (typeof left === 'number' && typeof right === 'boolean') {
-    return false
+  for (let i = 0; i < maxLen; i++) {
+    const left = leftArray[i]
+    const right = rightArray[i]
+
+    // Handle special cases for null and undefined
+    // undefined is less than null in our ordering
+    if (left === undefined) {
+      results.push( false)
+    } else if (right === undefined) {
+      results.push( true)
+    } else if (left === null && right === null) {
+      results.push( false)
+    } else if (left === null) {
+      results.push( false)
+    } else if (right === null) {
+      results.push( true)
+      // Handle boolean vs number ordering (boolean > number according to tests)
+    } else if (typeof left === 'boolean' && typeof right === 'number') {
+      results.push( true)
+    } else if (typeof left === 'number' && typeof right === 'boolean') {
+      results.push( false)
+    } else {
+      // Use the same comparison function as sort for other cases
+      results.push( compareValues(left, right) > 0)
+    }
   }
 
-  // Use the same comparison function as sort for other cases
-  return compareValues(left, right) > 0
+  return results
 }
 
 /**
@@ -41,25 +58,41 @@ export const greaterThan = (left: any, right: any): boolean => {
  * @param right The right value to compare
  * @returns true if left >= right, false otherwise
  */
-export const greaterThanOrEqual = (left: any, right: any): boolean => {
-  // Handle special cases for null and undefined
-  if (left === undefined && right === undefined) return true
-  if (left === undefined) return false
-  if (right === undefined) return true
-  if (left === null && right === null) return true
-  if (left === null) return false
-  if (right === null) return true
+export const greaterThanOrEqual = (leftArray: any, rightArray: any): boolean => {
+  console.log('greaterThanOrEqual', leftArray, rightArray)
+  leftArray = ensureArray(leftArray)
+  rightArray = ensureArray(rightArray)
+  const results = []
+  const maxLen = Math.max(leftArray.length, rightArray.length)
 
-  // Handle boolean vs number ordering (boolean > number according to tests)
-  if (typeof left === 'boolean' && typeof right === 'number') {
-    return true
-  }
-  if (typeof left === 'number' && typeof right === 'boolean') {
-    return false
+  for (let i = 0; i < maxLen; i++) {
+    const left = leftArray[i]
+    const right = rightArray[i]
+
+    // Handle special cases for null and undefined
+    // undefined is less than null in our ordering
+    if (left === undefined) {
+      results.push( false)
+    } else if (right === undefined) {
+      results.push( true)
+    } else if (left === null && right === null) {
+      results.push(true)
+    } else if (left === null) {
+      results.push( false)
+    } else if (right === null) {
+      results.push( true)
+      // Handle boolean vs number ordering (boolean > number according to tests)
+    } else if (typeof left === 'boolean' && typeof right === 'number') {
+      results.push( true)
+    } else if (typeof left === 'number' && typeof right === 'boolean') {
+      results.push( false)
+    } else {
+      // Use the same comparison function as sort for other cases
+      results.push( compareValues(left, right) >= 0)
+    }
   }
 
-  // Use the same comparison function as sort for other cases
-  return compareValues(left, right) >= 0
+  return results
 }
 
 /**
@@ -70,24 +103,41 @@ export const greaterThanOrEqual = (left: any, right: any): boolean => {
  * @param right The right value to compare
  * @returns true if left < right, false otherwise
  */
-export const lessThan = (left: any, right: any): boolean => {
-  // Handle special cases for null and undefined
-  if (left === undefined) return true
-  if (right === undefined) return false
-  if (left === null && right === null) return false
-  if (left === null) return true
-  if (right === null) return false
+export const lessThan = (leftArray: any, rightArray: any): boolean => {
+  console.log('lessThan', leftArray, rightArray)
+  leftArray = ensureArray(leftArray)
+  rightArray = ensureArray(rightArray)
+  const results = []
+  const maxLen = Math.max(leftArray.length, rightArray.length)
 
-  // Handle boolean vs number ordering (boolean > number according to tests)
-  if (typeof left === 'boolean' && typeof right === 'number') {
-    return false
-  }
-  if (typeof left === 'number' && typeof right === 'boolean') {
-    return true
+  for (let i = 0; i < maxLen; i++) {
+    const left = leftArray[i]
+    const right = rightArray[i]
+
+    // Handle special cases for null and undefined
+    // undefined is less than null in our ordering
+    if (left === undefined) {
+      results.push( false)
+    } else if (right === undefined) {
+      results.push( true)
+    } else if (left === null && right === null) {
+      results.push( false)
+    } else if (left === null) {
+      results.push( true)
+    } else if (right === null) {
+      results.push( false)
+      // Handle boolean vs number ordering (boolean > number according to tests)
+    } else if (typeof left === 'boolean' && typeof right === 'number') {
+      results.push( true)
+    } else if (typeof left === 'number' && typeof right === 'boolean') {
+      results.push( false)
+    } else {
+      // Use the same comparison function as sort for other cases
+      results.push( compareValues(left, right) < 0)
+    }
   }
 
-  // Use the same comparison function as sort for other cases
-  return compareValues(left, right) < 0
+  return results
 }
 
 /**
@@ -98,25 +148,41 @@ export const lessThan = (left: any, right: any): boolean => {
  * @param right The right value to compare
  * @returns true if left <= right, false otherwise
  */
-export const lessThanOrEqual = (left: any, right: any): boolean => {
-  // Handle special cases for null and undefined
-  if (left === undefined && right === undefined) return true
-  if (left === undefined) return true
-  if (right === undefined) return false
-  if (left === null && right === null) return true
-  if (left === null) return true
-  if (right === null) return false
+export const lessThanOrEqual = (leftArray: any, rightArray: any): boolean => {
+  console.log('lessThanOrEqual', leftArray, rightArray)
+  leftArray = ensureArray(leftArray)
+  rightArray = ensureArray(rightArray)
+  const results = []
+  const maxLen = Math.max(leftArray.length, rightArray.length)
 
-  // Handle boolean vs number ordering (boolean > number according to tests)
-  if (typeof left === 'boolean' && typeof right === 'number') {
-    return false
-  }
-  if (typeof left === 'number' && typeof right === 'boolean') {
-    return true
+  for (let i = 0; i < maxLen; i++) {
+    const left = leftArray[i]
+    const right = rightArray[i]
+
+    // Handle special cases for null and undefined
+    // undefined is less than null in our ordering
+    if (left === undefined) {
+      results.push( false)
+    } else if (right === undefined) {
+      results.push( true)
+    } else if (left === null && right === null) {
+      results.push(true)
+    } else if (left === null) {
+      results.push( true)
+    } else if (right === null) {
+      results.push( false)
+      // Handle boolean vs number ordering (boolean > number according to tests)
+    } else if (typeof left === 'boolean' && typeof right === 'number') {
+      results.push( true)
+    } else if (typeof left === 'number' && typeof right === 'boolean') {
+      results.push( false)
+    } else {
+      // Use the same comparison function as sort for other cases
+      results.push( compareValues(left, right) <= 0)
+    }
   }
 
-  // Use the same comparison function as sort for other cases
-  return compareValues(left, right) <= 0
+  return results
 }
 
 /**
@@ -127,8 +193,14 @@ export const lessThanOrEqual = (left: any, right: any): boolean => {
  * @param right The right value to compare
  * @returns true if values are equal, false otherwise
  */
-export const equal = (left: any, right: any): boolean => {
-  return isDeepEqual(left, right)
+export const equal = (leftArray: any, rightArray: any): boolean => {
+  const results = []
+
+  for (let i = 0; i < leftArray.length; i++) {
+    results.push(isDeepEqual(leftArray[i], rightArray[i]))
+  }
+
+  return results
 }
 
 /**
@@ -140,5 +212,11 @@ export const equal = (left: any, right: any): boolean => {
  * @returns true if values are not equal, false otherwise
  */
 export const notEqual = (left: any, right: any): boolean => {
-  return !isDeepEqual(left, right)
+  const results = []
+
+  for (let i = 0; i < leftArray.length; i++) {
+    results.push(!isDeepEqual(leftArray[i], rightArray[i]))
+  }
+
+  return results
 }

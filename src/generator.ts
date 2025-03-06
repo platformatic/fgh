@@ -624,27 +624,10 @@ export class JQCodeGenerator implements CodeGenerator {
     const rightCode = this.generateNode(node.right)
 
     return `(() => {
-      // Handle array cases for > operator
       const left = ${leftCode};
       const right = ${rightCode};
       
-      if (Array.isArray(left) && Array.isArray(right)) {
-        // If both are arrays, compare elements pair-wise
-        const results = [];
-        for (let i = 0; i < Math.max(left.length, right.length); i++) {
-          results.push(greaterThan(left[i], right[i]));
-        }
-        return [results];
-      } else if (Array.isArray(left)) {
-        // If only left is array, compare each element with right
-        return [left.map(item => greaterThan(item, right))];
-      } else if (Array.isArray(right)) {
-        // If only right is array, compare left with each element
-        return [right.map(item => greaterThan(left, item))];
-      } else {
-        // Simple scalar comparison
-        return greaterThan(left, right);
-      }
+      return greaterThan(left, right);
     })()`
   }
 

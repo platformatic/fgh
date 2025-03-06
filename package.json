@@ -15,7 +15,7 @@
     "lint": "eslint .",
     "lint:fix": "eslint --fix .",
     "test": "node --no-warnings --experimental-strip-types --test",
-    "working": "node --no-warnings --experimental-strip-types --test test/array-construction.test.ts test/array-return.test.ts test/default-operator.test.ts test/generator.test.ts test/sum-operator.test.ts test/array-keys.test.ts test/comma-operator.ts",
+    "working": "node --no-warnings --experimental-strip-types --test test/array-construction.test.ts test/array-return.test.ts test/default-operator.test.ts test/generator.test.ts test/sum-operator.test.ts test/array-keys.test.ts test/comma-operator.test.ts test/comparison-operators.test.ts test/parser.test.ts test/lexer.test.ts test/boolean-operators.test.ts",
     "benchmark": "node --no-warnings benchmarks/benchmark.ts",
     "benchmark:report": "node --no-warnings benchmarks/runner.js",
     "benchmark:sample": "node --no-warnings benchmarks/generate-sample.js && node --no-warnings benchmarks/update-docs.js",
