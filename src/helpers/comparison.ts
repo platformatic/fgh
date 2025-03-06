@@ -194,6 +194,9 @@ export const lessThanOrEqual = (leftArray: any, rightArray: any): boolean => {
  * @returns true if values are equal, false otherwise
  */
 export const equal = (leftArray: any, rightArray: any): boolean => {
+  leftArray = ensureArray(leftArray)
+  rightArray = ensureArray(rightArray)
+
   const results = []
 
   for (let i = 0; i < leftArray.length; i++) {
@@ -211,7 +214,10 @@ export const equal = (leftArray: any, rightArray: any): boolean => {
  * @param right The right value to compare
  * @returns true if values are not equal, false otherwise
  */
-export const notEqual = (left: any, right: any): boolean => {
+export const notEqual = (leftArray: any, rightArray: any): boolean => {
+  leftArray = ensureArray(leftArray)
+  rightArray = ensureArray(rightArray)
+
   const results = []
 
   for (let i = 0; i < leftArray.length; i++) {

@@ -1,4 +1,4 @@
-import { test } from 'node:test'
+import { test, describe } from 'node:test'
 import assert from 'node:assert'
 import { query } from '../src/fgh.ts'
 
@@ -37,8 +37,8 @@ const productCatalog = {
   }
 }
 
-test('complex operations', async (t) => {
-  await t.test('should extract all product names across all categories', () => {
+describe('complex operations', async (t) => {
+  test('should extract all product names across all categories', () => {
     const result = query('.categories[].products[].name', productCatalog)
     assert.deepEqual(
       result,
@@ -46,7 +46,7 @@ test('complex operations', async (t) => {
     )
   })
 
-  await t.test('should find products that are low in stock', () => {
+  test('should find products that are low in stock', () => {
     const result = query('.categories[].products[] | select(.stock < 20) | { id, name, stock }', productCatalog)
 
     assert.equal(result.length, 2)

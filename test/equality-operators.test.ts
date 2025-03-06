@@ -1,11 +1,11 @@
 // Test for equality operators: ==, !=
 
-import { test } from 'node:test'
+import { test, describe } from 'node:test'
 import assert from 'node:assert'
 import { query } from '../src/fgh.ts'
 
-test('equality operator ==', async (t) => {
-  await t.test('should compare primitive values', () => {
+describe('equality operator ==', async (t) => {
+  test('should compare primitive values', () => {
     // Basic comparisons
     assert.deepEqual(query('5 == 5', null), [true])
     assert.deepEqual(query('5 == 6', null), [false])
@@ -27,14 +27,14 @@ test('equality operator ==', async (t) => {
     assert.deepEqual(query('null == ""', null), [false])
   })
 
-  await t.test('should work with property access', () => {
+  test('should work with property access', () => {
     assert.deepEqual(query('.a == 5', { a: 5 }), [true])
     assert.deepEqual(query('.a == 5', { a: 10 }), [false])
     assert.deepEqual(query('.a == .b', { a: 7, b: 7 }), [true])
     assert.deepEqual(query('.a == .b', { a: 7, b: 5 }), [false])
   })
 
-  await t.test('should work as a filter', () => {
+  test('should work as a filter', () => {
     // Filter usage as shown in examples
     assert.deepEqual(
       query('. == false', null),
@@ -43,8 +43,8 @@ test('equality operator ==', async (t) => {
   })
 })
 
-test('inequality operator !=', async (t) => {
-  await t.test('should compare primitive values', () => {
+describe('inequality operator !=', async (t) => {
+  test('should compare primitive values', () => {
     // Basic comparisons
     assert.deepEqual(query('5 != 5', null), [false])
     assert.deepEqual(query('5 != 6', null), [true])
@@ -62,7 +62,7 @@ test('inequality operator !=', async (t) => {
     assert.deepEqual(query('null != 0', null), [true])
   })
 
-  await t.test('should work with property access', () => {
+  test('should work with property access', () => {
     assert.deepEqual(query('.a != 5', { a: 10 }), [true])
     assert.deepEqual(query('.a != 5', { a: 5 }), [false])
     assert.deepEqual(query('.a != .b', { a: 7, b: 5 }), [true])
