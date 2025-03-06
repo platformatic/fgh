@@ -85,50 +85,52 @@ export const subtractValues = (leftArray: any, rightArray: any): any => {
  * @param right The right value
  * @returns The result of multiplying the values
  */
-export const multiplyValues = (left: any, right: any): any => {
-  // Handle null/undefined inputs
-  if (isNullOrUndefined(left) || isNullOrUndefined(right)) return 0
+export const multiplyValues = (leftArray: any, rightArray: any): any => {
 
-  // For numeric multiplication
-  if (typeof left === 'number' && typeof right === 'number') {
-    return left * right
-  }
+  console.log('addValues', leftArray, rightArray)
+  leftArray = ensureArray(leftArray)
+  rightArray = ensureArray(rightArray)
 
-  // String repetition: "a" * 3 = "aaa"
-  if (typeof left === 'string' && typeof right === 'number' && Number.isInteger(right) && right >= 0) {
-    return left.repeat(right)
-  }
+  const results: any[] = []
 
-  if (typeof right === 'string' && typeof left === 'number' && Number.isInteger(left) && left >= 0) {
-    return right.repeat(left)
-  }
-
-  // Array repetition: [1, 2] * 3 = [1, 2, 1, 2, 1, 2]
-  if (Array.isArray(left) && typeof right === 'number' && Number.isInteger(right) && right >= 0) {
-    const result = []
-    for (let i = 0; i < right; i++) {
-      result.push(...left)
+  for (let i = 0; i < leftArray.length; i++) {
+    for (let k = 0; k < rightArray.length; k++) {
+      const left = leftArray[i]
+      const right = rightArray[k]
+      // Handle null/undefined inputs
+      if (isNullOrUndefined(left) || isNullOrUndefined(right)) {
+        results.push(0)
+        // For numeric multiplication
+      } else if (typeof left === 'number' && typeof right === 'number') {
+        results.push(left * right)
+        // String repetition: "a" * 3 = "aaa"
+      } else if (typeof left === 'string' && typeof right === 'number' && Number.isInteger(right) && right >= 0) {
+        results.push(...left.repeat(right))
+      } else if (typeof right === 'string' && typeof left === 'number' && Number.isInteger(left) && left >= 0) {
+        results.push(...right.repeat(left))
+        // Array repetition: [1, 2] * 3 = [1, 2, 1, 2, 1, 2]
+      } else if (Array.isArray(left) && typeof right === 'number' && Number.isInteger(right) && right >= 0) {
+        for (let j = 0; k < right; j++) {
+          results.push(...left)
+        }
+      } else if (Array.isArray(right) && typeof left === 'number' && Number.isInteger(left) && left >= 0) {
+        for (let i = 0; i < left; i++) {
+          results.push(...right)
+        }
+      } else {
+        // Try to convert values to numbers if possible
+        const leftNum = Number(left)
+        const rightNum = Number(right)
+        if (!isNaN(leftNum) && !isNaN(rightNum)) {
+          results.push(leftNum * rightNum)
+        } else {
+          results.push(NaN)
+        }
+      }
     }
-    return result
   }
 
-  if (Array.isArray(right) && typeof left === 'number' && Number.isInteger(left) && left >= 0) {
-    const result = []
-    for (let i = 0; i < left; i++) {
-      result.push(...right)
-    }
-    return result
-  }
-
-  // Try to convert values to numbers if possible
-  const leftNum = Number(left)
-  const rightNum = Number(right)
-  if (!isNaN(leftNum) && !isNaN(rightNum)) {
-    return leftNum * rightNum
-  }
-
-  // Default: return 0 for incompatible types
-  return 0
+  return results
 }
 
 /**

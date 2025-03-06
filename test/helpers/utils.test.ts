@@ -1,6 +1,6 @@
 import { describe, it } from 'node:test'
 import assert from 'node:assert'
-import { isNullOrUndefined, ensureArray, getNestedValue } from '../../src/helpers/utils.ts'
+import { isNullOrUndefined, ensureArray } from '../../src/helpers/utils.ts'
 
 describe.skip('Utils Helper Functions', () => {
   describe('isNullOrUndefined', () => {
