@@ -48,7 +48,7 @@ describe('greater than operator >', async (t) => {
     )
   })
 
-  test.skip('should work as a filter', () => {
+  test('should work as a filter', () => {
     // Filter usage as shown in example
     assert.deepEqual(
       query('. < 5', 2),

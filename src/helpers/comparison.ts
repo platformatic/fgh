@@ -205,8 +205,23 @@ export const equal = (leftArray: any, rightArray: any): boolean => {
   const results = []
 
   for (let i = 0; i < leftArray.length; i++) {
-    results.push(isDeepEqual(leftArray[i], rightArray[i]))
+    for (let k = 0; k < rightArray.length; k++) {
+      console.log('equal item', leftArray[i], rightArray[k])
+      if (Array.isArray(leftArray[i]) && Array.isArray(rightArray[k])) {
+        results.push(isDeepEqual(leftArray[i], rightArray[k]))
+      } else if (Array.isArray(leftArray[i]) && !Array.isArray(rightArray[k])) {
+        let result = []
+        for (const item of leftArray[i]) {
+          result.push(isDeepEqual(item, rightArray[k]))
+        }
+        results.push(result)
+      } else {
+        results.push(isDeepEqual(leftArray[i], rightArray[k]))
+      }
+    }
   }
+  
+  console.log('equal', leftArray, rightArray, results)
 
   return results
 }
@@ -220,14 +235,30 @@ export const equal = (leftArray: any, rightArray: any): boolean => {
  * @returns true if values are not equal, false otherwise
  */
 export const notEqual = (leftArray: any, rightArray: any): boolean => {
+  console.log('notEqual', leftArray, rightArray)
   leftArray = ensureArray(leftArray)
   rightArray = ensureArray(rightArray)
 
   const results = []
 
   for (let i = 0; i < leftArray.length; i++) {
-    results.push(!isDeepEqual(leftArray[i], rightArray[i]))
+    for (let k = 0; k < rightArray.length; k++) {
+      console.log('notEqual item', leftArray[i], rightArray[k])
+      if (Array.isArray(leftArray[i]) && Array.isArray(rightArray[k])) {
+        results.push(!isDeepEqual(leftArray[i], rightArray[k]))
+      } else if (Array.isArray(leftArray[i]) && !Array.isArray(rightArray[k])) {
+        let result = []
+        for (const item of leftArray[i]) {
+          result.push(!isDeepEqual(item, rightArray[k]))
+        }
+        results.push(result)
+      } else {
+        results.push(!isDeepEqual(leftArray[i], rightArray[k]))
+      }
+    }
   }
+  
+  console.log('notEqual', leftArray, rightArray, results)
 
   return results
 }

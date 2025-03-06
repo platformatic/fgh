@@ -122,7 +122,7 @@ describe('not function', async (t) => {
     checkBoolean('.a | not', { a: 42 }, false)
   })
 
-  test.skip('should handle multiple results', () => {
+  test('should handle multiple results', () => {
     // Use map function to apply not to each element in the array
     assert.deepEqual(
       query('map(not)', [true, false]),
@@ -146,7 +146,7 @@ describe('combined boolean operators', async (t) => {
     checkBoolean('(.foo or .bar) | not', { foo: false, bar: false }, true)
   })
 
-  test.skip('should handle array examples from spec', () => {
+  test('should handle array examples from spec', () => {
     // Using map to implement the example from spec
     const result = query('map(if . then . else (. | not) end)', [true, false])
     assert.deepEqual(result, [[true, true]])

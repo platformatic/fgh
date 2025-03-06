@@ -188,12 +188,22 @@ export const handleMapValues = (input: Array<any>, fn: (input: any) => any): Arr
 
 export const handleSelect = (input: Array<any>, fn: (input: any) => any): Array<any> => {
   let results = []
-  for (const item of input) {
-    const [result] = fn([item])
-    if (result) {
+
+  const conditions = fn(input)
+
+  console.log('handleSelect', input, conditions)
+
+  for (let i = 0; i < input.length; i++) {
+    const condition = conditions[i]
+    const item = input[i]
+
+    if (Array.isArray(item)) {
+      results.push(item.filter((_, idx) => condition[idx]))
+    } else if (condition) {
       results.push(item)
     }
   }
+
   return results
 }
 

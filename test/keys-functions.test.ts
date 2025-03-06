@@ -121,17 +121,17 @@ describe('keys_unsorted function', () => {
 })
 
 describe('keys and keys_unsorted with pipes and filters', () => {
-  test.skip('keys | select - filter object keys', () => {
+  test('keys | select - filter object keys', () => {
     const input = { name: 'John', age: 30, address: '123 Main St', email: 'john@example.com' }
     const result = query('keys | select(. != "age")', input)
-    assert.deepStrictEqual(result, ['address', 'email', 'name'])
+    assert.deepStrictEqual(result, [['address', 'email', 'name']])
   })
 
-  test.skip('keys with select comparison using equality', () => {
+  test('keys with select comparison using equality', () => {
     const input = { name: 'John', age: 30, address: '123 Main St', email: 'john@example.com' }
     // Select keys equal to 'name'
     const result = query('keys | select(. == "name")', input)
-    assert.deepStrictEqual(result, ['name'])
+    assert.deepStrictEqual(result, [['name']])
   })
 
   test('keys_unsorted with pipe to identity', () => {
