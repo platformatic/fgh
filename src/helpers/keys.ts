@@ -14,7 +14,7 @@ import { isNullOrUndefined } from './utils.ts'
  * @returns Array of keys (sorted) or indices
  */
 export const getKeys = (input: Array<any>): Array<string> => {
-  return getKeysUnsorted(input).sort()
+  return getKeysUnsorted(input, true)
 }
 
 /**
@@ -26,15 +26,21 @@ export const getKeys = (input: Array<any>): Array<string> => {
  * @param input The input object or array
  * @returns Array of keys (unsorted) or indices
  */
-export const getKeysUnsorted = (input: Array<any>): Array<string> => {
+export const getKeysUnsorted = (input: Array<any>, sort: boolean = false): Array<string> => {
   console.log('getKeys', input)
 
   const results: string[] = []
 
   for (const item of input) {
-    // Handle objects - return sorted keys
-    if (typeof item === 'object' && item !== null) {
-      results.push(Object.keys(item))
+    if (Array.isArray(item)) {
+      const keys = Array.from({ length: item.length }, (_, i) => i)
+      results.push(keys)
+    } else if (typeof item === 'object' && item !== null) {
+      const keys = Object.keys(item)
+      if (sort) {
+        keys.sort()
+      }
+      results.push(keys)
     } else {
       throw new Error(`Cannot get keys from ${item}`)
     }
