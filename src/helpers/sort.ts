@@ -103,17 +103,19 @@ function compareObjects (a: any, b: any): number {
  * @param input The array to sort
  * @returns The sorted array
  */
-export const sortArray = (input: any): any => {
-  // Special case: return null for null input
-  if (input === null) return null
-  // Return undefined for undefined
-  if (input === undefined) return undefined
-  if (!Array.isArray(input)) return undefined
+export const sortArray = (input: Array<any>): Array<any> => {
+  console.log('sortArray', input)
+  const results = []
 
-  const result = [...input].sort(compareValues)
+  for (const item of input) {
+    if (!Array.isArray(item)) {
+      throw new Error('Cannot sort non-array')
+    }
+    const result = [...item].sort(compareValues)
+    results.push(result)
+  }
 
-  // Flatten the result to match expected test format
-  return result.flat()
+  return results
 }
 
 /**
@@ -127,24 +129,27 @@ export const sortArrayBy = (
   input: any,
   paths: ((item: any) => any)[]
 ): any => {
-  // Special case: return null for null input
-  if (input === null) return null
-  // Return undefined for undefined
-  if (input === undefined) return undefined
-  if (!Array.isArray(input)) return undefined
+  console.log('sortArrayBy', input, paths)
+  const results = []
 
-  const result = [...input].sort((a, b) => {
-    for (const pathFn of paths) {
-      const valueA = pathFn(a)
-      const valueB = pathFn(b)
-
-      const comparison = compareValues(valueA, valueB)
-      if (comparison !== 0) return comparison
+  for (const item of input) {
+    if (!Array.isArray(item)) {
+      throw new Error('Cannot sort non-array')
     }
-    return 0
-  })
+    const result = [...item].sort((a, b) => {
+      for (const pathFn of paths) {
+        const valueA = pathFn([a])
+        const valueB = pathFn([b])
 
-  return result
+        const comparison = compareValues(valueA, valueB)
+        if (comparison !== 0) return comparison
+      }
+    return 0
+    })
+    results.push(result)
+  }
+
+  return results
 }
 
 /**
