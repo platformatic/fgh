@@ -17,7 +17,7 @@ A typescript implementation of the [JQ language](http://jqlang.org/).
 - Comma Operator (`,`): Creates a sequence of outputs, combining the results of two or more filters
 - Addition Operator (`+`): Adds numbers, concatenates strings and arrays, or merges objects
 - Subtraction Operator (`-`): Subtracts numbers or removes elements from arrays and objects
-- Multiplication Operator (`*`): Multiplies numbers or repeats strings/arrays
+- Multiplication Operator (`*`): Multiplies numbers or repeats strings
 - Division Operator (`/`): Divides numbers
 - Modulo Operator (`%`): Calculates the remainder after division
 - Default Operator (`//`): Provides a fallback value when the left operand is `false`, `null`, or produces no values
@@ -100,7 +100,7 @@ query('[1, 2, 3, 4] - [2, 4]', null)
 ```
 
 ### Multiplication and Division Operators
-Multiplication (`*`) and division (`/`) operators work with numbers and other data types:
+Multiplication (`*`) and division (`/`) operators work with numbers and strings:
 
 ```javascript
 // Multiplying numbers
@@ -111,9 +111,8 @@ query('6 * 3', null)
 query('"abc" * 3', null)
 // => ["abcabcabc"]
 
-// Repeating arrays
-query('[1, 2] * 3', null)
-// => [[1, 2, 1, 2, 1, 2]]
+// Note: Array multiplication is not supported
+// query('[1, 2] * 3', null) will throw an error
 
 // Dividing numbers
 query('10 / 2', null)
@@ -142,6 +141,13 @@ query('10 % .negDivisor', { negDivisor: -3 })
 // Modulo with arrays
 query('.[] | . % 3', [5, 7, 9, 10, 12])
 // => [2, 1, 0, 1, 0]
+
+// Special cases
+query('null % 5', null)
+// => [0]  // null is treated as 0
+
+query('10 % null', null)
+// => [10] // modulo by null is treated as identity
 
 // Checking if a number is even
 query('{ isEven: (.value % 2 == 0) }', { value: 6 })
@@ -233,7 +239,7 @@ query('(true, true) and (true, false)', null)
 
 // Map function with NOT operation
 query('map(not)', [true, false])
-// => [false, true]
+// => [[false, true]]
 ```
 
 ### Comparison Operators
@@ -253,7 +259,7 @@ query('.price < 10', { price: 7.99 })
 
 // Filtering arrays using map and a comparison
 query('map(. > 5)', [3, 5, 7, 9])
-// => [false, false, true, true]
+// => [[false, false, true, true]]
 
 // Comparing different types (follows jq's type ordering)
 query('"abc" > 123', null)
@@ -269,19 +275,19 @@ The `map` and `map_values` filters apply a filter to each element of an array or
 ```javascript
 // Apply a filter to each element of an array
 query('map(.+1)', [1, 2, 3])
-// => [2, 3, 4]
+// => [[2, 3, 4]]
 
 // Apply a filter that produces multiple values per input (map collects all results)
 query('map(., .)', [1, 2])
-// => [1, 1, 2, 2]
+// => [[1, 1, 2, 2]]
 
 // Apply a filter that produces multiple values per input (map_values takes only the first result)
 query('map_values(., .)', [1, 2])
-// => [1, 2]
+// => [[1, 2]]
 
 // Apply a filter to values of an object (map always returns an array)
 query('map(.+1)', {"a": 1, "b": 2, "c": 3})
-// => [2, 3, 4]
+// => [[2, 3, 4]]
 
 // Apply a filter to values of an object (map_values maintains the object structure)
 query('map_values(.+1)', {"a": 1, "b": 2, "c": 3})
@@ -327,7 +333,7 @@ The `select` filter outputs its input unchanged if the filter returns true, and 
 ```javascript
 // Filter out values that don't match a condition
 query('map(select(. >= 2))', [1, 5, 3, 0, 7])
-// => [5, 3, 7]
+// => [[5, 3, 7]]
 
 // Find a specific item in an array of objects
 query('.[] | select(.id == "second")', [
@@ -350,22 +356,53 @@ query('select(.value > 10)', { name: 'test', value: 15 })
 
 ## CLI Tool
 
-FGH includes a command-line interface (CLI) tool for processing newline-delimited JSON data using JQ expressions:
+FGH includes a command-line interface (CLI) tool for processing newline-delimited JSON data using JQ expressions. To use it, you need to call the Node.js file directly:
 
 ```bash
 # Basic usage (reads from stdin)
-cat data.ndjson | fgh '.name'
+cat data.ndjson | node --no-warnings --experimental-strip-types src/cli/index.ts '.name'
 
 # Read from file
-fgh -f data.ndjson '.users[].name'
+node --no-warnings --experimental-strip-types src/cli/index.ts -f data.ndjson '.users[].name'
 
 # Exit on first error
-fgh -e -f data.ndjson '.complex.expression'
+node --no-warnings --experimental-strip-types src/cli/index.ts -e -f data.ndjson '.complex.expression'
 ```
 
 The CLI processes each line of input as a separate JSON document, applies the JQ expression, and outputs the result as a newline-delimited JSON stream.
 
+If you install the package globally or use npm scripts, you can use the shorter form:
+
+```bash
+# When installed globally or via npm scripts
+cat data.ndjson | fgh '.name'
+fgh -f data.ndjson '.users[].name'
+```
+
 See [CLI usage examples](./examples/cli/usage-examples.md) for more details.
+
+## Error Handling
+
+The `safeQuery` function provides error handling by returning an empty array instead of throwing an error:
+
+```javascript
+import { safeQuery } from 'fgh';
+
+// Normal query that will succeed
+const result = safeQuery('.name', { name: 'bob' });
+// => ['bob']
+
+// Query that would normally throw an error returns empty array
+const errorResult = safeQuery('.invalid[', { name: 'bob' });
+// => []
+```
+
+For debugging purposes, you can enable error logging by setting the `FGH_DEBUG` environment variable to `'true'`:
+
+```bash
+# Enable debug error logging for safeQuery
+FGH_DEBUG=true node your-script.js
+```
 
 ## Performance
 
