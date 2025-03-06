@@ -3,21 +3,6 @@
  */
 
 /**
- * Preserve nested array structure for consistent array handling.
- * For the new approach, we consistently handle arrays without special flags.
- * 
- * @param arr The value to format consistently as an array
- * @returns The array itself or a wrapped non-array value
- */
-export const preserveNestedArrays = <T>(value: T | T[]): T[] => {
-  // If not an array, wrap it in an array
-  if (!Array.isArray(value)) return [value as T];
-  
-  // Return the array as is - no special flags needed
-  return value;
-}
-
-/**
  * Check if a value is null or undefined
  * @param x The value to check
  * @returns True if value is null or undefined
@@ -32,50 +17,4 @@ export const isNullOrUndefined = (x: unknown): boolean => x === null || x === un
 export const ensureArray = <T>(x: T | T[]): T[] => {
   if (Array.isArray(x)) return x
   return [x]
-}
-
-/**
- * Get a nested property value from an object, with optional safe access
- * @param obj The object to get the property from
- * @param props Array of property names to access
- * @param optional Whether to use optional chaining for property access
- * @returns The property value if found, or undefined
- */
-export const getNestedValue = (
-  obj: any,
-  props: string[],
-  optional = false
-): any => {
-  if (isNullOrUndefined(obj)) return undefined
-
-  let value = obj
-  for (const prop of props) {
-    if (isNullOrUndefined(value)) return undefined
-
-    // Special handling for arrays - map property access over all elements
-    if (Array.isArray(value)) {
-      // For arrays, we map the property access over all elements
-      const results: any[] = []
-      for (const item of value) {
-        if (typeof item === 'object' && item !== null) {
-          const itemValue = optional ? item?.[prop] : item[prop]
-          if (!isNullOrUndefined(itemValue)) {
-            if (Array.isArray(itemValue)) {
-              results.push(...itemValue)
-            } else {
-              results.push(itemValue)
-            }
-          }
-        }
-      }
-
-      return results.length > 0 ? results : undefined
-    }
-
-    // For objects, access normally
-    if (typeof value !== 'object') return undefined
-    value = optional ? value?.[prop] : value[prop]
-  }
-
-  return value
 }

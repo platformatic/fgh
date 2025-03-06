@@ -2,7 +2,7 @@
  * Helper functions for accessing properties and elements from objects and arrays
  */
 
-import { isNullOrUndefined, getNestedValue } from './utils.ts'
+import { isNullOrUndefined } from './utils.ts'
 
 /**
  * Access a property from an object, with support for nested properties and array iteration

@@ -13,7 +13,6 @@ import type {
 import {
   isNullOrUndefined,
   ensureArray,
-  getNestedValue,
   accessProperty,
   accessIndex,
   accessSlice,
@@ -41,7 +40,6 @@ import {
   lessThanOrEqual,
   equal,
   notEqual,
-  handleArrayIterationToSelectPipe,
   logicalAnd,
   logicalOr,
   logicalNot,
@@ -429,7 +427,6 @@ console.log(code)
     const functionFactory = new Function(
       'isNullOrUndefined',
       'ensureArray',
-      'getNestedValue',
       'accessProperty',
       'accessIndex',
       'accessSlice',
@@ -456,7 +453,6 @@ console.log(code)
       'lessThanOrEqual',
       'equal',
       'notEqual',
-      'handleArrayIterationToSelectPipe',
       'logicalAnd',
       'logicalOr',
       'logicalNot',
@@ -470,7 +466,6 @@ console.log(code)
     return functionFactory(
       isNullOrUndefined,
       ensureArray,
-      getNestedValue,
       accessProperty,
       accessIndex,
       accessSlice,
@@ -497,7 +492,6 @@ console.log(code)
       lessThanOrEqual,
       equal,
       notEqual,
-      handleArrayIterationToSelectPipe,
       logicalAnd,
       logicalOr,
       logicalNot,
