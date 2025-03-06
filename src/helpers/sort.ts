@@ -1,4 +1,10 @@
 /**
+ * Helper functions for sorting and comparing values in FGH expressions
+ * Implements consistent ordering, array sorting, and deep equality comparison
+ * with special handling for all data types
+ */
+
+/**
  * Compare values according to JQ sort order:
  * null < false < true < numbers < strings < arrays < objects
  *
@@ -98,10 +104,13 @@ function compareObjects (a: any, b: any): number {
 }
 
 /**
- * Sort an array using the JQ sort order
+ * Implements the JQ 'sort' function to sort array contents
+ * Sorts each array in the input using the JQ type-aware comparison rules,
+ * preserving the original array structure while sorting its contents
  *
- * @param input The array to sort
- * @returns The sorted array
+ * @param input Array of arrays to sort
+ * @returns Array of sorted arrays
+ * @throws Error when attempting to sort non-array values
  */
 export const sortArray = (input: Array<any>): Array<any> => {
   const results = []
@@ -118,11 +127,14 @@ export const sortArray = (input: Array<any>): Array<any> => {
 }
 
 /**
- * Sort an array by the results of applying path expressions to each element
+ * Implements the JQ 'sort_by(path)' function for custom sorting
+ * Sorts arrays based on the values obtained by applying path expressions
+ * to each element, supporting multi-level sorting with multiple paths
  *
- * @param input The array to sort
- * @param paths Array of functions that compute the sort keys
- * @returns The sorted array
+ * @param input Array of arrays to sort
+ * @param paths Array of functions that compute sort keys for each element
+ * @returns Array of arrays sorted according to the specified path criteria
+ * @throws Error when attempting to sort non-array values
  */
 export const sortArrayBy = (
   input: any,
@@ -151,8 +163,10 @@ export const sortArrayBy = (
 }
 
 /**
- * Checks if two values are deeply equal
- * This is used for the equality (==) operator
+ * Performs a deep equality comparison between two values of any type
+ * Used by the equality (==) and inequality (!=) operators to determine
+ * if two values should be considered equal, with structural comparison
+ * for complex types like arrays and objects
  *
  * @param a First value to compare
  * @param b Second value to compare

@@ -1,3 +1,11 @@
+/**
+ * Lexical analyzer for FGH
+ *
+ * Parses JQ-like expressions into tokens for further processing by the parser.
+ * Handles all token types including identifiers, operators, literals, and keywords,
+ * with support for string escaping and proper error reporting.
+ */
+
 import type { Token, Lexer } from './types.ts'
 import { ParseError } from './types.ts'
 

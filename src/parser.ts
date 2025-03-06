@@ -1,3 +1,11 @@
+/**
+ * Parser for FGH expressions
+ *
+ * Transforms tokenized input into an Abstract Syntax Tree (AST) following JQ-like syntax.
+ * Handles complex expressions including pipes, operators, array/object construction,
+ * property access, filtering, and more, with comprehensive error handling and recovery.
+ */
+
 // src/parser.ts - Includes support for array construction [.prop1, .prop2[]]
 import { ParseError } from './types.ts'
 import type { Token, TokenType, Lexer, ASTNode } from './types.ts'

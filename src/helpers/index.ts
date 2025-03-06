@@ -1,5 +1,6 @@
 /**
- * Export all helper functions for use in the generator
+ * Export all helper functions for FGH operations and data manipulation
+ * This module aggregates all specialized helpers for use throughout the FGH library
  */
 
 export * from './utils.ts'

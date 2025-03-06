@@ -1,5 +1,13 @@
 #!/usr/bin/env node
 
+/**
+ * Command-line interface for FGH
+ *
+ * Provides tools for processing streams of newline-delimited JSON (NDJSON) using
+ * JQ-like expressions from the command line. Supports file input, standard input,
+ * error handling, and formatted output with multiple display options.
+ */
+
 import { createReadStream } from 'node:fs'
 import { createInterface } from 'node:readline'
 import { Readable } from 'node:stream'

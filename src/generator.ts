@@ -1,3 +1,11 @@
+/**
+ * Code generator for FGH expressions
+ *
+ * Converts the Abstract Syntax Tree (AST) into executable JavaScript functions.
+ * Handles all node types and generates optimized code that uses the helper functions
+ * to process input data according to the JQ-like query expressions.
+ */
+
 /* eslint no-new-func: "off" */
 import type {
   CodeGenerator,

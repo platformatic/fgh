@@ -1,14 +1,22 @@
 /**
- * Mathematical operations for FGH
+ * Mathematical operations for FGH expressions
+ * Implements arithmetic operators (+, -, *, /, %) with type-aware behavior
+ * for various data types including numbers, strings, arrays, and objects
  */
 
 import { isNullOrUndefined, ensureArray } from './utils.ts'
 
 /**
- * Add two values together, handling various types appropriately
- * @param left The left value
- * @param right The right value
- * @returns The result of adding the values
+ * Implements the addition (+) operator with type-specific behavior:
+ * - Numbers: standard arithmetic addition
+ * - Arrays: array concatenation
+ * - Objects: object property merging
+ * - Mixed types: various conversions based on JQ semantics
+ *
+ * @param leftArray Array of values to use as left operands
+ * @param rightArray Array of values to use as right operands
+ * @returns Array of results from adding each combination of left and right values
+ * @throws Error when attempting incompatible operations like array+non-array
  */
 export const addValues = (leftArray: any, rightArray: any): Array<any> => {
   leftArray = ensureArray(leftArray)
@@ -41,10 +49,15 @@ export const addValues = (leftArray: any, rightArray: any): Array<any> => {
 }
 
 /**
- * Subtract one value from another, handling various types appropriately
- * @param left The left value
- * @param right The right value to subtract
- * @returns The result of subtracting the values
+ * Implements the subtraction (-) operator with type-specific behavior:
+ * - Numbers: standard arithmetic subtraction
+ * - Arrays: removes elements from left array that are in right array
+ * - Mixed types: converts to numbers when possible
+ *
+ * @param leftArray Array of values to use as left operands
+ * @param rightArray Array of values to use as right operands
+ * @returns Array of results from subtracting each right value from each left value
+ * @throws Error for incompatible operations (null/undefined, objects, mixed array/non-array)
  */
 export const subtractValues = (leftArray: any, rightArray: any): any => {
   leftArray = ensureArray(leftArray)
@@ -78,10 +91,15 @@ export const subtractValues = (leftArray: any, rightArray: any): any => {
 }
 
 /**
- * Multiply two values, handling various types appropriately
- * @param left The left value
- * @param right The right value
- * @returns The result of multiplying the values
+ * Implements the multiplication (*) operator with type-specific behavior:
+ * - Numbers: standard arithmetic multiplication
+ * - String×Number: string repetition ("a" * 3 = "aaa")
+ * - Mixed types: converts to numbers when possible
+ *
+ * @param leftArray Array of values to use as left operands
+ * @param rightArray Array of values to use as right operands
+ * @returns Array of results from multiplying each left value by each right value
+ * @throws Error for incompatible operations like array multiplication
  */
 export const multiplyValues = (leftArray: any, rightArray: any): any => {
   leftArray = ensureArray(leftArray)
@@ -126,10 +144,14 @@ export const multiplyValues = (leftArray: any, rightArray: any): any => {
 }
 
 /**
- * Divide one value by another, handling various types appropriately
- * @param left The dividend
- * @param right The divisor
- * @returns The result of dividing the values
+ * Implements the division (/) operator with type-specific behavior:
+ * - Numbers: standard arithmetic division
+ * - Mixed types: converts to numbers when possible
+ *
+ * @param leftArray Array of values to use as left operands (dividends)
+ * @param rightArray Array of values to use as right operands (divisors)
+ * @returns Array of results from dividing each left value by each right value
+ * @throws Error for incompatible operations or null/undefined values
  */
 export const divideValues = (leftArray: any, rightArray: any): any => {
   leftArray = ensureArray(leftArray)
@@ -173,10 +195,14 @@ export const divideValues = (leftArray: any, rightArray: any): any => {
 }
 
 /**
- * Calculate the modulo of two values
- * @param left The dividend
- * @param right The divisor
- * @returns The remainder after division
+ * Implements the modulo (%) operator with mathematical (not just JavaScript) semantics:
+ * - Always returns a non-negative result for positive divisors
+ * - Handles special cases like null/undefined and zero divisor
+ * - Applies true mathematical modulo rather than remainder operation
+ *
+ * @param leftArray Array of values to use as left operands (dividends)
+ * @param rightArray Array of values to use as right operands (divisors)
+ * @returns Array of modulo results for each combination of values
  */
 export const moduloValues = (leftArray: any, rightArray: any): any => {
   leftArray = ensureArray(leftArray)

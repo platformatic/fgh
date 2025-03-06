@@ -1,3 +1,11 @@
+/**
+ * Type definitions and interfaces for the FGH library
+ *
+ * Provides comprehensive type support for the lexer, parser, and code generator,
+ * including token types, AST node definitions, and error handling classes.
+ * These types form the foundation for type safety throughout the library.
+ */
+
 export type JSONValue =
   | string
   | number

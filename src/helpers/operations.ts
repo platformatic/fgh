@@ -1,15 +1,21 @@
 /**
- * Helper functions for FGH operations (pipe, array/object construction, etc.)
+ * Helper functions for FGH high-level operations
+ * Implements pipe (|), array/object construction, mapping, filtering, and
+ * various data transformation operations with consistent handling of
+ * arrays, objects, and scalar values
  */
 
 import { isNullOrUndefined, ensureArray } from './utils.ts'
 
 /**
- * Handle the pipe operation (|) by applying the right function to each result of the left function
- * @param input The input value
- * @param leftFn The function on the left side of the pipe
- * @param rightFn The function on the right side of the pipe
- * @returns The result of piping the left function into the right function
+ * Implements the JQ pipe operator (|) for function composition
+ * Applies the left function to each input item, then feeds those results
+ * into the right function, creating a processing pipeline
+ *
+ * @param input Array of input values to process through the pipeline
+ * @param leftFn Function to apply first (left side of the pipe)
+ * @param rightFn Function to apply to the results of leftFn (right side of the pipe)
+ * @returns Combined results after applying both functions in sequence
  */
 export const handlePipe = (
   input: any,
@@ -33,10 +39,13 @@ export const handlePipe = (
 }
 
 /**
- * Construct an array by applying element functions to the input
- * @param input The input value
- * @param elementFns The functions to apply to the input to get array elements
- * @returns The constructed array
+ * Implements array construction for JQ expressions like [.a, .b, .c]
+ * Executes each element function on the input and collects the results
+ * into a single array, handling null/undefined values appropriately
+ *
+ * @param input Array of input values to process
+ * @param elementFns Array of functions that generate the array elements
+ * @returns Single-element array containing the constructed array
  */
 export const constructArray = (
   input: Array<any>,
@@ -78,10 +87,13 @@ interface FieldDefinition {
 }
 
 /**
- * Construct an object by applying field functions to the input
- * @param input The input value
- * @param fields The field definitions for the object
- * @returns The constructed object or array of objects
+ * Implements object construction for JQ expressions like {key: .value}
+ * Creates objects by computing each field's key and value dynamically,
+ * with support for both static and computed property names
+ *
+ * @param input Array of input values to process
+ * @param fields Array of field definitions with key/value functions
+ * @returns Array of constructed objects with all field combinations
  */
 export const constructObject = (
   input: Array<any>,
@@ -112,6 +124,14 @@ export const constructObject = (
   return results
 }
 
+/**
+ * Implements the JQ comma operator for sequencing operations
+ * Executes each function in the sequence and concatenates all results
+ *
+ * @param input Array of input values to process
+ * @param fns Array of functions to apply in sequence
+ * @returns Array containing the concatenated results of all functions
+ */
 export const handleSequence = (input: Array<any>, fns: ((input: Array<any>) => Array<any>)[]): Array<any> => {
   const results = []
 
@@ -125,6 +145,16 @@ export const handleSequence = (input: Array<any>, fns: ((input: Array<any>) => A
   return results
 }
 
+/**
+ * Implements the JQ 'map' function for arrays and objects
+ * Transforms each item in arrays or each value in objects
+ * using the provided mapping function
+ *
+ * @param input Array of arrays or objects to map over
+ * @param fn Mapping function to apply to each item
+ * @returns Array of mapped results
+ * @throws Error when attempting to map over non-array and non-object values
+ */
 export const handleMap = (input: Array<any>, fn: (input: any) => any): Array<any> => {
   const results = []
 
@@ -143,6 +173,16 @@ export const handleMap = (input: Array<any>, fn: (input: any) => any): Array<any
   return results
 }
 
+/**
+ * Implements the JQ 'map_values' function for transforming values
+ * For arrays: transforms each element while preserving array structure
+ * For objects: transforms each value while preserving keys and structure
+ *
+ * @param input Array of arrays or objects to transform
+ * @param fn Transformation function to apply to each value
+ * @returns Array of transformed inputs with structure preserved
+ * @throws Error when attempting to map over non-array and non-object values
+ */
 export const handleMapValues = (input: Array<any>, fn: (input: any) => any): Array<any> => {
   const results = []
   for (const item of input) {
@@ -175,6 +215,15 @@ export const handleMapValues = (input: Array<any>, fn: (input: any) => any): Arr
   return results
 }
 
+/**
+ * Implements the JQ 'select' function for filtering
+ * Keeps only elements that match the provided condition,
+ * with special handling for filtering arrays vs. scalar values
+ *
+ * @param input Array of values to filter
+ * @param fn Function that returns boolean conditions for filtering
+ * @returns Array containing only values that passed the condition
+ */
 export const handleSelect = (input: Array<any>, fn: (input: any) => any): Array<any> => {
   const results = []
 
@@ -194,6 +243,14 @@ export const handleSelect = (input: Array<any>, fn: (input: any) => any): Array<
   return results
 }
 
+/**
+ * Implements the JQ recursive descent operator (..)
+ * Recursively traverses arrays and objects, collecting all nested values
+ * at any depth into a flat result array
+ *
+ * @param input Array of values to recursively traverse
+ * @returns Flattened array containing the input items and all of their descendants
+ */
 export const handleRecursiveDescent = (input: Array<any>): Array<any> => {
   const results = [...input]
 

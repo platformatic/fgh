@@ -1,28 +1,31 @@
 /**
- * Helper functions for object and array keys operations
+ * Helper functions for extracting and manipulating keys from objects and arrays
+ * Provides utilities for retrieving keys in sorted or insertion order,
+ * with special handling for different data types
  */
 
 /**
- * Get the keys from an object or indices from an array
- * For objects, keys are sorted by unicode codepoint order
- * For arrays, returns indices from 0 to length-1
- * Non-object types return an empty array
+ * Implements the JQ 'keys' function to extract keys from objects or indices from arrays
+ * For objects, returns property names sorted by unicode codepoint order
+ * For arrays, returns indices from 0 to length-1 as numbers
  *
- * @param input The input object or array
- * @returns Array of keys (sorted) or indices
+ * @param input Array of objects or arrays to extract keys/indices from
+ * @returns Array of arrays containing the keys (as strings) or indices (as numbers)
+ * @throws Error when input is neither an object nor an array
  */
 export const getKeys = (input: Array<any>): Array<(string | number)[]> => {
   return getKeysUnsorted(input, true)
 }
 
 /**
- * Get the keys from an object or indices from an array
- * For objects, keys are in insertion order (not sorted)
- * For arrays, returns indices from 0 to length-1
- * Non-object types return an empty array
+ * Implements the JQ 'keys_unsorted' function to extract keys from objects or indices from arrays
+ * For objects, returns property names in their original insertion order (unless sort=true)
+ * For arrays, returns indices from 0 to length-1 as numbers
  *
- * @param input The input object or array
- * @returns Array of keys (unsorted) or indices
+ * @param input Array of objects or arrays to extract keys/indices from
+ * @param sort Optional flag to sort the keys (defaults to false)
+ * @returns Array of arrays containing the keys (as strings) or indices (as numbers)
+ * @throws Error when input is neither an object nor an array
  */
 export const getKeysUnsorted = (input: Array<any>, sort: boolean = false): Array<(string | number)[]> => {
   const results: (string | number)[][] = []

@@ -1,3 +1,11 @@
+/**
+ * Main entry point for the FGH library
+ *
+ * Provides the primary API for compiling and executing JQ-like expressions against
+ * JavaScript data structures. Includes functions for compilation, query execution,
+ * and safe querying with error handling and recovery capabilities.
+ */
+
 import { JQParser } from './parser.ts'
 import { JQCodeGenerator } from './generator.ts'
 import type { JQFunction, CompileOptions } from './types.ts'

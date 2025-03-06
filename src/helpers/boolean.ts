@@ -1,5 +1,7 @@
 /**
- * Boolean and default operations for FGH
+ * Boolean operations, conditional logic, and default value handling for FGH
+ * Implements logical operators (AND, OR, NOT), conditional expressions,
+ * and the default operator with support for arrays and scalar values
  */
 
 import { ensureArray } from './utils.ts'
@@ -17,11 +19,13 @@ export const isTruthy = (value: any): boolean => {
 }
 
 /**
- * Implement logical AND operation
+ * Implements logical AND operation with support for arrays and scalar values
+ * Evaluates 'and' conditions between all combinations of values in left and right arrays,
+ * with special handling for nested arrays following JQ's 'and' operator semantics
  *
- * @param left The left operand
- * @param right The right operand
- * @returns true if both operands are truthy, false otherwise
+ * @param leftArray Array of values to use as left operands
+ * @param rightArray Array of values to use as right operands
+ * @returns Array of boolean results from AND operations between each left and right combination
  */
 export const logicalAnd = (leftArray: any, rightArray: any): boolean | boolean[] => {
   leftArray = ensureArray(leftArray)
@@ -58,11 +62,13 @@ export const logicalAnd = (leftArray: any, rightArray: any): boolean | boolean[]
 }
 
 /**
- * Implement logical OR operation
+ * Implements logical OR operation with support for arrays and scalar values
+ * Evaluates 'or' conditions between all combinations of values in left and right arrays,
+ * with special handling for nested arrays following JQ's 'or' operator semantics
  *
- * @param left The left operand
- * @param right The right operand
- * @returns true if either operand is truthy, false otherwise
+ * @param leftArray Array of values to use as left operands
+ * @param rightArray Array of values to use as right operands
+ * @returns Array of boolean results from OR operations between each left and right combination
  */
 export const logicalOr = (leftArray: any, rightArray: any): boolean | boolean[] => {
   leftArray = ensureArray(leftArray)
@@ -98,10 +104,11 @@ export const logicalOr = (leftArray: any, rightArray: any): boolean | boolean[] 
 }
 
 /**
- * Implement logical NOT operation (negation)
+ * Implements logical NOT operation (negation) with array support
+ * Negates each value in the input array according to JQ's truthiness rules
  *
- * @param value The value to negate
- * @returns true if the value is falsy, false if the value is truthy
+ * @param values Array of values to negate
+ * @returns Array of boolean results with each input value negated
  */
 export const logicalNot = (values: Array<any>): boolean[] => {
   values = ensureArray(values)
@@ -111,13 +118,13 @@ export const logicalNot = (values: Array<any>): boolean[] => {
 }
 
 /**
- * Implement default operation (//)
- * Returns left if it produces values that are not false or null,
- * otherwise returns right.
+ * Implements the JQ default operation (//)
+ * Returns the first truthy value from the left array if one exists;
+ * otherwise, returns the right array as fallback
  *
- * @param left The left operand
- * @param right The right operand
- * @returns left if left produces values that are not false or null, otherwise right
+ * @param left Array of primary values to check for truthiness
+ * @param right Array of fallback values to use if no truthy value exists in left
+ * @returns Single-element array with first truthy value from left, or right array if none found
  */
 export const handleDefault = (left: Array<any>, right: Array<any>): any => {
   left = ensureArray(left)
@@ -132,6 +139,17 @@ export const handleDefault = (left: Array<any>, right: Array<any>): any => {
   return right
 }
 
+/**
+ * Implements conditional (if/then/else) evaluation for JQ expressions
+ * Applies the condition function to each input item and routes to
+ * either the 'then' branch or 'else' branch based on the result
+ *
+ * @param input Array of input values to process
+ * @param conditionFn Function that evaluates the condition for each input
+ * @param thenFn Function that processes the input when condition is truthy
+ * @param elseFn Function that processes the input when condition is falsy
+ * @returns Array of results from either thenFn or elseFn for each input
+ */
 export const handleConditional = (input: Array<any>, conditionFn: (input: any) => any, thenFn: (input: any) => any, elseFn: (input: any) => any): any[] => {
   const results = []
 

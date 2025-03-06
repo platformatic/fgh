@@ -1,15 +1,20 @@
 /**
  * Helper functions for accessing properties and elements from objects and arrays
+ * Provides utilities for property access, array indexing, slicing, and iteration
+ * with support for optional chaining and error handling
  */
 
 import { isNullOrUndefined } from './utils.ts'
 
 /**
- * Access a property from an object, with support for nested properties and array iteration
- * @param obj The object to access the property from
- * @param prop The property path (dot notation)
- * @param optional Whether to use optional chaining for property access
- * @returns The property value if found, or undefined
+ * Access a property from an array of objects using the given property name
+ * Handles nested property access and supports optional chaining
+ *
+ * @param input Array of objects to access properties from
+ * @param prop The property name to access
+ * @param optional Whether to use optional chaining (skip undefined/null values)
+ * @returns Array of property values extracted from the input objects
+ * @throws Error when attempting to access property on an array without optional flag
  */
 export const accessProperty = (
   input: Array<any>,
@@ -45,10 +50,13 @@ export const accessProperty = (
 }
 
 /**
- * Access an element at a specific index from an array or array-like object
- * @param obj The array or object to access
- * @param idx The index to access
- * @returns The element at the specified index, or undefined
+ * Access elements at a specific index from an array of arrays or objects
+ * For arrays, retrieves the element at the given index (with negative index support)
+ * For objects, retrieves the value at the given position in Object.values()
+ *
+ * @param obj Array of arrays or objects to access elements from
+ * @param idx The index to access (negative indices count from the end)
+ * @returns Array of elements extracted at the specified indices
  */
 export const accessIndex = (obj: Array<any>, idx: number): any => {
   const results: any[] = []
@@ -66,11 +74,15 @@ export const accessIndex = (obj: Array<any>, idx: number): any => {
 }
 
 /**
- * Extract a slice of an array or string
- * @param input The array or string to slice
- * @param start The start index
- * @param end The end index
- * @returns The sliced array or string, or undefined
+ * Extract a slice from each item in an array of arrays or strings
+ * Supports standard slice notation with start/end indices, null values,
+ * and negative indices for accessing elements relative to the end
+ *
+ * @param input Array of arrays or strings to slice
+ * @param start The start index (inclusive), null means start from beginning
+ * @param end The end index (exclusive), null means slice to the end
+ * @returns Array of sliced results from each input item
+ * @throws Error when attempting to slice non-array and non-string items
  */
 export const accessSlice = (
   input: Array<any>,
@@ -101,9 +113,12 @@ export const accessSlice = (
 }
 
 /**
- * Iterate over an array or object's values
- * @param input The array or object to iterate over
- * @returns The array of values, or undefined
+ * Flatten arrays or extract values from objects in the input array
+ * Implements the JQ array iteration operator [] by unwrapping arrays
+ * and converting objects to arrays of their values
+ *
+ * @param input Array of arrays or objects to iterate/flatten
+ * @returns Flattened array containing all elements from inner arrays or object values
  */
 export const iterateArray = (input: Array<any>): Array<any> => {
   const results: any[] = []

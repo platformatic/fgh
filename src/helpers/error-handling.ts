@@ -2,14 +2,19 @@ import { JQError, ParseError, ExecutionError as JQExecutionError } from '../type
 
 /**
  * Enhanced error handling functions for FGH
+ * Provides utilities for safe execution, detailed error reporting with context,
+ * and automatic error recovery for common syntax issues in JQ expressions
  */
 
 /**
- * Safely executes a function and returns the result or handles errors
+ * Safely executes a function with enhanced error handling and contextual information
+ * Catches errors and wraps them with additional context, preserving the original error
+ * as the cause for better debugging and error tracing
  *
- * @param fn The function to execute
- * @param errorMessage Optional custom error message
- * @returns The result of the function or undefined if an error occurred
+ * @param fn The function to execute safely
+ * @param errorMessage Optional custom error message to include in thrown errors
+ * @returns The result of the function execution
+ * @throws JQError or ExecutionError with enhanced context information
  */
 export function safeExecute<T> (fn: () => T, errorMessage?: string): T | undefined {
   try {
@@ -33,13 +38,15 @@ export function safeExecute<T> (fn: () => T, errorMessage?: string): T | undefin
 }
 
 /**
- * Creates a detailed parse error with context from the original expression
+ * Creates a detailed parse error with visual context from the original expression
+ * Shows the expression fragment around the error position with a pointer indicating
+ * the exact position where the error occurred, making debugging much easier
  *
- * @param message Error message
- * @param position Position in the expression
- * @param expression The original expression string
- * @param originalError Optional original error that caused this
- * @returns A ParseError with context
+ * @param message Primary error message describing the issue
+ * @param position Character position in the expression where the error occurred
+ * @param expression The complete original expression string being parsed
+ * @param originalError Optional original error that caused this error
+ * @returns A ParseError with rich context information and cause chain
  */
 export function createParseErrorWithContext (
   message: string,
@@ -68,11 +75,16 @@ export function createParseErrorWithContext (
 }
 
 /**
- * Attempts to recover from certain parsing errors by suggesting corrections
+ * Attempts to automatically recover from common syntax errors in JQ expressions
+ * by applying heuristic fixes such as adding missing brackets, braces, quotes, etc.
  *
- * @param error The original error
- * @param expression The expression being parsed
- * @returns An object with the fixed expression and a warning message, or null if recovery is not possible
+ * Intelligently identifies error patterns and suggests corrections to allow
+ * parsing to continue despite minor syntax issues
+ *
+ * @param error The original parse error that occurred
+ * @param expression The complete expression string being parsed
+ * @returns An object with the fixed expression, warning message, and original error;
+ *          or null if no automatic recovery is possible
  */
 export function attemptErrorRecovery (
   error: Error,

@@ -1,17 +1,20 @@
 /**
- * Comparison operations for FGH
+ * Comparison operations for FGH expressions
+ * Implements relational operators (<, <=, >, >=) and equality operators (==, !=)
+ * with consistent ordering rules and deep equality comparison for complex data types
  */
 
 import { compareValues, isDeepEqual } from './sort.ts'
 import { ensureArray } from './utils.ts'
 
 /**
- * Check if left value is greater than right value
- * Using the same ordering rules as the sort function
+ * Implements the greater than (>) operator with JQ-compatible ordering rules
+ * Compares all combinations of elements between the left and right arrays
+ * using a consistent type ordering system (null < boolean < number < string < array < object)
  *
- * @param left The left value
- * @param right The right value to compare
- * @returns true if left > right, false otherwise
+ * @param leftArray Array of values to compare as left operands
+ * @param rightArray Array of values to compare as right operands
+ * @returns Array of boolean results indicating whether each left value is greater than each right value
  */
 export const greaterThan = (leftArray: any[], rightArray: any[]): (boolean | boolean[])[] => {
   leftArray = ensureArray(leftArray)
@@ -51,12 +54,13 @@ export const greaterThan = (leftArray: any[], rightArray: any[]): (boolean | boo
 }
 
 /**
- * Check if left value is greater than or equal to right value
- * Using the same ordering rules as the sort function
+ * Implements the greater than or equal (>=) operator with JQ-compatible ordering rules
+ * Compares all combinations of elements between the left and right arrays
+ * using a consistent type ordering system (null < boolean < number < string < array < object)
  *
- * @param left The left value
- * @param right The right value to compare
- * @returns true if left >= right, false otherwise
+ * @param leftArray Array of values to compare as left operands
+ * @param rightArray Array of values to compare as right operands
+ * @returns Array of boolean results indicating whether each left value is greater than or equal to each right value
  */
 export const greaterThanOrEqual = (leftArray: any, rightArray: any): (boolean | boolean[])[] => {
   leftArray = ensureArray(leftArray)
@@ -96,12 +100,13 @@ export const greaterThanOrEqual = (leftArray: any, rightArray: any): (boolean | 
 }
 
 /**
- * Check if left value is less than right value
- * Using the same ordering rules as the sort function
+ * Implements the less than (<) operator with JQ-compatible ordering rules
+ * Compares all combinations of elements between the left and right arrays
+ * using a consistent type ordering system (null < boolean < number < string < array < object)
  *
- * @param left The left value
- * @param right The right value to compare
- * @returns true if left < right, false otherwise
+ * @param leftArray Array of values to compare as left operands
+ * @param rightArray Array of values to compare as right operands
+ * @returns Array of boolean results indicating whether each left value is less than each right value
  */
 export const lessThan = (leftArray: any, rightArray: any): (boolean | boolean[])[] => {
   leftArray = ensureArray(leftArray)
@@ -141,12 +146,13 @@ export const lessThan = (leftArray: any, rightArray: any): (boolean | boolean[])
 }
 
 /**
- * Check if left value is less than or equal to right value
- * Using the same ordering rules as the sort function
+ * Implements the less than or equal (<=) operator with JQ-compatible ordering rules
+ * Compares all combinations of elements between the left and right arrays
+ * using a consistent type ordering system (null < boolean < number < string < array < object)
  *
- * @param left The left value
- * @param right The right value to compare
- * @returns true if left <= right, false otherwise
+ * @param leftArray Array of values to compare as left operands
+ * @param rightArray Array of values to compare as right operands
+ * @returns Array of boolean results indicating whether each left value is less than or equal to each right value
  */
 export const lessThanOrEqual = (leftArray: any, rightArray: any): (boolean | boolean[])[] => {
   leftArray = ensureArray(leftArray)
@@ -186,12 +192,13 @@ export const lessThanOrEqual = (leftArray: any, rightArray: any): (boolean | boo
 }
 
 /**
- * Check if two values are equal
- * This uses deep equality comparison for objects and arrays
+ * Implements the equality (==) operator using deep equality comparison
+ * Compares all combinations of elements between the left and right arrays
+ * with special handling for array comparisons using structural equality
  *
- * @param left The left value
- * @param right The right value to compare
- * @returns true if values are equal, false otherwise
+ * @param leftArray Array of values to compare as left operands
+ * @param rightArray Array of values to compare as right operands
+ * @returns Array of boolean results indicating whether each left value is deeply equal to each right value
  */
 export const equal = (leftArray: any, rightArray: any): (boolean | boolean[])[] => {
   leftArray = ensureArray(leftArray)
@@ -219,12 +226,13 @@ export const equal = (leftArray: any, rightArray: any): (boolean | boolean[])[] 
 }
 
 /**
- * Check if two values are not equal
- * This uses deep equality comparison for objects and arrays
+ * Implements the inequality (!=) operator using deep equality comparison
+ * Compares all combinations of elements between the left and right arrays
+ * with special handling for array comparisons using structural equality
  *
- * @param left The left value
- * @param right The right value to compare
- * @returns true if values are not equal, false otherwise
+ * @param leftArray Array of values to compare as left operands
+ * @param rightArray Array of values to compare as right operands
+ * @returns Array of boolean results indicating whether each left value is not deeply equal to each right value
  */
 export const notEqual = (leftArray: any, rightArray: any): (boolean | boolean[])[] => {
   leftArray = ensureArray(leftArray)
