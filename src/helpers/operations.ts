@@ -216,7 +216,7 @@ export const handleRecursiveDescent = (input: Array<any>): Array<any> => {
     if (Array.isArray(item)) {
       results.push(...handleRecursiveDescent(item))
     } else if (typeof item === 'object') {
-      results.push(...handleRecursiveDescent(Object.values(item), false))
+      results.push(...handleRecursiveDescent(Object.values(item)))
     }
   }
 

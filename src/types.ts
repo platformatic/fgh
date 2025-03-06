@@ -111,6 +111,7 @@ export type NodeType =
   | 'Default'
   | 'Keys'
   | 'KeysUnsorted'
+  | 'Empty'
 
 export interface BaseNode {
   type: NodeType;
@@ -316,6 +317,10 @@ export interface KeysUnsortedNode extends BaseNode {
   type: 'KeysUnsorted';
 }
 
+export interface EmptyNode extends BaseNode {
+  type: 'Empty';
+}
+
 export type ASTNode =
   | IdentityNode
   | PropertyAccessNode
@@ -353,6 +358,7 @@ export type ASTNode =
   | DefaultNode
   | KeysNode
   | KeysUnsortedNode
+  | EmptyNode
 
 export interface Parser {
   parse(): ASTNode;

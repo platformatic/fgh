@@ -13,11 +13,11 @@ import { ensureArray } from './utils.ts'
  * @param right The right value to compare
  * @returns true if left > right, false otherwise
  */
-export const greaterThan = (leftArray: any[], rightArray: any[]): boolean[] => {
+export const greaterThan = (leftArray: any[], rightArray: any[]): (boolean | boolean[])[] => {
   console.log('greaterThan', leftArray, rightArray)
   leftArray = ensureArray(leftArray)
   rightArray = ensureArray(rightArray)
-  const results = []
+  const results: (boolean | boolean[])[] = []
 
   for (let i = 0; i < leftArray.length; i++) {
     const left = leftArray[i]
@@ -59,11 +59,11 @@ export const greaterThan = (leftArray: any[], rightArray: any[]): boolean[] => {
  * @param right The right value to compare
  * @returns true if left >= right, false otherwise
  */
-export const greaterThanOrEqual = (leftArray: any, rightArray: any): boolean => {
+export const greaterThanOrEqual = (leftArray: any, rightArray: any): (boolean | boolean[])[] => {
   console.log('greaterThanOrEqual', leftArray, rightArray)
   leftArray = ensureArray(leftArray)
   rightArray = ensureArray(rightArray)
-  const results = []
+  const results: (boolean | boolean[])[] = []
 
   for (let i = 0; i < leftArray.length; i++) {
     const left = leftArray[i]
@@ -105,11 +105,11 @@ export const greaterThanOrEqual = (leftArray: any, rightArray: any): boolean => 
  * @param right The right value to compare
  * @returns true if left < right, false otherwise
  */
-export const lessThan = (leftArray: any, rightArray: any): boolean => {
+export const lessThan = (leftArray: any, rightArray: any): (boolean | boolean[])[] => {
   console.log('lessThan', leftArray, rightArray)
   leftArray = ensureArray(leftArray)
   rightArray = ensureArray(rightArray)
-  const results = []
+  const results: (boolean | boolean[])[] = []
 
   for (let i = 0; i < leftArray.length; i++) {
     const left = leftArray[i]
@@ -151,11 +151,11 @@ export const lessThan = (leftArray: any, rightArray: any): boolean => {
  * @param right The right value to compare
  * @returns true if left <= right, false otherwise
  */
-export const lessThanOrEqual = (leftArray: any, rightArray: any): boolean => {
+export const lessThanOrEqual = (leftArray: any, rightArray: any): (boolean | boolean[])[] => {
   console.log('lessThanOrEqual', leftArray, rightArray)
   leftArray = ensureArray(leftArray)
   rightArray = ensureArray(rightArray)
-  const results = []
+  const results: (boolean | boolean[])[] = []
 
   for (let i = 0; i < leftArray.length; i++) {
     const left = leftArray[i]
@@ -197,11 +197,11 @@ export const lessThanOrEqual = (leftArray: any, rightArray: any): boolean => {
  * @param right The right value to compare
  * @returns true if values are equal, false otherwise
  */
-export const equal = (leftArray: any, rightArray: any): boolean => {
+export const equal = (leftArray: any, rightArray: any): (boolean | boolean[])[] => {
   leftArray = ensureArray(leftArray)
   rightArray = ensureArray(rightArray)
 
-  const results = []
+  const results: (boolean | boolean[])[] = []
 
   for (let i = 0; i < leftArray.length; i++) {
     for (let k = 0; k < rightArray.length; k++) {
@@ -233,12 +233,12 @@ export const equal = (leftArray: any, rightArray: any): boolean => {
  * @param right The right value to compare
  * @returns true if values are not equal, false otherwise
  */
-export const notEqual = (leftArray: any, rightArray: any): boolean => {
+export const notEqual = (leftArray: any, rightArray: any): (boolean | boolean[])[] => {
   console.log('notEqual', leftArray, rightArray)
   leftArray = ensureArray(leftArray)
   rightArray = ensureArray(rightArray)
 
-  const results = []
+  const results: (boolean | boolean[])[] = []
 
   for (let i = 0; i < leftArray.length; i++) {
     for (let k = 0; k < rightArray.length; k++) {

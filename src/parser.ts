@@ -1298,8 +1298,8 @@ export class JQParser {
               end
             }
 
-            // Only add input in production mode or when it's needed for execution
-            if (!isTestMode && isStandalone) {
+            // Only add input when it's needed for execution
+            if (isStandalone) {
               sliceNode.input = { type: 'Identity', position: 0 }
             }
 

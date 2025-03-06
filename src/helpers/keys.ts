@@ -11,7 +11,7 @@
  * @param input The input object or array
  * @returns Array of keys (sorted) or indices
  */
-export const getKeys = (input: Array<any>): Array<string> => {
+export const getKeys = (input: Array<any>): Array<(string | number)[]> => {
   return getKeysUnsorted(input, true)
 }
 
@@ -24,10 +24,10 @@ export const getKeys = (input: Array<any>): Array<string> => {
  * @param input The input object or array
  * @returns Array of keys (unsorted) or indices
  */
-export const getKeysUnsorted = (input: Array<any>, sort: boolean = false): Array<string> => {
+export const getKeysUnsorted = (input: Array<any>, sort: boolean = false): Array<(string | number)[]> => {
   console.log('getKeys', input)
 
-  const results: string[] = []
+  const results: (string | number)[][] = []
 
   for (const item of input) {
     if (Array.isArray(item)) {
