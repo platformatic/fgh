@@ -38,7 +38,7 @@ export function compile (expression: string, options?: CompileOptions): JQFuncti
           const generator = new JQCodeGenerator()
           const ast = parser.parse()
           const fn = generator.generate(ast)
-          
+
           return fn as JQFunction
         } catch (secondError) {
           // If recovery also fails, throw a more informative error
@@ -72,7 +72,7 @@ export function compile (expression: string, options?: CompileOptions): JQFuncti
  */
 export function query (expression: string, input: unknown): unknown[] {
   const fn = compile(expression)
-  
+
   // Use safeExecute for better error handling
   const result = safeExecute(() => fn(input), `Error executing expression '${expression}'`)
 

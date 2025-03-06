@@ -16,7 +16,7 @@ describe.skip('Utils Helper Functions', () => {
       assert.strictEqual(isNullOrUndefined(0), false)
     })
 
-      it('should return false for empty string', () => {
+    it('should return false for empty string', () => {
       assert.strictEqual(isNullOrUndefined(''), false)
     })
 

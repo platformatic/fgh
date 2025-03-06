@@ -38,7 +38,7 @@ export const logicalAnd = (leftArray: any, rightArray: any): boolean | boolean[]
       // Handle array operands
       if (Array.isArray(left) && Array.isArray(right)) {
         // For comma operator behavior, return flattened array of each evaluation
-        results.push(!!left.map((leftVal) => right.map((rightVal) => 
+        results.push(!!left.map((leftVal) => right.map((rightVal) =>
           isTruthy(leftVal) && isTruthy(rightVal)
         )).flat())
       } else if (Array.isArray(left)) {
@@ -78,9 +78,9 @@ export const logicalOr = (leftArray: any, rightArray: any): boolean | boolean[] 
       // Handle array operands
       if (Array.isArray(left) && Array.isArray(right)) {
         // For comma operator behavior, return flattened array of each evaluation
-        results.push(!!left.map((leftVal) => right.map((rightVal) => 
-                                               isTruthy(leftVal) || isTruthy(rightVal)
-                                              )).flat())
+        results.push(!!left.map((leftVal) => right.map((rightVal) =>
+          isTruthy(leftVal) || isTruthy(rightVal)
+        )).flat())
       } else if (Array.isArray(left)) {
         // Array on left side
         results.push(!!left.map(leftVal => isTruthy(leftVal) || isTruthy(right)))

@@ -107,18 +107,18 @@ describe('not function', async (t) => {
     // Basic inversion tests
     checkBoolean('true | not', null, false)
     checkBoolean('false | not', null, true)
-    checkBoolean('null | not', null, true);
+    checkBoolean('null | not', null, true)
     checkBoolean('42 | not', null, false)
     checkBoolean('"string" | not', null, false)
     checkBoolean('{} | not', null, false)
-    checkBoolean('[] | not', null, false);
+    checkBoolean('[] | not', null, false)
   })
 
   test('should work with property access', () => {
     // For property access tests
     checkBoolean('.a | not', { a: true }, false)
     checkBoolean('.a | not', { a: false }, true)
-    checkBoolean('.a | not', { a: null }, true);
+    checkBoolean('.a | not', { a: null }, true)
     checkBoolean('.a | not', { a: 42 }, false)
   })
 

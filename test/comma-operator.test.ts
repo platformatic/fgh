@@ -15,7 +15,7 @@ describe('comma operator', async (t) => {
   test('should handle simple comma operator on identity', () => {
     const result = query('.,.', [1, 2])
 
-    assert.deepStrictEqual(result, [[1,2], [1,2]])
+    assert.deepStrictEqual(result, [[1, 2], [1, 2]])
   })
 
   test('should handle comma operator with array iteration', () => {

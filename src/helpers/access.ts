@@ -33,7 +33,6 @@ export const accessProperty = (
       continue
     }
 
-
     const value = obj[prop]
 
     console.log('accessProperty1', obj, prop, optional, value)
@@ -45,7 +44,7 @@ export const accessProperty = (
   }
 
   console.log('accessProperty', input, prop, results)
-  
+
   return results
 }
 
@@ -84,7 +83,6 @@ export const accessSlice = (
   start: number | null,
   end: number | null
 ): Array<any> => {
-
   const results = []
   for (const item of input) {
     let currentStart = start

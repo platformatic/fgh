@@ -81,35 +81,37 @@ export class JQLexer implements Lexer {
         this.position++
         return { type: ':', value: ':', position: startPos }
       case '-':
+      {
         // Special handling for array context - in slice expressions, we want to keep '-' as a separate token
         // Check if we're in an array slice context (look for '[' before and ':' ahead)
-        let isSliceContext = false;
-        
-        // Scan backward to check for '['  
-        let backPos = this.position - 1;
+        let isSliceContext = false
+
+        // Scan backward to check for '['
+        let backPos = this.position - 1
         while (backPos >= 0 && this.isWhitespace(this.input[backPos])) {
-          backPos--;
+          backPos--
         }
-        const hasBracketBefore = backPos >= 0 && this.input[backPos] === '[';
-        
+        const hasBracketBefore = backPos >= 0 && this.input[backPos] === '['
+
         // Scan forward to check for ':'
-        let forwardPos = this.position + 1;
-        while (forwardPos < this.input.length && 
-              (this.isDigit(this.input[forwardPos]) || this.isWhitespace(this.input[forwardPos]))) {
-          forwardPos++;
+        let forwardPos = this.position + 1
+        while (forwardPos < this.input.length &&
+                (this.isDigit(this.input[forwardPos]) || this.isWhitespace(this.input[forwardPos]))) {
+          forwardPos++
         }
-        const hasColonAfter = forwardPos < this.input.length && this.input[forwardPos] === ':';
-        
-        isSliceContext = hasBracketBefore && (hasColonAfter || this.input.includes(':]', this.position));
-        
+        const hasColonAfter = forwardPos < this.input.length && this.input[forwardPos] === ':'
+
+        isSliceContext = hasBracketBefore && (hasColonAfter || this.input.includes(':]', this.position))
+
         // Look ahead to see if the next character is a digit
         if (!isSliceContext && this.position + 1 < this.input.length && this.isDigit(this.input[this.position + 1])) {
           // If followed by a digit, it's a negative number - handle in readNumber
-          return this.readNumber();
+          return this.readNumber()
         }
         // Otherwise it's a minus operator
-        this.position++;
-        return { type: '-', value: '-', position: startPos };
+        this.position++
+        return { type: '-', value: '-', position: startPos }
+      }
       case '{':
         this.position++
         return { type: '{', value: '{', position: startPos }

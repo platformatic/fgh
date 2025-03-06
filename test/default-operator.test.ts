@@ -50,10 +50,10 @@ describe('default operator', async (t) => {
     // Other values (even falsy like 0 or "") should not trigger the default
     assert.deepEqual(query('0 // "default"', null), [0])
     assert.deepEqual(query('"" // "default"', null), [''])
-    
+
     // Empty array should be preserved
     assert.deepEqual(query('[] // "default"', null), [[]])
-    
+
     // Empty object should be preserved
     assert.deepEqual(query('{} // "default"', null), [{}])
   })

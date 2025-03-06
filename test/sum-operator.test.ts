@@ -46,7 +46,7 @@ describe('sum operator', async (t) => {
   })
 
   test('supports array iteration', () => {
-    const input = { a: 1, b: [2,3,4] }
+    const input = { a: 1, b: [2, 3, 4] }
     assert.deepEqual(
       query('.a + .b[]', input),
       [3, 4, 5]
@@ -54,7 +54,7 @@ describe('sum operator', async (t) => {
   })
 
   test('supports array iteration', () => {
-    const input = { b: 1, a: [2,3,4] }
+    const input = { b: 1, a: [2, 3, 4] }
     assert.deepEqual(
       query('.a[] + .b', input),
       [3, 4, 5]
@@ -99,7 +99,7 @@ describe('difference operator', async (t) => {
   })
 
   test('supports array iteration', () => {
-    const input = { b: 1, a: [2,3,4] }
+    const input = { b: 1, a: [2, 3, 4] }
     assert.deepEqual(
       query('.a[] - .b', input),
       [1, 2, 3]

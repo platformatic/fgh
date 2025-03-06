@@ -27,23 +27,23 @@ export const greaterThan = (leftArray: any[], rightArray: any[]): boolean[] => {
       // Handle special cases for null and undefined
       // undefined is less than null in our ordering
       if (left === undefined) {
-        results.push( false)
+        results.push(false)
       } else if (right === undefined) {
-        results.push( true)
+        results.push(true)
       } else if (left === null && right === null) {
-        results.push( false)
+        results.push(false)
       } else if (left === null) {
-        results.push( false)
+        results.push(false)
       } else if (right === null) {
-        results.push( true)
+        results.push(true)
         // Handle boolean vs number ordering (boolean > number according to tests)
       } else if (typeof left === 'boolean' && typeof right === 'number') {
-        results.push( true)
+        results.push(true)
       } else if (typeof left === 'number' && typeof right === 'boolean') {
-        results.push( false)
+        results.push(false)
       } else {
         // Use the same comparison function as sort for other cases
-        results.push( compareValues(left, right) > 0)
+        results.push(compareValues(left, right) > 0)
       }
     }
   }
@@ -73,27 +73,26 @@ export const greaterThanOrEqual = (leftArray: any, rightArray: any): boolean => 
       // Handle special cases for null and undefined
       // undefined is less than null in our ordering
       if (left === undefined) {
-        results.push( false)
+        results.push(false)
       } else if (right === undefined) {
-        results.push( true)
+        results.push(true)
       } else if (left === null && right === null) {
         results.push(true)
       } else if (left === null) {
-        results.push( false)
+        results.push(false)
       } else if (right === null) {
-        results.push( true)
+        results.push(true)
         // Handle boolean vs number ordering (boolean > number according to tests)
       } else if (typeof left === 'boolean' && typeof right === 'number') {
-        results.push( true)
+        results.push(true)
       } else if (typeof left === 'number' && typeof right === 'boolean') {
-        results.push( false)
+        results.push(false)
       } else {
         // Use the same comparison function as sort for other cases
-        results.push( compareValues(left, right) >= 0)
+        results.push(compareValues(left, right) >= 0)
       }
     }
   }
-
 
   return results
 }
@@ -120,23 +119,23 @@ export const lessThan = (leftArray: any, rightArray: any): boolean => {
       // Handle special cases for null and undefined
       // undefined is less than null in our ordering
       if (left === undefined) {
-        results.push( false)
+        results.push(false)
       } else if (right === undefined) {
-        results.push( true)
+        results.push(true)
       } else if (left === null && right === null) {
-        results.push( false)
+        results.push(false)
       } else if (left === null) {
-        results.push( true)
+        results.push(true)
       } else if (right === null) {
-        results.push( false)
+        results.push(false)
         // Handle boolean vs number ordering (boolean > number according to tests)
       } else if (typeof left === 'boolean' && typeof right === 'number') {
-        results.push( true)
+        results.push(true)
       } else if (typeof left === 'number' && typeof right === 'boolean') {
-        results.push( false)
+        results.push(false)
       } else {
         // Use the same comparison function as sort for other cases
-        results.push( compareValues(left, right) < 0)
+        results.push(compareValues(left, right) < 0)
       }
     }
   }
@@ -166,23 +165,23 @@ export const lessThanOrEqual = (leftArray: any, rightArray: any): boolean => {
       // Handle special cases for null and undefined
       // undefined is less than null in our ordering
       if (left === undefined) {
-        results.push( false)
+        results.push(false)
       } else if (right === undefined) {
-        results.push( true)
+        results.push(true)
       } else if (left === null && right === null) {
         results.push(true)
       } else if (left === null) {
-        results.push( true)
+        results.push(true)
       } else if (right === null) {
-        results.push( false)
+        results.push(false)
         // Handle boolean vs number ordering (boolean > number according to tests)
       } else if (typeof left === 'boolean' && typeof right === 'number') {
-        results.push( true)
+        results.push(true)
       } else if (typeof left === 'number' && typeof right === 'boolean') {
-        results.push( false)
+        results.push(false)
       } else {
         // Use the same comparison function as sort for other cases
-        results.push( compareValues(left, right) <= 0)
+        results.push(compareValues(left, right) <= 0)
       }
     }
   }
@@ -210,7 +209,7 @@ export const equal = (leftArray: any, rightArray: any): boolean => {
       if (Array.isArray(leftArray[i]) && Array.isArray(rightArray[k])) {
         results.push(isDeepEqual(leftArray[i], rightArray[k]))
       } else if (Array.isArray(leftArray[i]) && !Array.isArray(rightArray[k])) {
-        let result = []
+        const result = []
         for (const item of leftArray[i]) {
           result.push(isDeepEqual(item, rightArray[k]))
         }
@@ -220,7 +219,7 @@ export const equal = (leftArray: any, rightArray: any): boolean => {
       }
     }
   }
-  
+
   console.log('equal', leftArray, rightArray, results)
 
   return results
@@ -247,7 +246,7 @@ export const notEqual = (leftArray: any, rightArray: any): boolean => {
       if (Array.isArray(leftArray[i]) && Array.isArray(rightArray[k])) {
         results.push(!isDeepEqual(leftArray[i], rightArray[k]))
       } else if (Array.isArray(leftArray[i]) && !Array.isArray(rightArray[k])) {
-        let result = []
+        const result = []
         for (const item of leftArray[i]) {
           result.push(!isDeepEqual(item, rightArray[k]))
         }
@@ -257,7 +256,7 @@ export const notEqual = (leftArray: any, rightArray: any): boolean => {
       }
     }
   }
-  
+
   console.log('notEqual', leftArray, rightArray, results)
 
   return results

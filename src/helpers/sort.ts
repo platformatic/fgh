@@ -144,7 +144,7 @@ export const sortArrayBy = (
         const comparison = compareValues(valueA, valueB)
         if (comparison !== 0) return comparison
       }
-    return 0
+      return 0
     })
     results.push(result)
   }

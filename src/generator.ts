@@ -157,7 +157,7 @@ export class JQCodeGenerator implements CodeGenerator {
   }
 
   private generateSequence (node: SequenceNode): string {
-    const expressions= node.expressions.map((element: ASTNode) => {
+    const expressions = node.expressions.map((element: ASTNode) => {
       const elementCode = this.generateNode(element)
       return JQCodeGenerator.wrapInFunction(elementCode)
     }).join(', ')
@@ -307,7 +307,7 @@ export class JQCodeGenerator implements CodeGenerator {
   }
 
   private generateSort (node: any): string {
-    return `sortArray(input)`
+    return 'sortArray(input)'
   }
 
   private generateSortBy (node: any): string {
@@ -421,7 +421,7 @@ const result = ensureArray(${body});
 // For arrays, return them directly
 return result;`
 
-console.log(code)
+    console.log(code)
 
     // Create a function factory that receives all helper functions as parameters
     const functionFactory = new Function(

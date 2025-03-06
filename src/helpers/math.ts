@@ -51,7 +51,7 @@ export const addValues = (leftArray: any, rightArray: any): Array<any> => {
 export const subtractValues = (leftArray: any, rightArray: any): any => {
   leftArray = ensureArray(leftArray)
   rightArray = ensureArray(rightArray)
-  const results= []
+  const results = []
 
   for (let i = 0; i < leftArray.length; i++) {
     for (let k = 0; k < rightArray.length; k++) {
@@ -213,13 +213,12 @@ export const moduloValues = (leftArray: any, rightArray: any): any => {
         const rightNum = Number(right)
         if (!isNaN(leftNum) && !isNaN(rightNum)) {
           if (rightNum === 0) return NaN
-            const mod = leftNum % rightNum
+          const mod = leftNum % rightNum
           results.push(mod < 0 ? mod + Math.abs(rightNum) : mod)
         }
         // Default: return NaN for incompatible types
         results.push(NaN)
       }
-
     }
   }
 
