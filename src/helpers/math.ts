@@ -10,29 +10,30 @@ import { isNullOrUndefined, ensureArray } from './utils.ts'
  * @param right The right value
  * @returns The result of adding the values
  */
-export const addValues = (left: any, right: any): Array<any> => {
-  left = ensureArray(left)
-  right = ensureArray(right)
-  const maxLength = Math.max(left.length, right.length)
+export const addValues = (leftArray: any, rightArray: any): Array<any> => {
+  leftArray = ensureArray(leftArray)
+  rightArray = ensureArray(rightArray)
 
-  const results: any[] = Array(maxLength)
+  const results: any[] = []
 
-  for (let i = 0; i < maxLength; i++) {
-    if (left[i] === undefined) {
-      results[i] = right[i]
-    } else if (right[i] === undefined) {
-      results[i] = left[i]
-    } else {
-      if (Array.isArray(left[i]) && Array.isArray(right[i])) {
-        results[i] = [...left[i], ...right[i]]
-      } else if (Array.isArray(left[i]) && right[i] !== null && right[i] !== undefined) {
-        results[i] = [...left[i], right[i]]
-      } else if (Array.isArray(right[i]) && left[i] !== null && left[i] !== undefined) {
-        results[i] = [left[i], ...right[i]]
-      } else if (typeof left[i] === 'object' && typeof right[i] === 'object' && left[i] !== null && right[i] !== null) {
-        results[i] = { ...left[i], ...right[i] }
+  for (let i = 0; i < leftArray.length; i++) {
+    for (let k = 0; k < rightArray.length; k++) {
+      const left = leftArray[i]
+      const right = rightArray[k]
+
+      if (Array.isArray(left) && Array.isArray(right)) {
+        results.push([...left, ...right])
+      } else if (typeof left === 'object' && typeof right === 'object' && left !== null && right !== null) {
+        results.push({ ...left, ...right })
+      } else if (left === undefined || left === null) {
+        results.push(right)
+      } else if (Array.isArray(left) && right !== null) {
+        throw new Error('Cannot add array to non-array')
+      } else if (Array.isArray(right) && left !== null) {
+        throw new Error('Cannot add array to non-array')
       } else {
-        results[i] = left[i] + right[i]
+        console.log('addValues', left, right)
+        results.push(left + right)
       }
     }
   }
@@ -46,28 +47,30 @@ export const addValues = (left: any, right: any): Array<any> => {
  * @param right The right value to subtract
  * @returns The result of subtracting the values
  */
-export const subtractValues = (left: any, right: any): any => {
-  left = ensureArray(left)
-  right = ensureArray(right)
+export const subtractValues = (leftArray: any, rightArray: any): any => {
+  leftArray = ensureArray(leftArray)
+  rightArray = ensureArray(rightArray)
+  const results= []
 
-  const maxLength = Math.max(left.length, right.length)
+  for (let i = 0; i < leftArray.length; i++) {
+    for (let k = 0; k < rightArray.length; k++) {
+      const left = leftArray[i]
+      const right = rightArray[k]
 
-  const results: any[] = Array(maxLength)
-
-  for (let i = 0; i < maxLength; i++) {
-    if (left[i] === undefined) {
-      if (typeof right[i] === 'number') {
-        results[i] = - right[i]
+      if (Array.isArray(left) && Array.isArray(right)) {
+        results.push(left.filter((item) => !right.includes(item)))
+      } else if (typeof left === 'object' && typeof right === 'object' && left !== null && right !== null) {
+        throw new Error('Cannot subtract objects')
+      } else if (left === undefined || left === null) {
+        throw new Error('Cannot subtract from non-number')
+      } else if (Array.isArray(left) && right !== null) {
+        throw new Error('Cannot subtract array to non-array')
+      } else if (Array.isArray(right) && left !== null) {
+        throw new Error('Cannot subtract array to non-array')
+      } else if (right === undefined || right === null) {
+        throw new Error('Cannot subtract null or undefined')
       } else {
-        results[i] = undefined
-      }
-    } else if (right[i] === undefined) {
-      results[i] = left[i]
-    } else {
-      if (Array.isArray(left[i]) && Array.isArray(right[i])) {
-        results[i] = left[i].filter((item) => !right[i].includes(item))
-      } else {
-        results[i] = left[i] - right[i]
+        results.push(left - right)
       }
     }
   }

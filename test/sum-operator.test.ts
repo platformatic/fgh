@@ -35,15 +35,34 @@ describe('sum operator', async (t) => {
     )
   })
 
-  test('should mix arrays and non-arrays', () => {
+  test('should not mix arrays and non-arrays', () => {
+    assert.throws(() => {
+      query('.a + 1', { a: [1, 2] })
+    })
+
+    assert.throws(() => {
+      query('1 + .a', { a: [1, 2] })
+    })
+  })
+
+  test('supports array iteration', () => {
+    const input = { a: 1, b: [2,3,4] }
     assert.deepEqual(
-      query('.a + 1', { a: [1, 2] }),
-      [[1, 2, 1]]
+      query('.a + .b[]', input),
+      [3, 4, 5]
+    )
+  })
+
+  test('supports array iteration', () => {
+    const input = { b: 1, a: [2,3,4] }
+    assert.deepEqual(
+      query('.a[] + .b', input),
+      [3, 4, 5]
     )
 
     assert.deepEqual(
-      query('1 + .a', { a: [1, 2] }),
-      [[1, 1, 2]]
+      query('.b + .a[]', input),
+      [3, 4, 5]
     )
   })
 })
@@ -74,8 +93,21 @@ describe('difference operator', async (t) => {
   })
 
   test('should handle null or undefined values', () => {
-    assert.deepEqual(query('.missing - 5', {}), [-5])
-    assert.deepEqual(query('10 - .missing', {}), [10])
-    assert.deepEqual(query('null - 5', {}), [-5])
+    assert.throws(() => query('.missing - 5', {}))
+    assert.throws(() => query('10 - .missing', {}))
+    assert.throws(() => query('null - 5', {}))
+  })
+
+  test('supports array iteration', () => {
+    const input = { b: 1, a: [2,3,4] }
+    assert.deepEqual(
+      query('.a[] - .b', input),
+      [1, 2, 3]
+    )
+
+    assert.deepEqual(
+      query('.b - .a[]', input),
+      [-1, -2, -3]
+    )
   })
 })

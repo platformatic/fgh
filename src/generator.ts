@@ -20,6 +20,7 @@ import {
   iterateArray,
   handlePipe,
   handleSequence,
+  handleMap,
   constructArray,
   constructObject,
   addValues,
@@ -321,112 +322,8 @@ export class JQCodeGenerator implements CodeGenerator {
   private generateMapFilter (node: any): string {
     const filterCode = this.generateNode(node.filter)
     const filterFn = JQCodeGenerator.wrapInFunction(filterCode)
-    const isSelectFilter = node.filter.type === 'SelectFilter'
 
-    if (isSelectFilter) {
-      return `(() => {
-        if (isNullOrUndefined(input)) return [[]];
-        
-        // Handle objects differently for map cases with property access
-        if (!Array.isArray(input) && typeof input === 'object' && input !== null) {
-          // Special case for map(select()) with object input that has array properties
-          const properties = Object.keys(input);
-          for (const prop of properties) {
-            if (Array.isArray(input[prop])) {
-              // Find matching items based on the condition
-              const filtered = [];
-              
-              for (const item of input[prop]) {
-                // Apply the condition to each item
-                const conditionResult = ${filterFn}(item);
-                
-                // If condition is truthy (returns the item), add it to filtered list
-                if (Array.isArray(conditionResult) && conditionResult.length > 0) {
-                  filtered.push(item);
-                }
-              }
-              
-              // Return filtered items wrapped in an array as expected in tests
-              return [[filtered]];
-            }
-          }
-        }
-        
-        // Standard array handling
-        if (Array.isArray(input)) {
-          // Find items that match the condition
-          const filtered = [];
-          
-          for (const item of input) {
-            // Apply the condition to each item
-            const conditionResult = ${filterFn}(item);
-            
-            // If condition is truthy (returns the item), add it to filtered list
-            if (Array.isArray(conditionResult) && conditionResult.length > 0) {
-              filtered.push(item);
-            }
-          }
-          
-          // Return filtered items wrapped in an array as expected in the tests
-          return [[filtered]];
-        }
-        
-        // Default case for empty or non-matching inputs
-        return [[]];
-      })()`;
-    } else {
-      // Standard map implementation for non-select cases
-      return `(() => {
-        if (isNullOrUndefined(input)) return [];
-        
-        // Handle objects differently for map cases with property access
-        if (!Array.isArray(input) && typeof input === 'object' && input !== null) {
-          // For object inputs with map(.+1) type expressions
-          // Extract the values and apply the filter to each
-          const values = Object.values(input);
-          const result = [];
-          
-          for (const item of values) {
-            // Apply the filter function to each value
-            const filterResult = ${filterFn}(item);
-            
-            // Skip undefined/null results
-            if (isNullOrUndefined(filterResult)) continue;
-            
-            // Handle different result types
-            if (Array.isArray(filterResult)) {
-              result.push(...filterResult);
-            } else {
-              result.push(filterResult);
-            }
-          }
-          
-          return result;
-        }
-        
-        // Standard array handling
-        const result = [];
-        const inputValues = Array.isArray(input) ? input : [input];
-        
-        for (const item of inputValues) {
-          // Apply the filter function to each item
-          const filterResult = ${filterFn}(item);
-          
-          // Skip undefined/null results
-          if (isNullOrUndefined(filterResult)) continue;
-          
-          // Handle array results - add all elements
-          if (Array.isArray(filterResult)) {
-            result.push(...filterResult);
-          } else {
-            // Add single value
-            result.push(filterResult);
-          }
-        }
-        
-        return result;
-      })()`;
-    }
+    return `handleMap(input, ${filterFn})`
   }
 
   private generateMapValuesFilter (node: any): string {
@@ -734,6 +631,7 @@ console.log(code)
       'iterateArray',
       'handlePipe',
       'handleSequence',
+      'handleMap',
       'constructArray',
       'constructObject',
       'addValues',
@@ -770,6 +668,7 @@ console.log(code)
       iterateArray,
       handlePipe,
       handleSequence,
+      handleMap,
       constructArray,
       constructObject,
       addValues,

@@ -132,3 +132,19 @@ export const handleSequence = (input: Array<any>, fns: ((input: Array<any>) => A
 
   return results
 }
+
+export const handleMap = (input: Array<any>, fn: (input: any) => any): Array<any> => {
+  console.log('handleMap', input, fn)
+  let results = []
+
+  for (const item of input) {
+    if (!Array.isArray(item)) {
+      throw new Error('Cannot map non-array')
+    }
+    const result = fn(item)
+    console.log('result', result)
+    results.push(result)
+  }
+
+  return results
+}
