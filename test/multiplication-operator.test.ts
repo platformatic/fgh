@@ -74,7 +74,7 @@ describe('division operator', async (t) => {
     assert.deepEqual(query('.a / 3', { a: 10 }), [3.3333333333333335]) // JavaScript floating point
   })
 
-  test.skip('should handle division by zero', () => {
+  test('should handle division by zero', () => {
     const result = query('10 / 0', {})
     assert.equal(result.length, 1)
     assert.equal(result[0], Infinity)

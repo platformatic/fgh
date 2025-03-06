@@ -81,8 +81,35 @@ export class JQLexer implements Lexer {
         this.position++
         return { type: ':', value: ':', position: startPos }
       case '-':
-        this.position++
-        return { type: '-', value: '-', position: startPos }
+        // Special handling for array context - in slice expressions, we want to keep '-' as a separate token
+        // Check if we're in an array slice context (look for '[' before and ':' ahead)
+        let isSliceContext = false;
+        
+        // Scan backward to check for '['  
+        let backPos = this.position - 1;
+        while (backPos >= 0 && this.isWhitespace(this.input[backPos])) {
+          backPos--;
+        }
+        const hasBracketBefore = backPos >= 0 && this.input[backPos] === '[';
+        
+        // Scan forward to check for ':'
+        let forwardPos = this.position + 1;
+        while (forwardPos < this.input.length && 
+              (this.isDigit(this.input[forwardPos]) || this.isWhitespace(this.input[forwardPos]))) {
+          forwardPos++;
+        }
+        const hasColonAfter = forwardPos < this.input.length && this.input[forwardPos] === ':';
+        
+        isSliceContext = hasBracketBefore && (hasColonAfter || this.input.includes(':]', this.position));
+        
+        // Look ahead to see if the next character is a digit
+        if (!isSliceContext && this.position + 1 < this.input.length && this.isDigit(this.input[this.position + 1])) {
+          // If followed by a digit, it's a negative number - handle in readNumber
+          return this.readNumber();
+        }
+        // Otherwise it's a minus operator
+        this.position++;
+        return { type: '-', value: '-', position: startPos };
       case '{':
         this.position++
         return { type: '{', value: '{', position: startPos }
@@ -135,6 +162,12 @@ export class JQLexer implements Lexer {
   private readNumber (): Token {
     const startPos = this.position
     let value = ''
+
+    // Check for negative sign at the beginning
+    if (this.input[this.position] === '-') {
+      value += '-'
+      this.position++
+    }
 
     // Read the integer part
     while (

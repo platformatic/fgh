@@ -416,7 +416,7 @@ export class JQCodeGenerator implements CodeGenerator {
     // Create a function that uses the helper functions
     const code = `
 // Execute the generated expression
-const result = ${body};
+const result = ensureArray(${body});
 
 // For arrays, return them directly
 return result;`
