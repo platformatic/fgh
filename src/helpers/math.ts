@@ -86,8 +86,6 @@ export const subtractValues = (leftArray: any, rightArray: any): any => {
  * @returns The result of multiplying the values
  */
 export const multiplyValues = (leftArray: any, rightArray: any): any => {
-
-  console.log('addValues', leftArray, rightArray)
   leftArray = ensureArray(leftArray)
   rightArray = ensureArray(rightArray)
 
@@ -110,13 +108,9 @@ export const multiplyValues = (leftArray: any, rightArray: any): any => {
         results.push(...right.repeat(left))
         // Array repetition: [1, 2] * 3 = [1, 2, 1, 2, 1, 2]
       } else if (Array.isArray(left) && typeof right === 'number' && Number.isInteger(right) && right >= 0) {
-        for (let j = 0; k < right; j++) {
-          results.push(...left)
-        }
+        throw new Error('Cannot multiply array by number')
       } else if (Array.isArray(right) && typeof left === 'number' && Number.isInteger(left) && left >= 0) {
-        for (let i = 0; i < left; i++) {
-          results.push(...right)
-        }
+        throw new Error('Cannot multiply array by number')
       } else {
         // Try to convert values to numbers if possible
         const leftNum = Number(left)
@@ -124,7 +118,7 @@ export const multiplyValues = (leftArray: any, rightArray: any): any => {
         if (!isNaN(leftNum) && !isNaN(rightNum)) {
           results.push(leftNum * rightNum)
         } else {
-          results.push(NaN)
+          throw new Error('Cannot multiply non-numeric values')
         }
       }
     }
@@ -139,28 +133,45 @@ export const multiplyValues = (leftArray: any, rightArray: any): any => {
  * @param right The divisor
  * @returns The result of dividing the values
  */
-export const divideValues = (left: any, right: any): any => {
-  // Handle null/undefined inputs
-  if (isNullOrUndefined(left)) return 0
-  if (isNullOrUndefined(right)) return left // Division by null treated as identity
+export const divideValues = (leftArray: any, rightArray: any): any => {
+  leftArray = ensureArray(leftArray)
+  rightArray = ensureArray(rightArray)
 
-  // Handle division by zero
-  if (right === 0) return Infinity
+  const results: any[] = []
 
-  // For numeric division
-  if (typeof left === 'number' && typeof right === 'number') {
-    return left / right
+  for (let i = 0; i < leftArray.length; i++) {
+    for (let k = 0; k < rightArray.length; k++) {
+      const left = leftArray[i]
+      const right = rightArray[k]
+      // Handle null/undefined inputs
+      if (isNullOrUndefined(left) || isNullOrUndefined(right)) {
+        throw new Error('Cannot divide null or undefined')
+        // For numeric division
+      } else if (typeof left === 'number' && typeof right === 'number') {
+        results.push(left / right)
+        // String repetition: "a" * 3 = "aaa"
+      } else if (typeof left === 'string' && typeof right === 'number' && Number.isInteger(right) && right >= 0) {
+        throw new Error('Cannot divide string by number')
+      } else if (typeof right === 'string' && typeof left === 'number' && Number.isInteger(left) && left >= 0) {
+        throw new Error('Cannot divide number by string')
+      } else if (Array.isArray(left) && typeof right === 'number' && Number.isInteger(right) && right >= 0) {
+        throw new Error('Cannot divide array by number')
+      } else if (Array.isArray(right) && typeof left === 'number' && Number.isInteger(left) && left >= 0) {
+        throw new Error('Cannot divide array by number')
+      } else {
+        // Try to convert values to numbers if possible
+        const leftNum = Number(left)
+        const rightNum = Number(right)
+        if (!isNaN(leftNum) && !isNaN(rightNum)) {
+          results.push(leftNum / rightNum)
+        } else {
+          throw new Error('Cannot multiply non-numeric values')
+        }
+      }
+    }
   }
 
-  // Try to convert values to numbers if possible
-  const leftNum = Number(left)
-  const rightNum = Number(right)
-  if (!isNaN(leftNum) && !isNaN(rightNum)) {
-    return rightNum === 0 ? Infinity : leftNum / rightNum
-  }
-
-  // Default: return NaN for incompatible types
-  return NaN
+  return results
 }
 
 /**
