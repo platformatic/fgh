@@ -185,3 +185,14 @@ export const handleMapValues = (input: Array<any>, fn: (input: any) => any): Arr
   }
   return results
 }
+
+export const handleSelect = (input: Array<any>, fn: (input: any) => any): Array<any> => {
+  let results = []
+  for (const item of input) {
+    const [result] = fn([item])
+    if (result) {
+      results.push(item)
+    }
+  }
+  return results
+}

@@ -5,7 +5,7 @@ import assert from 'node:assert'
 import { query, compile } from '../src/fgh.ts'
 
 describe('select filter', async () => {
-  test.only('should filter array elements that match a condition', () => {
+  test('should filter array elements that match a condition', () => {
     assert.deepEqual(
       query('map(select(. >= 2))', [ 5, 3, 0, 7]),
       [[5, 3, 7]]

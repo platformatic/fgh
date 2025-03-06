@@ -23,6 +23,7 @@ import {
   handleMap,
   handleMapValues,
   handleConditional,
+  handleSelect,
   constructArray,
   constructObject,
   addValues,
@@ -339,52 +340,7 @@ export class JQCodeGenerator implements CodeGenerator {
     const conditionCode = this.generateNode(node.condition)
     const conditionFn = JQCodeGenerator.wrapInFunction(conditionCode)
 
-    // Implementation for consistent array handling based on context
-    return `(() => {
-      // Handle null/undefined input
-      if (isNullOrUndefined(input)) return [];
-      
-      // Handle array input
-      if (Array.isArray(input)) {
-        // Filter the elements that match the condition
-        const result = [];
-        
-        for (const item of input) {
-          // Apply the condition to each item
-          const conditionResult = ${conditionFn}(item);
-          
-          // Handle array condition results (from piped operations)
-          if (Array.isArray(conditionResult)) {
-            // Check if any values in the array are truthy
-            const hasTruthy = conditionResult.some(val => val !== null && val !== undefined && val !== false);
-            if (hasTruthy) {
-              result.push(item);
-            }
-          }
-          // Handle scalar condition results
-          else if (conditionResult !== null && conditionResult !== undefined && conditionResult !== false) {
-            result.push(item);
-          }
-        }
-        
-        return result;
-      }
-      
-      // When used directly on a single object input
-      const conditionResult = ${conditionFn}(input);
-
-      // Handle array condition results
-      if (Array.isArray(conditionResult)) {
-        // Check if any values in the array are truthy
-        const hasTruthy = conditionResult.some(val => val !== null && val !== undefined && val !== false);
-        return hasTruthy ? [input] : [];
-      }
-
-      // Handle scalar condition results
-      return (conditionResult !== null && conditionResult !== undefined && conditionResult !== false) 
-        ? [input] 
-        : [];
-    })()`
+    return `handleSelect(input, ${conditionFn})`
   }
 
   private generateConditional (node: any): string {
@@ -526,6 +482,7 @@ console.log(code)
       'handleMap',
       'handleMapValues',
       'handleConditional',
+      'handleSelect',
       'constructArray',
       'constructObject',
       'addValues',
@@ -565,6 +522,7 @@ console.log(code)
       handleMap,
       handleMapValues,
       handleConditional,
+      handleSelect,
       constructArray,
       constructObject,
       addValues,

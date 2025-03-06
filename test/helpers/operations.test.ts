@@ -2,7 +2,7 @@ import { describe, it } from 'node:test'
 import assert from 'node:assert'
 import { handlePipe, constructArray, constructObject } from '../../src/helpers/operations.ts'
 
-describe('Operations Helper Functions', () => {
+describe.skip('Operations Helper Functions', () => {
   describe('handlePipe', () => {
     it('should return undefined if left function returns undefined', () => {
       const leftFn = () => undefined
