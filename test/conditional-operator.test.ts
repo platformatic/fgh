@@ -1,32 +1,32 @@
 // Test for conditional operator (if-then-else-end)
 
-import { test } from 'node:test'
+import { test, describe } from 'node:test'
 import assert from 'node:assert'
 import { query } from '../src/fgh.ts'
 
-test('if-then-else-end operator', async (t) => {
-  await t.test('should evaluate then branch for truthy conditions', () => {
+describe('if-then-else-end operator', async (t) => {
+  test('should evaluate then branch for truthy conditions', () => {
     assert.deepStrictEqual(
       query('if true then "yes" else "no" end', null),
       ['yes']
     )
   })
 
-  await t.test('should evaluate else branch for falsy conditions', () => {
+  test('should evaluate else branch for falsy conditions', () => {
     assert.deepStrictEqual(
       query('if false then "yes" else "no" end', null),
       ['no']
     )
   })
 
-  await t.test('should consider null as falsy', () => {
+  test('should consider null as falsy', () => {
     assert.deepStrictEqual(
       query('if null then "yes" else "no" end', null),
       ['no']
     )
   })
 
-  await t.test('should consider any other value as truthy', () => {
+  test('should consider any other value as truthy', () => {
     assert.deepStrictEqual(
       query('if 0 then "yes" else "no" end', null),
       ['yes']
@@ -41,7 +41,7 @@ test('if-then-else-end operator', async (t) => {
     )
   })
 
-  await t.test('should handle comparisons properly', () => {
+  test('should handle comparisons properly', () => {
     assert.deepStrictEqual(
       query('if 5 > 3 then "greater" else "not greater" end', null),
       ['greater']
@@ -53,27 +53,24 @@ test('if-then-else-end operator', async (t) => {
   })
 
   // Let's test how property access works in conditions explicitly
-  await t.test('should handle property access in conditions', () => {
-    // Present property is truthy
+  test('should handle property access in conditions', () => {
     assert.deepStrictEqual(
       query('if .value then "has value" else "no value" end', { value: 42 }),
       ['has value']
     )
 
-    // Explicit null check works as expected
     assert.deepStrictEqual(
       query('if .value == null then "is null" else "not null" end', { value: null }),
       ['is null']
     )
 
-    // Missing property returns undefined, which is truthy in this implementation
     assert.deepStrictEqual(
       query('if .missing then "exists" else "missing" end', { other: 42 }),
-      ['exists']
+      ['missing']
     )
   })
 
-  await t.test('should handle optional else branch', () => {
+  test('should handle optional else branch', () => {
     assert.deepStrictEqual(
       query('if true then "yes" end', null),
       ['yes']
@@ -84,7 +81,7 @@ test('if-then-else-end operator', async (t) => {
     )
   })
 
-  await t.test('should handle conditional as object value', () => {
+  test('should handle conditional as object value', () => {
     assert.deepStrictEqual(
       query('{result: if .value > 10 then "big" else "small" end}', { value: 15 }),
       [{ result: 'big' }]
@@ -95,27 +92,27 @@ test('if-then-else-end operator', async (t) => {
     )
   })
 
-  await t.test('should handle multiple results from condition', () => {
+  test('should handle multiple results from condition', () => {
     assert.deepStrictEqual(
       query('if [1,2,null,false,3] then . end', 'value'),
-      [1, 2, 3, false]
+      ['value']
     )
   })
 
-  await t.test('should handle array iteration in condition', () => {
+  test('should handle array iteration in condition', () => {
     assert.deepStrictEqual(
       query('if .values[] > 5 then "has big values" else "no big values" end',
         { values: [3, 4, 7, 2] }),
-      ['has big values']
+      ['no big values', 'no big values', 'has big values', 'no big values']
     )
     assert.deepStrictEqual(
       query('if .values[] > 5 then "has big values" else "no big values" end',
         { values: [3, 4, 5, 2] }),
-      ['has big values']
+      ['no big values', 'no big values', 'no big values', 'no big values']
     )
   })
 
-  await t.test('should handle chained conditionals with elif', () => {
+  test('should handle chained conditionals with elif', () => {
     const input = { value: 15 }
     assert.deepStrictEqual(
       query('if .value < 10 then "small" elif .value < 20 then "medium" else "large" end', input),
@@ -123,7 +120,7 @@ test('if-then-else-end operator', async (t) => {
     )
   })
 
-  await t.test('should handle conditionals with recursive data access', () => {
+  test('should handle conditionals with recursive data access', () => {
     const input = {
       person: {
         age: 25,
@@ -145,7 +142,7 @@ test('if-then-else-end operator', async (t) => {
     )
   })
 
-  await t.test('should handle conditional with empty result', () => {
+  test('should handle conditional with empty result', () => {
     assert.deepStrictEqual(
       query('if .value > 10 then . else empty end', { value: 15 }),
       [{ value: 15 }]
@@ -158,6 +155,6 @@ test('if-then-else-end operator', async (t) => {
   })
 })
 
-test('empty', async (t) => {
+describe('empty', async (t) => {
   assert.deepStrictEqual(query('empty', { value: 5 }), [])
 })

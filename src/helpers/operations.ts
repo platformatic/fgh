@@ -171,6 +171,7 @@ export const handleMapValues = (input: Array<any>, fn: (input: any) => any): Arr
       const obj = {}
       for (const key of keys) {
         const fnResult = fn([item[key]])
+        console.log('fnResult', fnResult)
         const result = fnResult?.[0]
 
         if (!isNullOrUndefined(result)) {
