@@ -138,12 +138,15 @@ export const handleMap = (input: Array<any>, fn: (input: any) => any): Array<any
   let results = []
 
   for (const item of input) {
-    if (!Array.isArray(item)) {
-      throw new Error('Cannot map non-array')
+    if (Array.isArray(item)) {
+      const result = fn(item)
+      results.push(result)
+    } else if (typeof item === 'object')  {
+      const result = fn(Object.values(item))
+      results.push(result)
+    } else {
+      throw new Error('Cannot map over non-array or object')
     }
-    const result = fn(item)
-    console.log('result', result)
-    results.push(result)
   }
 
   return results
