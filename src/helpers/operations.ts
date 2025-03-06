@@ -196,3 +196,22 @@ export const handleSelect = (input: Array<any>, fn: (input: any) => any): Array<
   }
   return results
 }
+
+export const handleRecursiveDescent = (input: Array<any>): Array<any> => {
+  console.log('handleRecursiveDescent init', input)
+  let results = [...input]
+  
+  console.log('handleRecursiveDescent', input, 'results before iteration', results)
+  
+  for (const item of input) {
+    if (Array.isArray(item)) {
+      results.push(...handleRecursiveDescent(item))
+    } else if (typeof item === 'object') {
+      results.push(...handleRecursiveDescent(Object.values(item), false))
+    }
+  }
+
+  console.log('handleRecursiveDescent', input, 'results', results)
+
+  return results
+}

@@ -24,6 +24,7 @@ import {
   handleMapValues,
   handleConditional,
   handleSelect,
+  handleRecursiveDescent,
   constructArray,
   constructObject,
   addValues,
@@ -249,8 +250,6 @@ export class JQCodeGenerator implements CodeGenerator {
     return `subtractValues(${leftCode}, ${rightCode})`
   }
 
-
-
   private generateMultiply (node: any): string {
     const leftCode = this.generateNode(node.left)
     const rightCode = this.generateNode(node.right)
@@ -277,49 +276,7 @@ export class JQCodeGenerator implements CodeGenerator {
   }
 
   private generateRecursiveDescent (node: any): string {
-    return `(() => {
-      if (isNullOrUndefined(input)) return undefined;
-      
-      // Final result array
-      const result = [];
-      
-      // Track object references to avoid duplicates and cycles
-      const visited = new WeakSet();
-      
-      // Function to recursively collect all values
-      const collectAllValues = (obj) => {
-        // Skip null/undefined values
-        if (isNullOrUndefined(obj)) return;
-        
-        // Add the current object/value itself to results first
-        result.push(obj);
-        
-        // For objects and arrays, track if we've seen them before to avoid cycles
-        if (typeof obj === 'object') {
-          if (visited.has(obj)) return;
-          visited.add(obj);
-          
-          // If it's an array, process each element
-          if (Array.isArray(obj)) {
-            for (const item of obj) {
-              collectAllValues(item);
-            }
-          }
-          // If it's an object, process each property
-          else if (obj !== null) {
-            for (const key in obj) {
-              if (key.startsWith('_')) continue; // Skip internal properties
-              collectAllValues(obj[key]);
-            }
-          }
-        }
-      };
-      
-      // Start the collection process with the input
-      collectAllValues(input);
-      
-      return result;
-    })()`
+    return 'handleRecursiveDescent(input)'
   }
 
   private generateMapFilter (node: any): string {
@@ -483,6 +440,7 @@ console.log(code)
       'handleMapValues',
       'handleConditional',
       'handleSelect',
+      'handleRecursiveDescent',
       'constructArray',
       'constructObject',
       'addValues',
@@ -523,6 +481,7 @@ console.log(code)
       handleMapValues,
       handleConditional,
       handleSelect,
+      handleRecursiveDescent,
       constructArray,
       constructObject,
       addValues,
