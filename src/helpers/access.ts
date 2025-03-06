@@ -18,8 +18,6 @@ export const accessProperty = (
 ): Array<any> => {
   const results: any[] = []
 
-  console.log(input)
-
   for (const obj of input) {
     if (Array.isArray(obj)) {
       throw new Error(`Cannot index array with string ${prop}`)

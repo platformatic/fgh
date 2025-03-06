@@ -92,88 +92,30 @@ export const constructObject = (
   input: Array<any>,
   fields: FieldDefinition[]
 ): Array<any> => {
-  // Special case for empty input
-  if (input.length === 0 || input[0] == null || input[0] === undefined) {
-    const result: Record<string, any> = {}
+  console.log('constructObject', input, fields)
+  const results = []
+
+  for (const item of input) {
+    let objects = [{}]
 
     for (const field of fields) {
-      if (field.isDynamic) {
-        // Dynamic key: {(.user): .titles}
-        const dynamicKey = (field.key as Function)(input)
-        if (!isNullOrUndefined(dynamicKey)) {
-          result[dynamicKey] = field.value(input)
+      const key = typeof field.key === 'function' ? field.key([item]) : field.key
+      const values = ensureArray(field.value([item]))
+
+      let newObjects = []
+      for (const obj of objects) {
+        for (const value of values) {
+          const newObj = { ...obj, [key]: value }
+          newObjects.push(newObj)
         }
-      } else {
-        // Static key
-        result[field.key as string] = field.value(input)
       }
+      objects = newObjects
     }
 
-    return [result]
+    results.push(...objects)
   }
 
-  // Handle array input for object construction: { user, title: .titles[] }
-  // This creates an array of objects by iterating over array elements in the fields
-  const hasArrayField = fields.some(field => {
-    const fieldValue = field.value(input)
-    return Array.isArray(fieldValue) && !field.isDynamic
-  })
-
-  if (hasArrayField) {
-    // First, find the array field and its length
-    let arrayField: FieldDefinition | undefined
-    let arrayLength = 0
-
-    for (const field of fields) {
-      const fieldValue = field.value(input)
-      if (Array.isArray(fieldValue) && !field.isDynamic) {
-        arrayField = field
-        arrayLength = fieldValue.length
-        break
-      }
-    }
-
-    // Create an array of objects
-    const result: Record<string, any>[] = []
-
-    for (let i = 0; i < arrayLength; i++) {
-      const obj: Record<string, any> = {}
-
-      for (const field of fields) {
-        const fieldValue = field.value(input)
-
-        if (field === arrayField) {
-          obj[field.key as string] = fieldValue[i]
-        } else {
-          obj[field.key as string] = fieldValue
-        }
-      }
-
-      result.push(obj)
-    }
-
-    // For object construction with array expansion, we need to be consistent
-    // with how arrays are processed in the standardizeResult function
-    return result
-  } else {
-    // Regular object construction
-    const result: Record<string, any> = {}
-
-    for (const field of fields) {
-      if (field.isDynamic) {
-        // Dynamic key: {(.user): .titles}
-        const dynamicKey = (field.key as Function)(input)
-        if (!isNullOrUndefined(dynamicKey)) {
-          result[dynamicKey] = field.value(input)
-        }
-      } else {
-        // Static key
-        result[field.key as string] = field.value(input)
-      }
-    }
-
-    return [result]
-  }
+  return results
 }
 
 export const handleSequence = (input: Array<any>, fns: ((input: Array<any>) => Array<any>)[]): Array<any> => {
