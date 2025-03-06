@@ -47,25 +47,28 @@ describe('map(select()) bug', async (t) => {
 
     // This test helps confirm if the first part works
     const result = query(filter, input)
-    console.log('map(select()) result:', JSON.stringify(result))
+    assert.deepEqual(result, [[{ name: 'John', role: 'admin' }]])
 
     // Test the full pipeline step by step
-    console.log('Step 1 (.users):', JSON.stringify(query('.users', input)))
+    const step1Result = query('.users', input)
+    assert.deepEqual(step1Result, [input.users])
 
-    console.log('Direct test of select on user object:')
-    console.log('select(.role == "admin") on John:',
-      JSON.stringify(query('select(.role == "admin")', { name: 'John', role: 'admin' })))
-    console.log('select(.role == "admin") on Alice:',
-      JSON.stringify(query('select(.role == "admin")', { name: 'Alice', role: 'user' })))
+    // Direct test of select on user object
+    const selectOnJohn = query('select(.role == "admin")', { name: 'John', role: 'admin' })
+    const selectOnAlice = query('select(.role == "admin")', { name: 'Alice', role: 'user' })
+
+    assert.deepEqual(selectOnJohn, [{ name: 'John', role: 'admin' }])
+    assert.deepEqual(selectOnAlice, [])
 
     // Test map directly
-    console.log('map(.name) directly on array:',
-      JSON.stringify(query('map(.name)', [{ name: 'John', role: 'admin' }])))
+    const mapNameResult = query('map(.name)', [{ name: 'John', role: 'admin' }])
+    assert.deepEqual(mapNameResult, [['John']])
 
-    console.log('Step 2 (.users | map(select(.role == "admin"))):',
-      JSON.stringify(query('.users | map(select(.role == "admin"))', input)))
-    console.log('Step 3 (Full pipeline):',
-      JSON.stringify(query('.users | map(select(.role == "admin")) | map(.name)', input)))
+    const step2Result = query('.users | map(select(.role == "admin"))', input)
+    assert.deepEqual(step2Result, [[{ name: 'John', role: 'admin' }]])
+
+    const step3Result = query('.users | map(select(.role == "admin")) | map(.name)', input)
+    assert.deepEqual(step3Result, [['John']])
   })
 
   test('map(.name) works correctly on array', () => {
@@ -77,6 +80,6 @@ describe('map(select()) bug', async (t) => {
 
     // This test helps confirm if the second part works
     const result = query(filter, input)
-    console.log('map(.name) result:', JSON.stringify(result))
+    assert.deepEqual(result, [['John']])
   })
 })

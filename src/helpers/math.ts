@@ -11,7 +11,6 @@ import { isNullOrUndefined, ensureArray } from './utils.ts'
  * @returns The result of adding the values
  */
 export const addValues = (leftArray: any, rightArray: any): Array<any> => {
-  console.log('addValues', leftArray, rightArray)
   leftArray = ensureArray(leftArray)
   rightArray = ensureArray(rightArray)
 
@@ -33,7 +32,6 @@ export const addValues = (leftArray: any, rightArray: any): Array<any> => {
       } else if (Array.isArray(right) && left !== null) {
         throw new Error('Cannot add array to non-array')
       } else {
-        console.log('addValues', left, right)
         results.push(left + right)
       }
     }
@@ -181,7 +179,6 @@ export const divideValues = (leftArray: any, rightArray: any): any => {
  * @returns The remainder after division
  */
 export const moduloValues = (leftArray: any, rightArray: any): any => {
-  console.log('addValues', leftArray, rightArray)
   leftArray = ensureArray(leftArray)
   rightArray = ensureArray(rightArray)
 

@@ -21,8 +21,6 @@ export const handlePipe = (
   for (const item of input) {
     const leftResult = ensureArray(leftFn([item]))
 
-    console.log('leftResult', leftResult)
-
     for (const leftItem of leftResult) {
       const rightResult = rightFn([leftItem])
       if (!isNullOrUndefined(rightResult)) {
@@ -54,14 +52,12 @@ export const constructArray = (
 
   for (const elementFn of elementFns) {
     let { values } = elementFn(input)
-    console.log('values', values)
 
     if (!Array.isArray(values)) {
       values = [values]
     }
 
     for (const item of values) {
-      console.log('item', item)
       // Skip undefined/null results
       if (isNullOrUndefined(item)) continue
 
@@ -91,7 +87,6 @@ export const constructObject = (
   input: Array<any>,
   fields: FieldDefinition[]
 ): Array<any> => {
-  console.log('constructObject', input, fields)
   const results = []
 
   for (const item of input) {
@@ -127,13 +122,10 @@ export const handleSequence = (input: Array<any>, fns: ((input: Array<any>) => A
     }
   }
 
-  console.log('handleSequence', input, 'results', results)
-
   return results
 }
 
 export const handleMap = (input: Array<any>, fn: (input: any) => any): Array<any> => {
-  console.log('handleMap', input, fn)
   const results = []
 
   for (const item of input) {
@@ -154,7 +146,6 @@ export const handleMap = (input: Array<any>, fn: (input: any) => any): Array<any
 export const handleMapValues = (input: Array<any>, fn: (input: any) => any): Array<any> => {
   const results = []
   for (const item of input) {
-    console.log('item', item)
     if (Array.isArray(item)) {
       const partial = []
       for (const subitem of item) {
@@ -170,7 +161,6 @@ export const handleMapValues = (input: Array<any>, fn: (input: any) => any): Arr
       const obj = {}
       for (const key of keys) {
         const fnResult = fn([item[key]])
-        console.log('fnResult', fnResult)
         const result = fnResult?.[0]
 
         if (!isNullOrUndefined(result)) {
@@ -190,8 +180,6 @@ export const handleSelect = (input: Array<any>, fn: (input: any) => any): Array<
 
   const conditions = fn(input)
 
-  console.log('handleSelect', input, conditions)
-
   for (let i = 0; i < input.length; i++) {
     const condition = conditions[i]
     const item = input[i]
@@ -207,10 +195,7 @@ export const handleSelect = (input: Array<any>, fn: (input: any) => any): Array<
 }
 
 export const handleRecursiveDescent = (input: Array<any>): Array<any> => {
-  console.log('handleRecursiveDescent init', input)
   const results = [...input]
-
-  console.log('handleRecursiveDescent', input, 'results before iteration', results)
 
   for (const item of input) {
     if (Array.isArray(item)) {
@@ -219,8 +204,6 @@ export const handleRecursiveDescent = (input: Array<any>): Array<any> => {
       results.push(...handleRecursiveDescent(Object.values(item)))
     }
   }
-
-  console.log('handleRecursiveDescent', input, 'results', results)
 
   return results
 }

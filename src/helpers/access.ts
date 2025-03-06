@@ -35,15 +35,11 @@ export const accessProperty = (
 
     const value = obj[prop]
 
-    console.log('accessProperty1', obj, prop, optional, value)
-
     if (value !== undefined || !optional) {
       results.push(value)
       continue
     }
   }
-
-  console.log('accessProperty', input, prop, results)
 
   return results
 }
@@ -65,8 +61,6 @@ export const accessIndex = (obj: Array<any>, idx: number): any => {
       results.push(Object.values(item)[idx])
     }
   }
-
-  console.log('accessIndex', obj, idx, results)
 
   return results
 }
@@ -103,8 +97,6 @@ export const accessSlice = (
     }
   }
 
-  console.log('accessSlice', input, start, end, results)
-
   return results
 }
 
@@ -123,7 +115,6 @@ export const iterateArray = (input: Array<any>): Array<any> => {
       results.push(...Object.values(item))
     }
   }
-  console.log('iterateArray', input, results)
 
   return results
 }

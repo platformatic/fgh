@@ -124,7 +124,6 @@ export const handleDefault = (left: Array<any>, right: Array<any>): any => {
   right = ensureArray(right)
 
   for (const item of left) {
-    console.log(item, isTruthy(item))
     if (isTruthy(item)) {
       return [item]
     }
@@ -134,22 +133,16 @@ export const handleDefault = (left: Array<any>, right: Array<any>): any => {
 }
 
 export const handleConditional = (input: Array<any>, conditionFn: (input: any) => any, thenFn: (input: any) => any, elseFn: (input: any) => any): any[] => {
-  console.log('handleConditional', input, conditionFn, thenFn, elseFn.toString())
-
   const results = []
 
   for (const item of input) {
     const conditions = ensureArray(conditionFn([item]))
-    console.log('conditions', conditions)
     for (const conditionResult of conditions) {
-      console.log('conditionResult', conditionResult)
       if (isTruthy(conditionResult)) {
         const thenResult = ensureArray(thenFn([item]))
-        console.log('thenResult', thenResult)
         results.push(...thenResult)
       } else {
         const elseResult = ensureArray(elseFn([item]))
-        console.log('elseResult', elseResult)
         results.push(...elseResult)
       }
     }

@@ -104,7 +104,6 @@ function compareObjects (a: any, b: any): number {
  * @returns The sorted array
  */
 export const sortArray = (input: Array<any>): Array<any> => {
-  console.log('sortArray', input)
   const results = []
 
   for (const item of input) {
@@ -129,7 +128,6 @@ export const sortArrayBy = (
   input: any,
   paths: ((item: any) => any)[]
 ): any => {
-  console.log('sortArrayBy', input, paths)
   const results = []
 
   for (const item of input) {

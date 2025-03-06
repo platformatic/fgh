@@ -25,8 +25,6 @@ export const getKeys = (input: Array<any>): Array<(string | number)[]> => {
  * @returns Array of keys (unsorted) or indices
  */
 export const getKeysUnsorted = (input: Array<any>, sort: boolean = false): Array<(string | number)[]> => {
-  console.log('getKeys', input)
-
   const results: (string | number)[][] = []
 
   for (const item of input) {
@@ -43,8 +41,6 @@ export const getKeysUnsorted = (input: Array<any>, sort: boolean = false): Array
       throw new Error(`Cannot get keys from ${item}`)
     }
   }
-
-  console.log('getKeys', input, results)
 
   return results
 }

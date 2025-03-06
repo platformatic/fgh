@@ -14,7 +14,6 @@ import { ensureArray } from './utils.ts'
  * @returns true if left > right, false otherwise
  */
 export const greaterThan = (leftArray: any[], rightArray: any[]): (boolean | boolean[])[] => {
-  console.log('greaterThan', leftArray, rightArray)
   leftArray = ensureArray(leftArray)
   rightArray = ensureArray(rightArray)
   const results: (boolean | boolean[])[] = []
@@ -60,7 +59,6 @@ export const greaterThan = (leftArray: any[], rightArray: any[]): (boolean | boo
  * @returns true if left >= right, false otherwise
  */
 export const greaterThanOrEqual = (leftArray: any, rightArray: any): (boolean | boolean[])[] => {
-  console.log('greaterThanOrEqual', leftArray, rightArray)
   leftArray = ensureArray(leftArray)
   rightArray = ensureArray(rightArray)
   const results: (boolean | boolean[])[] = []
@@ -106,7 +104,6 @@ export const greaterThanOrEqual = (leftArray: any, rightArray: any): (boolean | 
  * @returns true if left < right, false otherwise
  */
 export const lessThan = (leftArray: any, rightArray: any): (boolean | boolean[])[] => {
-  console.log('lessThan', leftArray, rightArray)
   leftArray = ensureArray(leftArray)
   rightArray = ensureArray(rightArray)
   const results: (boolean | boolean[])[] = []
@@ -152,7 +149,6 @@ export const lessThan = (leftArray: any, rightArray: any): (boolean | boolean[])
  * @returns true if left <= right, false otherwise
  */
 export const lessThanOrEqual = (leftArray: any, rightArray: any): (boolean | boolean[])[] => {
-  console.log('lessThanOrEqual', leftArray, rightArray)
   leftArray = ensureArray(leftArray)
   rightArray = ensureArray(rightArray)
   const results: (boolean | boolean[])[] = []
@@ -205,7 +201,6 @@ export const equal = (leftArray: any, rightArray: any): (boolean | boolean[])[] 
 
   for (let i = 0; i < leftArray.length; i++) {
     for (let k = 0; k < rightArray.length; k++) {
-      console.log('equal item', leftArray[i], rightArray[k])
       if (Array.isArray(leftArray[i]) && Array.isArray(rightArray[k])) {
         results.push(isDeepEqual(leftArray[i], rightArray[k]))
       } else if (Array.isArray(leftArray[i]) && !Array.isArray(rightArray[k])) {
@@ -220,8 +215,6 @@ export const equal = (leftArray: any, rightArray: any): (boolean | boolean[])[] 
     }
   }
 
-  console.log('equal', leftArray, rightArray, results)
-
   return results
 }
 
@@ -234,7 +227,6 @@ export const equal = (leftArray: any, rightArray: any): (boolean | boolean[])[] 
  * @returns true if values are not equal, false otherwise
  */
 export const notEqual = (leftArray: any, rightArray: any): (boolean | boolean[])[] => {
-  console.log('notEqual', leftArray, rightArray)
   leftArray = ensureArray(leftArray)
   rightArray = ensureArray(rightArray)
 
@@ -242,7 +234,6 @@ export const notEqual = (leftArray: any, rightArray: any): (boolean | boolean[])
 
   for (let i = 0; i < leftArray.length; i++) {
     for (let k = 0; k < rightArray.length; k++) {
-      console.log('notEqual item', leftArray[i], rightArray[k])
       if (Array.isArray(leftArray[i]) && Array.isArray(rightArray[k])) {
         results.push(!isDeepEqual(leftArray[i], rightArray[k]))
       } else if (Array.isArray(leftArray[i]) && !Array.isArray(rightArray[k])) {
@@ -256,8 +247,6 @@ export const notEqual = (leftArray: any, rightArray: any): (boolean | boolean[])
       }
     }
   }
-
-  console.log('notEqual', leftArray, rightArray, results)
 
   return results
 }
