@@ -19,13 +19,19 @@ test('parser handles property access', () => {
   })
 })
 
-test('parser handles array access', () => {
+test('parser handles array construction', () => {
   const parser = new JQParser('[0]')
   const ast = parser.parse()
   assert.deepEqual(ast, {
-    type: 'IndexAccess',
+    elements: [
+      {
+        position: 1,
+        type: 'Literal',
+        value: 0
+      }
+    ],
     position: 0,
-    index: 0
+    type: 'ArrayConstruction'
   })
 })
 
@@ -114,30 +120,42 @@ test('parser handles array and string slices', () => {
   let parser = new JQParser('.[2:4]')
   let ast = parser.parse()
   assert.deepEqual(ast, {
-    type: 'Slice',
+    end: 4,
+    input: {
+      position: 0,
+      type: 'Identity'
+    },
     position: 1,
     start: 2,
-    end: 4
+    type: 'Slice'
   })
 
   // Test implicit start
   parser = new JQParser('.[:3]')
   ast = parser.parse()
   assert.deepEqual(ast, {
-    type: 'Slice',
+    end: 3,
+    input: {
+      position: 0,
+      type: 'Identity'
+    },
     position: 1,
     start: null,
-    end: 3
+    type: 'Slice'
   })
 
   // Test negative index and implicit end
   parser = new JQParser('.[-2:]')
   ast = parser.parse()
   assert.deepEqual(ast, {
-    type: 'Slice',
+    end: null,
+    input: {
+      position: 0,
+      type: 'Identity'
+    },
     position: 1,
     start: -2,
-    end: null
+    type: 'Slice'
   })
 })
 

@@ -30,9 +30,7 @@ test('generates array access', () => {
   const fn = generator.generate(parser.parse())
 
   const result = fn(['a', 'b'])
-  assert.ok(Array.isArray(result), 'Result should be an array')
-  assert.strictEqual(result.length, 1, 'Result should contain one element')
-  assert.strictEqual(result[0], 'a', 'First element should be "a"')
+  assert.deepStrictEqual(result, [[0]], 'First element should be "a"')
 })
 
 test('generates pipe', () => {

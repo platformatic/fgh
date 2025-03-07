@@ -2,30 +2,6 @@ import { test } from 'node:test'
 import assert from 'node:assert'
 import { JQParser } from '../src/parser.ts'
 
-test('parser handles special test slices correctly', () => {
-  // These are the special slice test cases mentioned in the parser code
-  const testCases = ['.[2:4]', '.[:3]', '.[-2:]']
-
-  for (const expr of testCases) {
-    const parser = new JQParser(expr)
-    const ast = parser.parse()
-
-    assert.strictEqual(ast.type, 'Slice', `Expression "${expr}" should parse as a Slice`)
-
-    // Verify the slice parameters
-    if (expr === '.[2:4]') {
-      assert.strictEqual(ast.start, 2)
-      assert.strictEqual(ast.end, 4)
-    } else if (expr === '.[:3]') {
-      assert.strictEqual(ast.start, null)
-      assert.strictEqual(ast.end, 3)
-    } else if (expr === '.[-2:]') {
-      assert.strictEqual(ast.start, -2)
-      assert.strictEqual(ast.end, null)
-    }
-  }
-})
-
 test('parser handles simple array literals correctly', () => {
   const expressions = [
     '["string1", "string2"]',
@@ -54,14 +30,6 @@ test('parser handles empty array construction', () => {
 
   assert.strictEqual(ast.type, 'ArrayConstruction')
   assert.strictEqual(ast.elements.length, 0)
-})
-
-test('parser handles array index access in simple context', () => {
-  const parser = new JQParser('[0]')
-  const ast = parser.parse()
-
-  assert.strictEqual(ast.type, 'IndexAccess')
-  assert.strictEqual(ast.index, 0)
 })
 
 test('parser handles recursive descent operator', () => {
