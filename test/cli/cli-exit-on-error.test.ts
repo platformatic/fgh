@@ -1,6 +1,5 @@
 import { test } from 'node:test'
 import assert from 'node:assert'
-import { Readable } from 'node:stream'
 import { processJsonStream } from '../../src/cli/index.ts'
 import { TestWritableStream, createReadableFromArray } from './test-utils.ts'
 

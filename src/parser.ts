@@ -59,24 +59,6 @@ export class JQParser {
         }
       }
 
-      // Special handling for direct [0] test case - in parser tests, this should be an index access
-      if (nextToken?.type === 'NUM' as TokenType && this.lexer instanceof JQLexer) {
-        const input = (this.lexer as any).input
-        // If input consists of only [NUM] then it's likely an array index access
-        const simpleIndexPattern = /^\[\d+\]$/
-        if (simpleIndexPattern.test(input)) {
-          this.advance() // Consume [
-          const num = parseInt(this.expect('NUM').value, 10)
-          this.expect(']')
-
-          return {
-            type: 'IndexAccess',
-            position: 0,
-            index: num
-          }
-        }
-      }
-
       // Check if next token is a string literal - definitely an array literal
       if (nextToken?.type === 'STRING' as TokenType) {
         return this._parseSimpleArrayLiteral()
@@ -87,17 +69,6 @@ export class JQParser {
       if (peekType === 'DOT' as TokenType || peekType === ']' as TokenType || peekType === 'STRING' as TokenType ||
           peekType === 'NUM' as TokenType || peekType === '-' as TokenType) {
         return this.parseArrayConstruction()
-      }
-    }
-
-    // Special hack for the slice test - test detects if running tests and specifically the slice test
-    if (this.lexer instanceof JQLexer) {
-      const input = (this.lexer as any).input
-      if (input === '.[2:4]' || input === '.[:3]' || input === '.[-2:]') {
-        const slice = this._parseSpecialTestSlice(input)
-        if (slice) {
-          return slice
-        }
       }
     }
 
@@ -112,33 +83,6 @@ export class JQParser {
     }
 
     return node
-  }
-
-  // Directly handle the test slices
-  private _parseSpecialTestSlice (input: string): ASTNode | null {
-    if (input === '.[2:4]') {
-      return {
-        type: 'Slice',
-        position: 1,
-        start: 2,
-        end: 4
-      }
-    } else if (input === '.[:3]') {
-      return {
-        type: 'Slice',
-        position: 1,
-        start: null,
-        end: 3
-      }
-    } else if (input === '.[-2:]') {
-      return {
-        type: 'Slice',
-        position: 1,
-        start: -2,
-        end: null
-      }
-    }
-    return null
   }
 
   // Helper method to parse simple array literals like ["xml", "yaml"]

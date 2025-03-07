@@ -24,13 +24,13 @@ test('generator handles nested dynamic key in object construction', () => {
       }
     ]
   }
-  
+
   const generator = new JQCodeGenerator()
   const fn = generator.generate(ast)
-  
+
   // Test the function with an object that has a keyName property
   const result = fn({ keyName: 'dynamicKey' })
-  
+
   // The result should have the dynamicKey property with 'value' as its value
   assert.deepStrictEqual(result, [{ dynamicKey: 'value' }])
 })
@@ -87,10 +87,10 @@ test('generator handles complex nesting of expressions', () => {
       }
     }
   }
-  
+
   const generator = new JQCodeGenerator()
   const fn = generator.generate(ast)
-  
+
   // Test the function with sample data
   const result = fn({
     items: [
@@ -98,7 +98,7 @@ test('generator handles complex nesting of expressions', () => {
       { name: 'item2', value: 15 }
     ]
   })
-  
+
   // Check if the result matches what we expect - the actual result includes an array wrapper
   assert.deepStrictEqual(result, [
     [
@@ -110,19 +110,19 @@ test('generator handles complex nesting of expressions', () => {
 
 test('generator handles various expression types', () => {
   // Test different expression types to increase coverage
-  
+
   // 1. Test Empty AST node
   let ast = {
     type: 'Empty',
     position: 0
   }
-  
+
   let generator = new JQCodeGenerator()
   let fn = generator.generate(ast)
-  
+
   // Empty should return an empty array for any input
   assert.deepStrictEqual(fn({ data: 'value' }), [])
-  
+
   // 2. Test Not AST node
   ast = {
     type: 'Not',
@@ -133,13 +133,13 @@ test('generator handles various expression types', () => {
       value: true
     }
   }
-  
+
   generator = new JQCodeGenerator()
   fn = generator.generate(ast)
-  
+
   // Not true should return false
   assert.deepStrictEqual(fn({}), [false])
-  
+
   // 3. Test Modulo AST node
   ast = {
     type: 'Modulo',
@@ -155,10 +155,10 @@ test('generator handles various expression types', () => {
       value: 3
     }
   }
-  
+
   generator = new JQCodeGenerator()
   fn = generator.generate(ast)
-  
+
   // 10 % 3 should return 1
   assert.deepStrictEqual(fn({}), [1])
 })
@@ -169,13 +169,13 @@ test('generator handles sort and sort_by expressions', () => {
     type: 'Sort',
     position: 0
   }
-  
+
   let generator = new JQCodeGenerator()
   let fn = generator.generate(ast)
-  
+
   // Sort should order the array
   assert.deepStrictEqual(fn([3, 1, 2]), [[1, 2, 3]])
-  
+
   // Test sort_by with paths
   ast = {
     type: 'SortBy',
@@ -188,17 +188,17 @@ test('generator handles sort and sort_by expressions', () => {
       }
     ]
   }
-  
+
   generator = new JQCodeGenerator()
   fn = generator.generate(ast)
-  
+
   // Sort_by should order by the specified property
   const result = fn([
     { name: 'Alice', age: 30 },
     { name: 'Bob', age: 25 },
     { name: 'Charlie', age: 35 }
   ])
-  
+
   assert.deepStrictEqual(result, [[
     { name: 'Bob', age: 25 },
     { name: 'Alice', age: 30 },

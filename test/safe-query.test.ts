@@ -14,7 +14,7 @@ test('safeQuery returns empty array for invalid expressions', () => {
   // Invalid property access - this actually returns [undefined] in the implementation
   const invalidPropertyResult = safeQuery('.nonexistent.property', { name: 'John' })
   assert.deepStrictEqual(invalidPropertyResult, [undefined])
-  
+
   // Completely invalid expression
   const veryInvalidResult = safeQuery('this is not a valid expression', { name: 'John' })
   assert.deepStrictEqual(veryInvalidResult, [])
@@ -23,22 +23,22 @@ test('safeQuery returns empty array for invalid expressions', () => {
 test('safeQuery with debug mode enabled', () => {
   // Store original env variable
   const originalDebug = process.env.FGH_DEBUG
-  
+
   // Enable debug mode
   process.env.FGH_DEBUG = 'true'
-  
+
   // Capture console.error
   const originalConsoleError = console.error
-  let errorMessages = []
+  const errorMessages = []
   console.error = (...args) => { errorMessages.push(args.join(' ')) }
-  
+
   try {
     // Invalid query should log to console.error
     safeQuery('.invalid[', { name: 'John' })
-    
+
     // Verify error was logged
     assert.strictEqual(errorMessages.length, 1, 'Error should be logged to console.error')
-    assert.ok(errorMessages[0].includes('FGH query error'), 
+    assert.ok(errorMessages[0].includes('FGH query error'),
       'Error message should contain "FGH query error"')
   } finally {
     // Restore original values
