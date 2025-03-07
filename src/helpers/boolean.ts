@@ -31,6 +31,21 @@ export const logicalAnd = (leftArray: any, rightArray: any): boolean | boolean[]
   leftArray = ensureArray(leftArray)
   rightArray = ensureArray(rightArray)
 
+  // Handle case when either array is empty by returning an array with the correct value
+  // Empty arrays are truthy in JQ, so we need to handle them specially
+  if (leftArray.length === 0 || rightArray.length === 0) {
+    // Empty arrays are truthy in JQ
+    if (leftArray.length === 0 && rightArray.length === 0) {
+      return [true] // both empty is a truthy value
+    } else if (leftArray.length === 0) {
+      // Empty array on left, use right side truthiness
+      return rightArray.map(right => isTruthy(right))
+    } else {
+      // Empty array on right, use left side truthiness
+      return leftArray.map(left => isTruthy(left))
+    }
+  }
+
   const results = []
 
   for (let i = 0; i < leftArray.length; i++) {
@@ -74,6 +89,21 @@ export const logicalOr = (leftArray: any, rightArray: any): boolean | boolean[] 
   leftArray = ensureArray(leftArray)
   rightArray = ensureArray(rightArray)
 
+  // Handle case when either array is empty by returning an array with the correct value
+  // Empty arrays are truthy in JQ, so we need to handle them specially
+  if (leftArray.length === 0 || rightArray.length === 0) {
+    // Empty arrays are truthy in JQ
+    if (leftArray.length === 0 && rightArray.length === 0) {
+      return [true] // both empty is a truthy value
+    } else if (leftArray.length === 0) {
+      // Empty array on left, use right side truthiness but OR with true (since empty is truthy)
+      return rightArray.map(right => true || isTruthy(right))
+    } else {
+      // Empty array on right, use left side truthiness but OR with true (since empty is truthy)
+      return leftArray.map(left => isTruthy(left) || true)
+    }
+  }
+
   const results = []
 
   for (let i = 0; i < leftArray.length; i++) {
@@ -112,6 +142,12 @@ export const logicalOr = (leftArray: any, rightArray: any): boolean | boolean[] 
  */
 export const logicalNot = (values: Array<any>): boolean[] => {
   values = ensureArray(values)
+
+  // Handle case when values array is empty
+  if (values.length === 0) {
+    // Empty arrays are truthy in JQ, so ![] is false
+    return [false]
+  }
 
   // Map over the array and negate each value
   return values.map(item => !isTruthy(item))
