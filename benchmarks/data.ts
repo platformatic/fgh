@@ -211,7 +211,7 @@ export const TEST_EXPRESSIONS = {
 
   // Nested access
   nested: '.user.personal.name',
-  deepNested: '.level1.level2.level3.level4.level5.level6.level7.level8.value',
+  deepNested: '.[] | .level1.level2.level3.level4.level5.level6.level7.level8.value',
   arrayNested: '.posts[].comments[].author',
 
   // Transformations
