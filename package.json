@@ -35,16 +35,21 @@
     "jq",
     "typescript",
     "json",
-    "filter",
-    "comma operator",
-    "sequence"
+    "filter"
   ],
-  "author": "Matteo Collina <hello@matteocollina.com>",
+  "author": "Platformatic Inc. <oss@platformatic.dev> (https://platformatic.dev)",
+  "contributors": [
+    {
+      "name": "Matteo Collina",
+      "email": "Matteo Collina <hello@matteocollina.com>",
+      "url": "https://nodeland.dev"
+    }
+  ],
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/mcollina/fgh/issues"
+    "url": "https://github.com/platformatic/fgh/issues"
   },
-  "homepage": "https://github.com/mcollina/fgh#readme",
+  "homepage": "https://github.com/platformatic/fgh#readme",
   "devDependencies": {
     "@fastify/pre-commit": "^2.2.0",
     "@types/node": "^22.13.4",
