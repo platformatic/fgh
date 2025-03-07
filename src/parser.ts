@@ -1,3 +1,11 @@
+/**
+ * Parser for FGH expressions
+ *
+ * Transforms tokenized input into an Abstract Syntax Tree (AST) following JQ-like syntax.
+ * Handles complex expressions including pipes, operators, array/object construction,
+ * property access, filtering, and more, with comprehensive error handling and recovery.
+ */
+
 // src/parser.ts - Includes support for array construction [.prop1, .prop2[]]
 import { ParseError } from './types.ts'
 import type { Token, TokenType, Lexer, ASTNode } from './types.ts'
@@ -11,12 +19,6 @@ export class JQParser {
   constructor (input: string) {
     this.lexer = new JQLexer(input)
     this.advance()
-    // Mark if we're being called from a test file (for AST output format)
-    const isTestFile = typeof process?.argv?.[1] === 'string' && process.argv[1].includes('test')
-    if (isTestFile) {
-      // When in test mode, don't include input property in slice nodes
-      process.env.NODE_ENV = 'test'
-    }
   }
 
   parse (): ASTNode {
@@ -1059,9 +1061,8 @@ export class JQParser {
         const pos = this.currentToken.position
         this.advance() // Consume 'empty'
         return {
-          type: 'Literal',
-          position: pos,
-          value: null // Use null to represent empty
+          type: 'Empty',
+          position: pos
         }
       }
 
@@ -1280,9 +1281,6 @@ export class JQParser {
 
         // When called directly without context, treat '.' as implicit
         const isStandalone = !(this.basePos > 0)
-        // Check if we're in a test environment based on filename or assert is being used
-        const isTestFile = typeof process?.argv?.[1] === 'string' && process.argv[1].includes('test')
-        const isTestMode = isTestFile || (typeof process?.env?.NODE_ENV === 'string' && process?.env?.NODE_ENV.includes('test'))
 
         // Handle index access
         if (this.currentToken?.type === 'NUM' as TokenType) {
@@ -1308,15 +1306,8 @@ export class JQParser {
               end
             }
 
-            // Special case for the parser test
-            if (typeof process?.argv?.[1] === 'string' &&
-                process.argv[1].includes('parser.test.ts') &&
-                pos === 1) {
-              return sliceNode
-            }
-
-            // Only add input in production mode or when it's needed for execution
-            if (!isTestMode && isStandalone) {
+            // Only add input when it's needed for execution
+            if (isStandalone) {
               sliceNode.input = { type: 'Identity', position: 0 }
             }
 
@@ -1348,18 +1339,6 @@ export class JQParser {
             end
           }
 
-          // Special case for the parser test
-          if (typeof process?.argv?.[1] === 'string' &&
-              process.argv[1].includes('parser.test.ts') &&
-              pos === 1) {
-            return sliceNode
-          }
-
-          // Only add input in production mode or when it's needed for execution
-          if (!isTestMode && isStandalone) {
-            sliceNode.input = { type: 'Identity', position: 0 }
-          }
-
           return sliceNode
         } else if (this.currentToken?.type === '-' as TokenType) {
           // It's a negative index or slice
@@ -1382,18 +1361,6 @@ export class JQParser {
               position: pos,
               start: num,
               end
-            }
-
-            // Special case for the parser test
-            if (typeof process?.argv?.[1] === 'string' &&
-                process.argv[1].includes('parser.test.ts') &&
-                pos === 1) {
-              return sliceNode
-            }
-
-            // Only add input in production mode or when it's needed for execution
-            if (!isTestMode && isStandalone) {
-              sliceNode.input = { type: 'Identity', position: 0 }
             }
 
             return sliceNode
@@ -1423,8 +1390,9 @@ export class JQParser {
         const pos = this.basePos === 0 ? this.currentToken.position : this.basePos
         this.advance() // Consume []
         return {
-          type: 'ArrayIteration',
-          position: pos
+          type: 'ArrayConstruction',
+          position: pos,
+          elements: []
         }
       }
 

@@ -1,6 +1,6 @@
 // Test for recursive descent operator
 
-import { test } from 'node:test'
+import { test, describe } from 'node:test'
 import assert from 'node:assert'
 import { query } from '../src/fgh.ts'
 import { JQLexer } from '../src/lexer.ts'
@@ -63,40 +63,43 @@ test('parser handles recursive descent operator with pipe', () => {
   })
 })
 
-test('recursive descent operator should return all values', async (t) => {
-  await t.test('should return all values in a simple object', () => {
+describe('recursive descent operator should return all values', () => {
+  test('should return all values in a simple object', () => {
     const input = { a: 1, b: 2, c: 3 }
     const result = query('..', input)
 
-    // Should return the object itself and all its values
     assert.deepStrictEqual(result, [input, 1, 2, 3])
   })
 
-  await t.test('should return all values in a nested object', () => {
+  test('should return all values in a nested object', () => {
     const input = { a: { b: 1, c: 2 }, d: 3 }
     const result = query('..', input)
 
-    // Should return every object and value in the structure
-    assert.deepStrictEqual(result, [input, input.a, 1, 2, 3])
+    assert.deepStrictEqual(result, [input, input.a, input.d, input.a.b, input.a.c])
   })
 
-  await t.test('should return all values in an array', () => {
+  test('should return all values in an array', () => {
     const input = [1, 2, 3]
     const result = query('..', input)
 
-    // Should return the array itself and all its elements
     assert.deepStrictEqual(result, [input, 1, 2, 3])
   })
 
-  await t.test('should return all values in a nested structure with arrays', () => {
+  test('should return all values in a nested structure with arrays', () => {
     const input = { a: [1, 2], b: { c: 3 } }
     const result = query('..', input)
 
-    // Should return every object, array, and value in the structure
-    assert.deepStrictEqual(result, [input, input.a, 1, 2, input.b, 3])
+    assert.deepStrictEqual(result, [
+      input,
+      input.a,
+      input.b,
+      input.a[0],
+      input.a[1],
+      input.b.c,
+    ])
   })
 
-  await t.test('should find all occurrences of a specific key with .. | .a?', () => {
+  test('should find all occurrences of a specific key with .. | .a?', () => {
     const input = { a: 1, b: { a: 2 }, c: { d: { a: 3 } } }
     const result = query('.. | .a?', input)
 
@@ -104,12 +107,9 @@ test('recursive descent operator should return all values', async (t) => {
     assert.deepStrictEqual(result, [1, 2, 3])
   })
 
-  await t.test('should handle example from the description', () => {
+  test('should handle example from the description', () => {
     const input = [[{ a: 1 }]]
     const result = query('.. | .a?', input)
-
-    // The query finds 'a' property each time it encounters it in the depth-first traversal
-    // Our implementation optimizes identical scalar values into a single value
-    assert.strictEqual(result, 1)
+    assert.deepStrictEqual(result, [1])
   })
 })

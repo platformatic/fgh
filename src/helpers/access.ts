@@ -1,161 +1,135 @@
 /**
  * Helper functions for accessing properties and elements from objects and arrays
+ * Provides utilities for property access, array indexing, slicing, and iteration
+ * with support for optional chaining and error handling
  */
 
-import { isNullOrUndefined, getNestedValue } from './utils.ts'
+import { isNullOrUndefined } from './utils.ts'
 
 /**
- * Access a property from an object, with support for nested properties and array iteration
- * @param obj The object to access the property from
- * @param prop The property path (dot notation)
- * @param optional Whether to use optional chaining for property access
- * @returns The property value if found, or undefined
+ * Access a property from an array of objects using the given property name
+ * Handles nested property access and supports optional chaining
+ *
+ * @param input Array of objects to access properties from
+ * @param prop The property name to access
+ * @param optional Whether to use optional chaining (skip undefined/null values)
+ * @returns Array of property values extracted from the input objects
+ * @throws Error when attempting to access property on an array without optional flag
  */
 export const accessProperty = (
-  obj: any,
+  input: Array<any>,
   prop: string,
   optional = false
-): any => {
-  if (isNullOrUndefined(obj)) return undefined
+): Array<any> => {
+  const results: any[] = []
 
-  // Special case for array elements - critical for array iteration with property access
-  if (Array.isArray(obj)) {
-    // Create a collector for all the values
-    const results: any[] = []
-
-    // Process each item in the array
-    for (const item of obj) {
-      // Skip non-objects
-      if (isNullOrUndefined(item) || typeof item !== 'object') continue
-
-      // Get the property value
-      const value = getNestedValue(item, prop.split('.'), optional)
-
-      // Only add non-null values
-      if (!isNullOrUndefined(value)) {
-        // Handle nested arrays
-        if (Array.isArray(value)) {
-          // Push each item
-          results.push(...value)
-        } else {
-          // Push the single value
-          results.push(value)
-        }
+  for (const obj of input) {
+    if (Array.isArray(obj)) {
+      if (!optional) {
+        throw new Error(`Cannot index array with string ${prop}`)
       }
+      continue
     }
 
-    // If we found any values, return them as a special array that won't be flattened
-    if (results.length > 0) {
-      // Mark the array so it will be preserved through future operations
-      Object.defineProperty(results, '_fromArrayConstruction', { value: true })
-      return results
+    if (isNullOrUndefined(obj)) {
+      if (!optional) {
+        results.push(obj)
+      }
+      continue
     }
 
-    return undefined
+    const value = obj[prop]
+
+    if (value !== undefined || !optional) {
+      results.push(value)
+      continue
+    }
   }
 
-  // Regular property access on an object
-  return getNestedValue(obj, prop.split('.'), optional)
+  return results
 }
 
 /**
- * Access an element at a specific index from an array or array-like object
- * @param obj The array or object to access
- * @param idx The index to access
- * @returns The element at the specified index, or undefined
+ * Access elements at a specific index from an array of arrays or objects
+ * For arrays, retrieves the element at the given index (with negative index support)
+ * For objects, retrieves the value at the given position in Object.values()
+ *
+ * @param obj Array of arrays or objects to access elements from
+ * @param idx The index to access (negative indices count from the end)
+ * @returns Array of elements extracted at the specified indices
  */
-export const accessIndex = (obj: any, idx: number): any => {
-  if (isNullOrUndefined(obj)) return undefined
+export const accessIndex = (obj: Array<any>, idx: number): any => {
+  const results: any[] = []
 
-  if (Array.isArray(obj)) {
-    if (obj.some(Array.isArray)) {
-      const results = obj
-        .map(item => Array.isArray(item) ? item[idx] : undefined)
-        .filter(x => !isNullOrUndefined(x))
-
-      return results.length > 0 ? results : undefined
-    }
-
-    // Handle negative indices to access from the end of the array
-    if (idx < 0) {
-      const actualIdx = obj.length + idx
-      return actualIdx >= 0 && actualIdx < obj.length ? obj[actualIdx] : undefined
-    }
-
-    return idx >= 0 && idx < obj.length ? obj[idx] : undefined
-  }
-
-  if (typeof obj === 'object' && obj !== null) {
-    const arrays = Object.values(obj).filter(Array.isArray)
-    if (arrays.length > 0) {
-      const arr = arrays[0]
-
-      // Handle negative indices for nested arrays too
-      if (idx < 0) {
-        const actualIdx = arr.length + idx
-        return actualIdx >= 0 && actualIdx < arr.length ? arr[actualIdx] : undefined
-      }
-
-      return idx >= 0 && idx < arr.length ? arr[idx] : undefined
+  for (const item of obj) {
+    if (Array.isArray(item)) {
+      const index = idx < 0 ? item.length + idx : idx
+      results.push(item[index])
+    } else if (typeof item === 'object' && item !== null) {
+      results.push(Object.values(item)[idx])
     }
   }
 
-  return undefined
+  return results
 }
 
 /**
- * Extract a slice of an array or string
- * @param input The array or string to slice
- * @param start The start index
- * @param end The end index
- * @returns The sliced array or string, or undefined
+ * Extract a slice from each item in an array of arrays or strings
+ * Supports standard slice notation with start/end indices, null values,
+ * and negative indices for accessing elements relative to the end
+ *
+ * @param input Array of arrays or strings to slice
+ * @param start The start index (inclusive), null means start from beginning
+ * @param end The end index (exclusive), null means slice to the end
+ * @returns Array of sliced results from each input item
+ * @throws Error when attempting to slice non-array and non-string items
  */
 export const accessSlice = (
-  input: any,
+  input: Array<any>,
   start: number | null,
   end: number | null
-): any => {
-  if (isNullOrUndefined(input)) return undefined
+): Array<any> => {
+  const results = []
+  for (const item of input) {
+    let currentStart = start
+    let currentEnd = end
+    if (currentEnd === null) {
+      currentEnd = item.length
+      if (currentStart < 0) {
+        currentStart = item.length + currentStart
+      }
+    }
 
-  // Convert null start/end to undefined for array slice operator
-  const startIdx = start !== null ? start : undefined
-  const endIdx = end !== null ? end : undefined
-
-  if (Array.isArray(input)) {
-    const result = input.slice(startIdx, endIdx)
-    return result
+    if (Array.isArray(item)) {
+      results.push(item.slice(currentStart, currentEnd))
+    } else if (typeof item === 'string') {
+      results.push(item.slice(currentStart, currentEnd))
+    } else {
+      throw new Error(`Cannot slice ${item}`)
+    }
   }
 
-  if (typeof input === 'string') {
-    return input.slice(startIdx, endIdx)
-  }
-
-  return undefined
+  return results
 }
 
 /**
- * Iterate over an array or object's values
- * @param input The array or object to iterate over
- * @returns The array of values, or undefined
+ * Flatten arrays or extract values from objects in the input array
+ * Implements the JQ array iteration operator [] by unwrapping arrays
+ * and converting objects to arrays of their values
+ *
+ * @param input Array of arrays or objects to iterate/flatten
+ * @returns Flattened array containing all elements from inner arrays or object values
  */
-export const iterateArray = (input: any): any => {
-  if (isNullOrUndefined(input)) return undefined
+export const iterateArray = (input: Array<any>): Array<any> => {
+  const results: any[] = []
 
-  if (Array.isArray(input)) {
-    // Make sure to preserve the array structure
-    const result = [...input]
-    // Mark the array to preserve it as a sequence
-    Object.defineProperty(result, '_fromArrayConstruction', { value: true })
-    return result
+  for (const item of input) {
+    if (Array.isArray(item)) {
+      results.push(...item)
+    } else if (typeof input === 'object' && input !== null) {
+      results.push(...Object.values(item))
+    }
   }
 
-  if (typeof input === 'object' && input !== null) {
-    // Get object values
-    const result = Object.values(input)
-    // Mark the array to preserve it as a sequence
-    Object.defineProperty(result, '_fromArrayConstruction', { value: true })
-    return result
-  }
-
-  return undefined
+  return results
 }

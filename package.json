@@ -15,6 +15,7 @@
     "lint": "eslint .",
     "lint:fix": "eslint --fix .",
     "test": "node --no-warnings --experimental-strip-types --test",
+    "coverage": "node --no-warnings --experimental-strip-types --test --experimental-test-coverage",
     "benchmark": "node --no-warnings benchmarks/benchmark.ts",
     "benchmark:report": "node --no-warnings benchmarks/runner.js",
     "benchmark:sample": "node --no-warnings benchmarks/generate-sample.js && node --no-warnings benchmarks/update-docs.js",

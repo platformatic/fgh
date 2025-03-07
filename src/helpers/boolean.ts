@@ -1,6 +1,10 @@
 /**
- * Boolean and default operations for FGH
+ * Boolean operations, conditional logic, and default value handling for FGH
+ * Implements logical operators (AND, OR, NOT), conditional expressions,
+ * and the default operator with support for arrays and scalar values
  */
+
+import { ensureArray } from './utils.ts'
 
 /**
  * Helper function to determine if a value is considered "truthy" in Boolean operations
@@ -11,145 +15,156 @@
  */
 export const isTruthy = (value: any): boolean => {
   // false and null are the only false values
-  return value !== false && value !== null
+  return value !== false && value !== null && value !== undefined
 }
 
 /**
- * Implement logical AND operation
+ * Implements logical AND operation with support for arrays and scalar values
+ * Evaluates 'and' conditions between all combinations of values in left and right arrays,
+ * with special handling for nested arrays following JQ's 'and' operator semantics
  *
- * @param left The left operand
- * @param right The right operand
- * @returns true if both operands are truthy, false otherwise
+ * @param leftArray Array of values to use as left operands
+ * @param rightArray Array of values to use as right operands
+ * @returns Array of boolean results from AND operations between each left and right combination
  */
-export const logicalAnd = (left: any, right: any): boolean | boolean[] => {
-  // Handle array operands
-  if (Array.isArray(left) && Array.isArray(right)) {
-    // Cartesian product of the arrays
-    const result: boolean[] = []
-    for (const leftValue of left) {
-      for (const rightValue of right) {
-        result.push(isTruthy(leftValue) && isTruthy(rightValue))
+export const logicalAnd = (leftArray: any, rightArray: any): boolean | boolean[] => {
+  leftArray = ensureArray(leftArray)
+  rightArray = ensureArray(rightArray)
+
+  const results = []
+
+  for (let i = 0; i < leftArray.length; i++) {
+    const left = leftArray[i]
+
+    for (let k = 0; k < rightArray.length; k++) {
+      const right = rightArray[k]
+
+      // Handle array operands
+      if (Array.isArray(left) && Array.isArray(right)) {
+        // For comma operator behavior, return flattened array of each evaluation
+        results.push(!!left.map((leftVal) => right.map((rightVal) =>
+          isTruthy(leftVal) && isTruthy(rightVal)
+        )).flat())
+      } else if (Array.isArray(left)) {
+        // Array on left side
+        results.push(!!left.map(leftVal => isTruthy(leftVal) && isTruthy(right)))
+      } else if (Array.isArray(right)) {
+        // Array on right side
+        results.push(!!right.map(rightVal => isTruthy(left) && isTruthy(rightVal)))
+      } else {
+        // Simple case - both operands are scalar values
+        results.push(isTruthy(left) && isTruthy(right))
       }
     }
-    return result
-  } else if (Array.isArray(left)) {
-    // Array on left side
-    const result: boolean[] = []
-    for (const leftValue of left) {
-      result.push(isTruthy(leftValue) && isTruthy(right))
-    }
-    return result
-  } else if (Array.isArray(right)) {
-    // Array on right side
-    const result: boolean[] = []
-    for (const rightValue of right) {
-      result.push(isTruthy(left) && isTruthy(rightValue))
-    }
-    return result
-  } else {
-    // Simple case - both operands are scalar values
-    return isTruthy(left) && isTruthy(right)
   }
+
+  return results
 }
 
 /**
- * Implement logical OR operation
+ * Implements logical OR operation with support for arrays and scalar values
+ * Evaluates 'or' conditions between all combinations of values in left and right arrays,
+ * with special handling for nested arrays following JQ's 'or' operator semantics
  *
- * @param left The left operand
- * @param right The right operand
- * @returns true if either operand is truthy, false otherwise
+ * @param leftArray Array of values to use as left operands
+ * @param rightArray Array of values to use as right operands
+ * @returns Array of boolean results from OR operations between each left and right combination
  */
-export const logicalOr = (left: any, right: any): boolean | boolean[] => {
-  // Handle array operands
-  if (Array.isArray(left) && Array.isArray(right)) {
-    // Cartesian product of the arrays
-    const result: boolean[] = []
-    for (const leftValue of left) {
-      for (const rightValue of right) {
-        result.push(isTruthy(leftValue) || isTruthy(rightValue))
+export const logicalOr = (leftArray: any, rightArray: any): boolean | boolean[] => {
+  leftArray = ensureArray(leftArray)
+  rightArray = ensureArray(rightArray)
+
+  const results = []
+
+  for (let i = 0; i < leftArray.length; i++) {
+    const left = leftArray[i]
+    for (let k = 0; k < rightArray.length; k++) {
+      const right = rightArray[k]
+
+      // Handle array operands
+      if (Array.isArray(left) && Array.isArray(right)) {
+        // For comma operator behavior, return flattened array of each evaluation
+        results.push(!!left.map((leftVal) => right.map((rightVal) =>
+          isTruthy(leftVal) || isTruthy(rightVal)
+        )).flat())
+      } else if (Array.isArray(left)) {
+        // Array on left side
+        results.push(!!left.map(leftVal => isTruthy(leftVal) || isTruthy(right)))
+      } else if (Array.isArray(right)) {
+        // Array on right side
+        results.push(!!right.map(rightVal => isTruthy(left) || isTruthy(rightVal)))
+      } else {
+        // Simple case - both operands are scalar values
+        results.push(isTruthy(left) || isTruthy(right))
       }
     }
-    return result
-  } else if (Array.isArray(left)) {
-    // Array on left side
-    const result: boolean[] = []
-    for (const leftValue of left) {
-      result.push(isTruthy(leftValue) || isTruthy(right))
-    }
-    return result
-  } else if (Array.isArray(right)) {
-    // Array on right side
-    const result: boolean[] = []
-    for (const rightValue of right) {
-      result.push(isTruthy(left) || isTruthy(rightValue))
-    }
-    return result
-  } else {
-    // Simple case - both operands are scalar values
-    return isTruthy(left) || isTruthy(right)
   }
+
+  return results
 }
 
 /**
- * Implement logical NOT operation (negation)
+ * Implements logical NOT operation (negation) with array support
+ * Negates each value in the input array according to JQ's truthiness rules
  *
- * @param value The value to negate
- * @returns true if the value is falsy, false if the value is truthy
+ * @param values Array of values to negate
+ * @returns Array of boolean results with each input value negated
  */
-export const logicalNot = (value: any): boolean | boolean[] => {
-  // Handle array values
-  if (Array.isArray(value)) {
-    // If we have a single-element array, extract the value
-    // This is needed for piping operations where the result is wrapped in an array
-    if (value.length === 1 && !Array.isArray(value[0])) {
-      return !isTruthy(value[0])
-    }
-    // Otherwise map over the array
-    return value.map(item => !isTruthy(item))
-  } else {
-    // Simple case - scalar value
-    return !isTruthy(value)
-  }
+export const logicalNot = (values: Array<any>): boolean[] => {
+  values = ensureArray(values)
+
+  // Map over the array and negate each value
+  return values.map(item => !isTruthy(item))
 }
 
 /**
- * Implement default operation (//)
- * Returns left if it produces values that are not false or null,
- * otherwise returns right.
+ * Implements the JQ default operation (//)
+ * Returns the first truthy value from the left array if one exists;
+ * otherwise, returns the right array as fallback
  *
- * @param left The left operand
- * @param right The right operand
- * @returns left if left produces values that are not false or null, otherwise right
+ * @param left Array of primary values to check for truthiness
+ * @param right Array of fallback values to use if no truthy value exists in left
+ * @returns Single-element array with first truthy value from left, or right array if none found
  */
-export const handleDefault = (left: any, right: any): any => {
-  // Check if left is an array
-  if (Array.isArray(left)) {
-    // Empty arrays should not trigger default behavior
-    if (left.length === 0) {
-      return left
+export const handleDefault = (left: Array<any>, right: Array<any>): any => {
+  left = ensureArray(left)
+  right = ensureArray(right)
+
+  for (const item of left) {
+    if (isTruthy(item)) {
+      return [item]
     }
+  }
 
-    // Filter out false and null values
-    const filteredLeft = left.filter(item => item !== false && item !== null)
-    // If there are non-false, non-null values, return those
-    if (filteredLeft.length > 0) {
-      return filteredLeft
+  return right
+}
+
+/**
+ * Implements conditional (if/then/else) evaluation for JQ expressions
+ * Applies the condition function to each input item and routes to
+ * either the 'then' branch or 'else' branch based on the result
+ *
+ * @param input Array of input values to process
+ * @param conditionFn Function that evaluates the condition for each input
+ * @param thenFn Function that processes the input when condition is truthy
+ * @param elseFn Function that processes the input when condition is falsy
+ * @returns Array of results from either thenFn or elseFn for each input
+ */
+export const handleConditional = (input: Array<any>, conditionFn: (input: any) => any, thenFn: (input: any) => any, elseFn: (input: any) => any): any[] => {
+  const results = []
+
+  for (const item of input) {
+    const conditions = ensureArray(conditionFn([item]))
+    for (const conditionResult of conditions) {
+      if (isTruthy(conditionResult)) {
+        const thenResult = ensureArray(thenFn([item]))
+        results.push(...thenResult)
+      } else {
+        const elseResult = ensureArray(elseFn([item]))
+        results.push(...elseResult)
+      }
     }
-    // Otherwise, return right
-    return right
   }
 
-  // Check if left is false or null
-  if (left === false || left === null) {
-    return right
-  }
-
-  // If left is undefined (sometimes happens with property access)
-  // return right
-  if (left === undefined) {
-    return right
-  }
-
-  // Otherwise return left
-  return left
+  return results
 }

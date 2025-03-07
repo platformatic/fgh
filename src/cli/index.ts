@@ -1,5 +1,13 @@
 #!/usr/bin/env node
 
+/**
+ * Command-line interface for FGH
+ *
+ * Provides tools for processing streams of newline-delimited JSON (NDJSON) using
+ * JQ-like expressions from the command line. Supports file input, standard input,
+ * error handling, and formatted output with multiple display options.
+ */
+
 import { createReadStream } from 'node:fs'
 import { createInterface } from 'node:readline'
 import { Readable } from 'node:stream'
@@ -45,10 +53,12 @@ export async function processJsonStream (options: CliOptions): Promise<void> {
       const jsonInput = JSON.parse(line)
 
       // Apply the JQ function
-      const result = jqFn(jsonInput)
+      const results = jqFn(jsonInput)
 
-      // Output the result as JSON
-      outputStream.write(JSON.stringify(result) + '\n')
+      // Output each result as JSON on a separate line
+      for (const result of results) {
+        outputStream.write(JSON.stringify(result) + '\n')
+      }
     } catch (error) {
       const errorMessage = {
         error: (error instanceof Error) ? error.message : String(error),

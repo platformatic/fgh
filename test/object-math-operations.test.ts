@@ -8,14 +8,14 @@ test('object construction with mathematical operations', async (t) => {
   await t.test('should support basic arithmetic in object values', () => {
     assert.deepEqual(
       query('{ sum: (2 + 3), difference: (10 - 5), product: (4 * 2), quotient: (10 / 2) }', null),
-      { sum: 5, difference: 5, product: 8, quotient: 5 }
+      [{ sum: 5, difference: 5, product: 8, quotient: 5 }]
     )
   })
 
   await t.test('should support arithmetic with property values', () => {
     assert.deepEqual(
       query('{ doubled: (.value * 2), halved: (.value / 2) }', { value: 10 }),
-      { doubled: 20, halved: 5 }
+      [{ doubled: 20, halved: 5 }]
     )
   })
 
@@ -23,7 +23,7 @@ test('object construction with mathematical operations', async (t) => {
     assert.deepEqual(
       query('{ metrics: { total: (.price * .quantity), average: (.price / 2) } }',
         { price: 12, quantity: 5 }),
-      { metrics: { total: 60, average: 6 } }
+      [{ metrics: { total: 60, average: 6 } }]
     )
   })
 
@@ -56,10 +56,10 @@ test('object construction with mathematical operations', async (t) => {
   await t.test('should handle multiple arithmetic operations', () => {
     assert.deepEqual(
       query('{ sum: (.a + .b + .c), weighted_avg: ((.a * 0.5) + (.b * 0.3) + (.c * 0.2)) }', { a: 10, b: 20, c: 30 }),
-      {
+      [{
         sum: 60,
         weighted_avg: 17
-      }
+      }]
     )
   })
 })

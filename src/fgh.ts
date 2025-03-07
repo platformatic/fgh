@@ -1,3 +1,11 @@
+/**
+ * Main entry point for the FGH library
+ *
+ * Provides the primary API for compiling and executing JQ-like expressions against
+ * JavaScript data structures. Includes functions for compilation, query execution,
+ * and safe querying with error handling and recovery capabilities.
+ */
+
 import { JQParser } from './parser.ts'
 import { JQCodeGenerator } from './generator.ts'
 import type { JQFunction, CompileOptions } from './types.ts'
@@ -65,30 +73,32 @@ export function compile (expression: string, options?: CompileOptions): JQFuncti
  *
  * @param expression The JQ expression to execute
  * @param input The input data to process
- * @returns The transformed data
+ * @returns The transformed data as an array
  *
  * @example
- * const result = query('.name', {name: 'John'});
+ * const result = query('.name', {name: 'John'}); // Returns ['John']
  */
-export function query (expression: string, input: unknown): unknown {
+export function query (expression: string, input: unknown): unknown[] {
   const fn = compile(expression)
 
   // Use safeExecute for better error handling
-  return safeExecute(() => fn(input), `Error executing expression '${expression}'`)
+  const result = safeExecute(() => fn(input), `Error executing expression '${expression}'`)
+
+  return result
 }
 
 /**
- * Executes a JQ expression on input data but returns undefined instead of throwing
+ * Executes a JQ expression on input data but returns empty array instead of throwing
  *
  * @param expression The JQ expression to execute
  * @param input The input data to process
- * @returns The transformed data or undefined if an error occurs
+ * @returns The transformed data as an array or empty array if an error occurs
  *
  * @example
- * const result = safeQuery('.name', {name: 'John'}); // Returns 'John'
- * const invalid = safeQuery('.invalid[', {name: 'John'}); // Returns undefined
+ * const result = safeQuery('.name', {name: 'John'}); // Returns ['John']
+ * const invalid = safeQuery('.invalid[', {name: 'John'}); // Returns []
  */
-export function safeQuery (expression: string, input: unknown): unknown | undefined {
+export function safeQuery (expression: string, input: unknown): unknown[] {
   try {
     return query(expression, input)
   } catch (error) {
@@ -96,7 +106,7 @@ export function safeQuery (expression: string, input: unknown): unknown | undefi
     if (typeof process !== 'undefined' && process.env && process.env.FGH_DEBUG === 'true') {
       console.error('FGH query error:', error)
     }
-    return undefined
+    return []
   }
 }
 

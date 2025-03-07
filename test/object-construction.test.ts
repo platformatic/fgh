@@ -5,13 +5,13 @@ import { query } from '../src/fgh.ts'
 test('object construction with static fields', () => {
   const input = { user: 'stedolan', name: 'John', age: 30 }
   const result = query('{ user, name }', input)
-  assert.deepEqual(result, { user: 'stedolan', name: 'John' })
+  assert.deepEqual(result, [{ user: 'stedolan', name: 'John' }])
 })
 
 test('object construction with property access', () => {
   const input = { user: 'stedolan', profile: { name: 'John', age: 30 } }
   const result = query('{ user, name: .profile.name }', input)
-  assert.deepEqual(result, { user: 'stedolan', name: 'John' })
+  assert.deepEqual(result, [{ user: 'stedolan', name: 'John' }])
 })
 
 test('object construction with array expansion', () => {
@@ -26,7 +26,7 @@ test('object construction with array expansion', () => {
 test('object construction with dynamic keys', () => {
   const input = { user: 'stedolan', titles: ['JQ Primer', 'More JQ'] }
   const result = query('{(.user): .titles}', input)
-  assert.deepEqual(result, { stedolan: ['JQ Primer', 'More JQ'] })
+  assert.deepEqual(result, [{ stedolan: ['JQ Primer', 'More JQ'] }])
 })
 
 test('complex object construction', () => {

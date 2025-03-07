@@ -1,3 +1,11 @@
+/**
+ * Type definitions and interfaces for the FGH library
+ *
+ * Provides comprehensive type support for the lexer, parser, and code generator,
+ * including token types, AST node definitions, and error handling classes.
+ * These types form the foundation for type safety throughout the library.
+ */
+
 export type JSONValue =
   | string
   | number
@@ -111,6 +119,7 @@ export type NodeType =
   | 'Default'
   | 'Keys'
   | 'KeysUnsorted'
+  | 'Empty'
 
 export interface BaseNode {
   type: NodeType;
@@ -316,6 +325,10 @@ export interface KeysUnsortedNode extends BaseNode {
   type: 'KeysUnsorted';
 }
 
+export interface EmptyNode extends BaseNode {
+  type: 'Empty';
+}
+
 export type ASTNode =
   | IdentityNode
   | PropertyAccessNode
@@ -353,6 +366,7 @@ export type ASTNode =
   | DefaultNode
   | KeysNode
   | KeysUnsortedNode
+  | EmptyNode
 
 export interface Parser {
   parse(): ASTNode;
@@ -399,12 +413,10 @@ export class ExecutionError extends JQError {
   }
 }
 
-export type JQFunction = (input: unknown) => unknown
+export type JQFunction = (input: unknown) => unknown[]
 
-// Interface for arrays with marker property
-export interface MarkedArray<T> extends Array<T> {
-  _fromArrayConstruction?: boolean;
-}
+// Following the refactoring to remove array flags, we no longer need the MarkedArray type
+// The standardizeResult function consistently handles arrays without the need for special flags
 
 export interface CompileOptions {
   /**

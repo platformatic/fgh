@@ -1,3 +1,11 @@
+/**
+ * Code generator for FGH expressions
+ *
+ * Converts the Abstract Syntax Tree (AST) into executable JavaScript functions.
+ * Handles all node types and generates optimized code that uses the helper functions
+ * to process input data according to the JQ-like query expressions.
+ */
+
 /* eslint no-new-func: "off" */
 import type {
   CodeGenerator,
@@ -13,13 +21,17 @@ import type {
 import {
   isNullOrUndefined,
   ensureArray,
-  getNestedValue,
-  flattenResult,
   accessProperty,
   accessIndex,
   accessSlice,
   iterateArray,
   handlePipe,
+  handleSequence,
+  handleMap,
+  handleMapValues,
+  handleConditional,
+  handleSelect,
+  handleRecursiveDescent,
   constructArray,
   constructObject,
   addValues,
@@ -36,8 +48,6 @@ import {
   lessThanOrEqual,
   equal,
   notEqual,
-  handleArrayIterationToSelectPipe,
-  handleArrayIterationToKeysPipe,
   logicalAnd,
   logicalOr,
   logicalNot,
@@ -49,6 +59,7 @@ export class JQCodeGenerator implements CodeGenerator {
   private generateNode (node: ASTNode): string {
     switch (node.type) {
       case 'Identity':
+        // Special handling for null inputs
         return 'input'
       case 'PropertyAccess':
         return this.generatePropertyAccess(node)
@@ -82,6 +93,8 @@ export class JQCodeGenerator implements CodeGenerator {
         return this.generateModulo(node)
       case 'Literal':
         return this.generateLiteral(node)
+      case 'Empty':
+        return this.generateEmpty(node)
       case 'RecursiveDescent':
         return this.generateRecursiveDescent(node)
       case 'MapFilter':
@@ -126,81 +139,13 @@ export class JQCodeGenerator implements CodeGenerator {
     }
   }
 
-  private generatePropertyAccess (node: PropertyAccessNode): string {
+  private generatePropertyAccess (node: PropertyAccessNode, optional: boolean = false): string {
     const properties: string[] = [node.property]
-    let current = node.input
-    let hasArrayIteration = false
-
-    // Check if there's an array iteration in the chain
-    if (current && current.type === 'ArrayIteration') {
-      hasArrayIteration = true
+    let input: string = 'input'
+    if (node.input) {
+      input = this.generateNode(node.input)
     }
-
-    while (current && current.type === 'PropertyAccess') {
-      properties.unshift((current as PropertyAccessNode).property)
-      current = (current as PropertyAccessNode).input
-
-      // Check for array iteration in parent nodes
-      if (current && current.type === 'ArrayIteration') {
-        hasArrayIteration = true
-      }
-    }
-
-    if (current && current.type === 'IndexAccess') {
-      const indexCode = this.generateIndexAccess(current)
-      return `accessProperty(${indexCode}, '${properties.join('.')}')`
-    }
-
-    // If we have an ArrayIteration in the property access chain, we need special handling
-    if (hasArrayIteration) {
-      const inputCode = current ? this.generateNode(current) : 'input'
-      const joined = properties.join('.')
-
-      return `(() => {
-        const inputVal = ${inputCode};
-        if (isNullOrUndefined(inputVal)) return undefined;
-        
-        // Find all properties
-        const propResults = [];
-        const propStack = [inputVal];
-        
-        // Process the property path
-        while (propStack.length > 0) {
-          const currentItem = propStack.pop();
-          
-          if (Array.isArray(currentItem)) {
-            // For arrays, process each element in order
-            // Important: reverse the array to maintain original order when using stack
-            const arrayElements = [...currentItem].filter(item => item !== null && item !== undefined);
-            // Add in reverse order to maintain original order when popping from stack
-            for (let i = arrayElements.length - 1; i >= 0; i--) {
-              propStack.push(arrayElements[i]);
-            }
-          } 
-          else if (typeof currentItem === 'object' && currentItem !== null) {
-            // Access the property from the object
-            const propValue = getNestedValue(currentItem, '${joined}'.split('.'));
-            if (!isNullOrUndefined(propValue)) {
-              if (Array.isArray(propValue)) {
-                propResults.push(...propValue);
-              } else {
-                propResults.push(propValue);
-              }
-            }
-          }
-        }
-        
-        // Mark as construction to preserve in later operations
-        if (propResults.length > 0) {
-          Object.defineProperty(propResults, '_fromArrayConstruction', { value: true });
-          return propResults;
-        }
-        
-        return undefined;
-      })()`
-    }
-
-    return `accessProperty(input, '${properties.join('.')}')`
+    return `accessProperty(${input}, '${properties.join('.')}', ${optional})`
   }
 
   private generateIndexAccess (node: IndexAccessNode): string {
@@ -212,138 +157,31 @@ export class JQCodeGenerator implements CodeGenerator {
   }
 
   private generateArrayIteration (node: ArrayIterationNode): string {
-    // Special case for '[]' which is parsed as ArrayIteration without input
-    // We need to check if this is a direct [] without a preceding input, which means empty array construction
-    if (!node.input && node.position === 0) {
-      // Return an empty array with proper construction marker
-      return 'Object.defineProperty([], "_fromArrayConstruction", { value: true })'
-    }
-
     if (node.input) {
       const inputCode = this.generateNode(node.input)
-      // Need to preserve array for correct handling in comma operator
-      return `((input) => {
-        const result = iterateArray(${inputCode});
-        if (Array.isArray(result)) {
-          Object.defineProperty(result, "_fromArrayConstruction", { value: true });
-        }
-        return result;
-      })(input)`
+      return `iterateArray(${inputCode})`
     }
-    return `((input) => {
-      const result = iterateArray(input);
-      if (Array.isArray(result)) {
-        Object.defineProperty(result, "_fromArrayConstruction", { value: true });
-      }
-      return result;
-    })(input)`
+    return 'iterateArray(input)'
   }
 
   private generateSequence (node: SequenceNode): string {
-    // Create an array with all expression results,
-    // flatten array items as needed, and mark it as an array construction
-    // so it's preserved by flattenResult
-    const expressions = node.expressions.map(expr => this.generateNode(expr))
+    const expressions = node.expressions.map((element: ASTNode) => {
+      const elementCode = this.generateNode(element)
+      return JQCodeGenerator.wrapInFunction(elementCode)
+    }).join(', ')
 
-    // Check if all expressions are IndexAccess nodes. If so, we have array index syntax like [1,2,3]
-    const allIndexAccess = node.expressions.every(expr => expr.type === 'IndexAccess')
-
-    if (allIndexAccess && node.expressions.length > 0 && (node.expressions[0] as IndexAccessNode).input) {
-      // This is a comma-separated list of array indices like .array[1,2,3]
-      // Generate more efficient special-case code
-      return `(() => {
-        const target = ${this.generateNode((node.expressions[0] as IndexAccessNode).input!)};
-        if (isNullOrUndefined(target)) return [];
-        
-        const results = [];
-        ${node.expressions.map(expr => {
-          const index = (expr as IndexAccessNode).index
-          return `
-          // Handle index ${index}
-          {
-            const idx = ${index};
-            const value = accessIndex(target, idx);
-            if (!isNullOrUndefined(value)) results.push(value);
-          }`
-        }).join('')}
-        
-        // Mark as array construction result
-        Object.defineProperty(results, "_fromArrayConstruction", { value: true });
-        return results;
-      })()`
-    }
-
-    // Enhanced sequence handling with careful array spread and preservation of structure
-    return `(() => {
-      const sequenceResults = [];
-      
-      ${expressions.map((expr, i) => `
-        // Process expression ${i + 1}
-        const result${i} = ${expr};
-        
-        // Handle arrays correctly while preserving their elements
-        if (Array.isArray(result${i})) {
-          // For arrays from array iteration and property access, always spread
-          if (result${i}._fromArrayConstruction) {
-            sequenceResults.push(...result${i});
-          }
-          // For regular arrays, also spread them to maintain consistency
-          else {
-            sequenceResults.push(...result${i});
-          }
-        }
-        // Don't lose non-array values either
-        else if (result${i} !== undefined) {
-          sequenceResults.push(result${i});
-        }
-      `).join('')}
-      
-      // Always mark the result array as a construction to preserve its structure
-      if (sequenceResults.length > 0) {
-        Object.defineProperty(sequenceResults, "_fromArrayConstruction", { value: true });
-      }
-      
-      return sequenceResults;
-    })()`
+    return 'handleSequence(input, [' + expressions + '])'
   }
 
   private static wrapInFunction (expr: string): string {
     return `((input) => ${expr})`
   }
 
+  private static wrapInFunctionWithAstType (expr: string, type: string): string {
+    return `((input) => { return { values: ${expr}, type: '${type}' } })`
+  }
+
   private generatePipe (node: PipeNode): string {
-    // Special handling for .[] | select(...) pattern
-    if (node.left.type === 'ArrayIteration' && node.right.type === 'SelectFilter') {
-      const leftCode = this.generateNode(node.left)
-      const rightSelectConditionCode = this.generateNode((node.right as any).condition)
-      return `(() => {
-        const leftResult = ${leftCode};
-        return handleArrayIterationToSelectPipe(leftResult, ${JQCodeGenerator.wrapInFunction(rightSelectConditionCode)});
-      })()`
-    }
-
-    // Special handling for .[] | keys pattern
-    // This allows extracting keys from each object in an array while preserving the array structure
-    // e.g., '.users[] | keys' returns [["id","name"],["id","name"]] instead of flattening to ["id","name","id","name"]
-    if (node.left.type === 'ArrayIteration' && node.right.type === 'Keys') {
-      const leftCode = this.generateNode(node.left)
-      return `(() => {
-        const leftResult = ${leftCode};
-        return handleArrayIterationToKeysPipe(leftResult, true);
-      })()`
-    }
-
-    // Special handling for .[] | keys_unsorted pattern
-    // This allows extracting keys in insertion order from each object in an array while preserving the array structure
-    // e.g., '.users[] | keys_unsorted' returns [["id","name"],["id","name"]] but in insertion order for each object
-    if (node.left.type === 'ArrayIteration' && node.right.type === 'KeysUnsorted') {
-      const leftCode = this.generateNode(node.left)
-      return `(() => {
-        const leftResult = ${leftCode};
-        return handleArrayIterationToKeysPipe(leftResult, false);
-      })()`
-    }
-
     const leftCode = this.generateNode(node.left)
     const rightCode = this.generateNode(node.right)
     return `handlePipe(input, ${JQCodeGenerator.wrapInFunction(leftCode)}, ${JQCodeGenerator.wrapInFunction(rightCode)})`
@@ -351,7 +189,7 @@ export class JQCodeGenerator implements CodeGenerator {
 
   private generateObjectConstruction (node: any): string {
     const fields = node.fields.map((field: any) => this.generateObjectField(field)).join(', ')
-    return `(input === null ? constructObject(null, [${fields}]) : constructObject(input, [${fields}]))`
+    return `constructObject(input, [${fields}])`
   }
 
   private generateObjectField (node: any): string {
@@ -370,15 +208,20 @@ export class JQCodeGenerator implements CodeGenerator {
   private generateSlice (node: any): string {
     if (node.input) {
       const inputCode = this.generateNode(node.input)
-      return `accessSlice(${inputCode}, ${node.start}, ${node.end})`
+      return `(() => {
+        const result = accessSlice(${inputCode}, ${node.start}, ${node.end});
+        return result;
+      })()`
     }
-    return `accessSlice(input, ${node.start}, ${node.end})`
+    return `(() => {
+      const result = accessSlice(input, ${node.start}, ${node.end});
+      return result;
+    })()`
   }
 
   private generateOptional (node: OptionalNode): string {
     if (node.expression.type === 'PropertyAccess') {
-      const propNode = node.expression
-      return `accessProperty(input, '${propNode.property}', true)`
+      return this.generatePropertyAccess(node.expression, true)
     }
     const exprCode = this.generateNode(node.expression)
     return `(isNullOrUndefined(input) ? undefined : ${exprCode})`
@@ -387,15 +230,16 @@ export class JQCodeGenerator implements CodeGenerator {
   private generateArrayConstruction (node: any): string {
     // Handle empty array construction
     if (!node.elements || node.elements.length === 0) {
-      // Return an empty array that will be preserved by flattenResult
-      return 'Object.defineProperty([], "_fromArrayConstruction", { value: true })'
+      // Return an empty array directly
+      return '[[]]'
     }
 
     const elements = node.elements.map((element: ASTNode) => {
       const elementCode = this.generateNode(element)
-      return JQCodeGenerator.wrapInFunction(elementCode)
+      return JQCodeGenerator.wrapInFunctionWithAstType(elementCode, element.type)
     }).join(', ')
 
+    // Use the constructArray helper which handles all array construction consistently
     return `constructArray(input, [${elements}])`
   }
 
@@ -409,29 +253,6 @@ export class JQCodeGenerator implements CodeGenerator {
   private generateDifference (node: any): string {
     const leftCode = this.generateNode(node.left)
     const rightCode = this.generateNode(node.right)
-
-    // Special case for array subtraction with string literals
-    if (node.right && node.right.type === 'ArrayConstruction' &&
-        node.right.elements && node.right.elements.length) {
-      // Extract string literals from array elements
-      const stringElements = node.right.elements
-        .filter(el => el.type === 'Literal' && typeof el.value === 'string')
-        .map(el => JSON.stringify(el.value))
-
-      if (stringElements.length) {
-        // Use filter function to remove the items
-        return `((arr) => {
-          if (!Array.isArray(arr)) return arr;
-          const toRemove = [${stringElements.join(', ')}];
-          const result = arr.filter(item => !toRemove.includes(item));
-          // Mark as a difference result to preserve array structure
-          Object.defineProperty(result, '_fromDifference', { value: true });
-          return result;
-        })(${leftCode})`
-      }
-    }
-
-    // Standard case
     return `subtractValues(${leftCode}, ${rightCode})`
   }
 
@@ -457,318 +278,44 @@ export class JQCodeGenerator implements CodeGenerator {
   }
 
   private generateLiteral (node: any): string {
-    // For null literals, return null directly
-    if (node.value === null) {
-      return 'null'
-    }
-
-    // Return the literal value directly
     return JSON.stringify(node.value)
   }
 
   private generateRecursiveDescent (node: any): string {
-    return `(() => {
-      if (isNullOrUndefined(input)) return undefined;
-      
-      // Final result array
-      const result = [];
-      // Track object references to avoid duplicates
-      const visited = new WeakSet();
-      
-      // Function to recursively collect all values
-      const collectAllValues = (obj) => {
-        // Skip null/undefined values
-        if (isNullOrUndefined(obj)) return;
-        
-        // For objects and arrays, track if we've seen them before
-        if (typeof obj === 'object') {
-          if (visited.has(obj)) return;
-          visited.add(obj);
-        }
-        
-        // Add the current object/value itself to results
-        result.push(obj);
-        
-        // If it's an array, process each element
-        if (Array.isArray(obj)) {
-          for (const item of obj) {
-            collectAllValues(item);
-          }
-        }
-        // If it's an object, process each property
-        else if (typeof obj === 'object' && obj !== null) {
-          for (const key in obj) {
-            collectAllValues(obj[key]);
-          }
-        }
-      };
-      
-      // Start the collection process with the input
-      collectAllValues(input);
-      
-      // Mark as array construction to preserve its structure
-      if (result.length > 0) {
-        Object.defineProperty(result, "_fromArrayConstruction", { value: true });
-      }
-      
-      return result;
-    })()`
+    return 'handleRecursiveDescent(input)'
   }
 
   private generateMapFilter (node: any): string {
     const filterCode = this.generateNode(node.filter)
     const filterFn = JQCodeGenerator.wrapInFunction(filterCode)
 
-    return `(() => {
-      if (isNullOrUndefined(input)) return [];
-      
-      const result = [];
-      const inputValues = Array.isArray(input) ? input : Object.values(input);
-      
-      for (const item of inputValues) {
-        // Apply the filter function to each item
-        const filterResult = ${filterFn}(item);
-        
-        // Skip undefined/null results
-        if (isNullOrUndefined(filterResult)) continue;
-        
-        // Handle array results - add all elements
-        if (Array.isArray(filterResult)) {
-          result.push(...filterResult);
-        } else {
-          // Add single value
-          result.push(filterResult);
-        }
-      }
-      
-      // Mark as array construction to preserve its structure
-      Object.defineProperty(result, "_fromArrayConstruction", { value: true });
-      
-      return result;
-    })()`
+    return `handleMap(input, ${filterFn})`
   }
 
   private generateMapValuesFilter (node: any): string {
     const filterCode = this.generateNode(node.filter)
     const filterFn = JQCodeGenerator.wrapInFunction(filterCode)
 
-    return `(() => {
-      if (isNullOrUndefined(input)) return [];
-      
-      // Handle array inputs
-      if (Array.isArray(input)) {
-        const result = [];
-        
-        for (const item of input) {
-          // Apply the filter function to each item
-          const filterResult = ${filterFn}(item);
-          
-          // Skip undefined/null results
-          if (isNullOrUndefined(filterResult)) continue;
-          
-          // For map_values, only take the first value from the filter result
-          if (Array.isArray(filterResult)) {
-            if (filterResult.length > 0) {
-              result.push(filterResult[0]);
-            }
-          } else {
-            // Add single value
-            result.push(filterResult);
-          }
-        }
-        
-        // Mark as array construction to preserve its structure
-        Object.defineProperty(result, "_fromArrayConstruction", { value: true });
-        
-        return result;
-      }
-      
-      // Handle object inputs
-      if (typeof input === 'object' && input !== null) {
-        const result = {};
-        
-        for (const key in input) {
-          // Apply the filter function to each value
-          const filterResult = ${filterFn}(input[key]);
-          
-          // Skip undefined/null results
-          if (isNullOrUndefined(filterResult)) continue;
-          
-          // For map_values, only take the first value from the filter result
-          if (Array.isArray(filterResult)) {
-            if (filterResult.length > 0) {
-              result[key] = filterResult[0];
-            }
-          } else {
-            // Add single value
-            result[key] = filterResult;
-          }
-        }
-        
-        return Object.keys(result).length > 0 ? result : {};
-      }
-      
-      return [];
-    })()`
+    return `handleMapValues(input, ${filterFn})`
   }
 
-  private generateSelectFilter (node: any, isAfterArrayIteration = false): string {
+  private generateSelectFilter (node: any): string {
     const conditionCode = this.generateNode(node.condition)
     const conditionFn = JQCodeGenerator.wrapInFunction(conditionCode)
 
-    if (isAfterArrayIteration) {
-      // Special case for .[] | select(...) pattern - directly return a single item
-      return `(() => {
-        if (isNullOrUndefined(input)) return null;
-        
-        // Special implementation for direct array iteration pipe to select
-        // Used in patterns like ".[] | select(.id == 'second')"
-        
-        // Filter the elements that match the condition
-        if (Array.isArray(input) && input._fromArrayConstruction) {
-          const result = [];
-          
-          for (const item of input) {
-            // Apply the condition to each item
-            const conditionResult = ${conditionFn}(item);
-            
-            // Include the item if the condition is true
-            if (conditionResult !== null && conditionResult !== undefined && conditionResult !== false) {
-              result.push(item);
-            }
-          }
-          
-          // For this special case, return a single match directly without array wrapping
-          if (result.length === 1) {
-            return result[0];
-          }
-          
-          // Otherwise return the array with matches
-          if (result.length > 0) {
-            Object.defineProperty(result, "_fromArrayConstruction", { value: true });
-          }
-          
-          return result;
-        }
-        
-        // When used on a single item
-        const conditionResult = ${conditionFn}(input);
-        
-        return (conditionResult !== null && conditionResult !== undefined && conditionResult !== false) 
-          ? input 
-          : null;
-      })()`
-    }
-
-    // Regular select implementation
-    return `(() => {
-      // Handle null/undefined input
-      if (isNullOrUndefined(input)) return null;
-      
-      // Handle array iteration input - when select is used with map(select(...))
-      if (input && input._fromArrayConstruction) {
-        // Filter the elements that match the condition
-        const result = [];
-        
-        for (const item of input) {
-          // Apply the condition to each item
-          const conditionResult = ${conditionFn}(item);
-          
-          // Include the item if the condition is true (not null, undefined, or false)
-          if (conditionResult !== null && conditionResult !== undefined && conditionResult !== false) {
-            result.push(item);
-          }
-        }
-        
-        // Mark as array construction to preserve its structure
-        if (result.length > 0) {
-          Object.defineProperty(result, "_fromArrayConstruction", { value: true });
-        }
-        
-        return result;
-      }
-      
-      // When used directly on a single object input
-      const conditionResult = ${conditionFn}(input);
-      
-      // Return the input unchanged if condition is true, otherwise null
-      return (conditionResult !== null && conditionResult !== undefined && conditionResult !== false) 
-        ? input 
-        : null;
-    })()`
+    return `handleSelect(input, ${conditionFn})`
   }
 
   private generateConditional (node: any): string {
-    const conditionCode = this.generateNode(node.condition)
-    const thenCode = this.generateNode(node.thenBranch)
-    const elseCode = node.elseBranch ? this.generateNode(node.elseBranch) : 'input'
+    const conditionCode = JQCodeGenerator.wrapInFunction(this.generateNode(node.condition))
+    const thenCode = JQCodeGenerator.wrapInFunction(this.generateNode(node.thenBranch))
+    const elseCode = node.elseBranch ? JQCodeGenerator.wrapInFunction(this.generateNode(node.elseBranch)) : 'input'
 
-    return `(() => {
-      // Evaluate condition
-      const conditionResult = ${conditionCode};
-      
-      // Handle multiple results from condition evaluation
-      if (Array.isArray(conditionResult)) {
-        const results = [];
-        
-        // For each condition result that is not false or null
-        const truthyResults = conditionResult.filter(item => item !== false && item !== null);
-        const falsyResults = conditionResult.filter(item => item === false || item === null);
-        
-        // If any truthy results, evaluate 'then' branch for each
-        if (truthyResults.length > 0) {
-          for (const item of truthyResults) {
-            // Apply the 'then' branch with the current item as input
-            const thenResult = ((input) => ${thenCode})(item);
-            
-            // Add result(s) to the output
-            if (Array.isArray(thenResult)) {
-              results.push(...thenResult);
-            } else if (thenResult !== undefined) {
-              results.push(thenResult);
-            }
-          }
-        }
-        
-        // If any falsy results, evaluate 'else' branch for each
-        if (falsyResults.length > 0) {
-          for (const item of falsyResults) {
-            // Apply the 'else' branch with the current item as input
-            const elseResult = ((input) => ${elseCode})(item);
-            
-            // Add result(s) to the output
-            if (Array.isArray(elseResult)) {
-              results.push(...elseResult);
-            } else if (elseResult !== undefined) {
-              results.push(elseResult);
-            }
-          }
-        }
-        
-        // Mark as construction array to preserve in later operations
-        if (results.length > 0) {
-          Object.defineProperty(results, '_fromArrayConstruction', { value: true });
-          return results;
-        }
-        
-        return undefined;
-      }
-      
-      // Handle single result case
-      if (conditionResult !== false && conditionResult !== null) {
-        return ${thenCode};
-      } else {
-        return ${elseCode};
-      }
-    })()`
+    return `handleConditional(input, ${conditionCode}, ${thenCode}, ${elseCode})`
   }
 
   private generateSort (node: any): string {
-    return `(() => {
-      // Handle special case for null input
-      if (input === null) return null;
-      return sortArray(input);
-    })()`
+    return 'sortArray(input)'
   }
 
   private generateSortBy (node: any): string {
@@ -777,18 +324,19 @@ export class JQCodeGenerator implements CodeGenerator {
       return JQCodeGenerator.wrapInFunction(pathCode)
     }).join(', ')
 
-    return `(() => {
-      // Handle special case for null input
-      if (input === null) return null;
-      return sortArrayBy(input, [${pathFunctions}]);
-    })()`
+    return `sortArrayBy(input, [${pathFunctions}])`
   }
 
   private generateGreaterThan (node: any): string {
     const leftCode = this.generateNode(node.left)
     const rightCode = this.generateNode(node.right)
 
-    return `greaterThan(${leftCode}, ${rightCode})`
+    return `(() => {
+      const left = ${leftCode};
+      const right = ${rightCode};
+      
+      return greaterThan(left, right);
+    })()`
   }
 
   private generateGreaterThanOrEqual (node: any): string {
@@ -850,91 +398,51 @@ export class JQCodeGenerator implements CodeGenerator {
     const leftCode = this.generateNode(node.left)
     const rightCode = this.generateNode(node.right)
 
-    return `handleDefault(${leftCode}, ${rightCode})`
+    const res = `handleDefault(${leftCode}, ${rightCode})`
+    return res
   }
 
   private generateKeys (node: any): string {
-    return 'getKeys(input)'
+    // Return keys in sorted order
+    return 'getKeys(input)'  // No need to flatten, standardizeResult will handle it
   }
 
   private generateKeysUnsorted (node: any): string {
-    return 'getKeysUnsorted(input)'
+    // Return keys in insertion order
+    return 'getKeysUnsorted(input)'  // No need to flatten, standardizeResult will handle it
+  }
+
+  private generateEmpty (node: any): string {
+    // Return an empty array directly without any special marking
+    return '[]'
   }
 
   generate (ast: ASTNode): Function {
-    // Special cases for sort and sort_by with null input
-    if (ast.type === 'Sort') {
-      return function (input: any) {
-        if (input === null) return null
-        return flattenResult(sortArray(input))
-      }
-    }
-
-    if (ast.type === 'SortBy') {
-      const pathFns = (ast as any).paths.map((path: any) => {
-        const fn = this.generate(path)
-        return fn
-      })
-
-      return function (input: any) {
-        if (input === null) return null
-        return flattenResult(sortArrayBy(input, pathFns))
-      }
-    }
-
-    // Special case for keys function
-    if (ast.type === 'Keys') {
-      return function (input: any) {
-        const result = getKeys(input)
-        // Ensure keys is always an array and marked as construction
-        if (Array.isArray(result)) {
-          Object.defineProperty(result, '_fromArrayConstruction', { value: true })
-          return result
-        }
-        // Return empty array for non-array results
-        const emptyArray: any[] = []
-        Object.defineProperty(emptyArray, '_fromArrayConstruction', { value: true })
-        return emptyArray
-      }
-    }
-
-    // Special case for keys_unsorted function
-    if (ast.type === 'KeysUnsorted') {
-      return function (input: any) {
-        const result = getKeysUnsorted(input)
-        // Ensure keys is always an array and marked as construction
-        if (Array.isArray(result)) {
-          Object.defineProperty(result, '_fromArrayConstruction', { value: true })
-          return result
-        }
-        // Return empty array for non-array results
-        const emptyArray: any[] = []
-        Object.defineProperty(emptyArray, '_fromArrayConstruction', { value: true })
-        return emptyArray
-      }
-    }
-
     const body = this.generateNode(ast)
 
     // Create a function that uses the helper functions
     const code = `
 // Execute the generated expression
-const result = ${body};
+const result = ensureArray(${body});
 
-// Return the result, applying flattening rules
-return flattenResult(result);`
+// For arrays, return them directly
+return result;`
 
     // Create a function factory that receives all helper functions as parameters
     const functionFactory = new Function(
       'isNullOrUndefined',
       'ensureArray',
-      'getNestedValue',
-      'flattenResult',
       'accessProperty',
       'accessIndex',
       'accessSlice',
       'iterateArray',
       'handlePipe',
+      'handleSequence',
+      'handleMap',
+      'handleMapValues',
+      'handleConditional',
+      'handleSelect',
+      'handleRecursiveDescent',
       'constructArray',
       'constructObject',
       'addValues',
@@ -950,28 +458,30 @@ return flattenResult(result);`
       'lessThanOrEqual',
       'equal',
       'notEqual',
-      'handleArrayIterationToSelectPipe',
-      'handleArrayIterationToKeysPipe',
       'logicalAnd',
       'logicalOr',
       'logicalNot',
       'handleDefault',
       'getKeys',
       'getKeysUnsorted',
-      `return function(input) { ${code} }`
+      `return function(_input) { const input = [_input]; ${code} }`
     )
 
     // Return a function that uses the imported helper functions
     return functionFactory(
       isNullOrUndefined,
       ensureArray,
-      getNestedValue,
-      flattenResult,
       accessProperty,
       accessIndex,
       accessSlice,
       iterateArray,
       handlePipe,
+      handleSequence,
+      handleMap,
+      handleMapValues,
+      handleConditional,
+      handleSelect,
+      handleRecursiveDescent,
       constructArray,
       constructObject,
       addValues,
@@ -987,8 +497,6 @@ return flattenResult(result);`
       lessThanOrEqual,
       equal,
       notEqual,
-      handleArrayIterationToSelectPipe,
-      handleArrayIterationToKeysPipe,
       logicalAnd,
       logicalOr,
       logicalNot,

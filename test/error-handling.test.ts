@@ -1,11 +1,11 @@
-import { test } from 'node:test'
+import { test, describe } from 'node:test'
 import assert from 'node:assert'
 import { query, safeQuery } from '../src/fgh.ts'
 import { safeExecute, attemptErrorRecovery } from '../src/helpers/error-handling.ts'
 import { ParseError, ExecutionError } from '../src/types.ts'
 
-test('error handling utilities', async (t) => {
-  await t.test('safeExecute should handle errors gracefully', () => {
+describe('error handling utilities', async (t) => {
+  test('safeExecute should handle errors gracefully', () => {
     // Test with a function that works correctly
     const result = safeExecute(() => 42)
     assert.equal(result, 42)
@@ -23,7 +23,7 @@ test('error handling utilities', async (t) => {
     }
   })
 
-  await t.test('attemptErrorRecovery should fix missing closing brackets', () => {
+  test('attemptErrorRecovery should fix missing closing brackets', () => {
     const expression = '.users[0'
     const error = new ParseError('Expected closing bracket at position 8', 8)
 
@@ -34,7 +34,7 @@ test('error handling utilities', async (t) => {
     assert.strictEqual(recovery?.originalError, error)
   })
 
-  await t.test('attemptErrorRecovery should fix missing closing braces', () => {
+  test('attemptErrorRecovery should fix missing closing braces', () => {
     const expression = '{ name: .user'
     const error = new ParseError('Expected closing brace at position 13', 13)
 
@@ -45,17 +45,17 @@ test('error handling utilities', async (t) => {
     assert.strictEqual(recovery?.originalError, error)
   })
 
-  await t.test('safeQuery should return undefined on error', () => {
+  test('safeQuery should return empty array on error', () => {
     // Valid query
     const validResult = safeQuery('.name', { name: 'John' })
-    assert.equal(validResult, 'John')
+    assert.deepEqual(validResult, ['John'])
 
     // Invalid query
     const invalidResult = safeQuery('.name[', { name: 'John' })
-    assert.equal(invalidResult, undefined)
+    assert.deepEqual(invalidResult, [])
   })
 
-  await t.test('query should throw errors for invalid expressions', () => {
+  test('query should throw errors for invalid expressions', () => {
     try {
       query('.name[', { name: 'John' })
       assert.fail('Should have thrown an error')
@@ -65,7 +65,7 @@ test('error handling utilities', async (t) => {
     }
   })
 
-  await t.test('errors should properly chain causes', () => {
+  test('errors should properly chain causes', () => {
     // Create a chain of errors to test nested causes
     const originalError = new Error('Original error')
 
@@ -83,7 +83,7 @@ test('error handling utilities', async (t) => {
     assert.equal(originalError.message, 'Original error')
   })
 
-  await t.test('error recovery should preserve the original error as cause', () => {
+  test('error recovery should preserve the original error as cause', () => {
     try {
       // Mock the compile function with recovery
       // This simulates the scenario where recovery fails and we throw with cause

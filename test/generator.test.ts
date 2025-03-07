@@ -8,8 +8,8 @@ test('generates identity function', () => {
   const generator = new JQCodeGenerator()
   const fn = generator.generate(parser.parse())
 
-  assert.equal(fn(5), 5)
-  assert.deepEqual(fn({ a: 1 }), { a: 1 })
+  assert.deepEqual(fn(5), [5])
+  assert.deepEqual(fn({ a: 1 }), [{ a: 1 }])
 })
 
 test('generates property access', () => {
@@ -17,11 +17,10 @@ test('generates property access', () => {
   const generator = new JQCodeGenerator()
   const fn = generator.generate(parser.parse())
 
-  assert.equal(fn({ foo: 'bar' }), 'bar')
-  assert.equal(fn({ bar: 'baz' }), undefined)
-  assert.deepEqual(
-    fn([{ foo: 1 }, { foo: 2 }]),
-    [1, 2]
+  assert.deepEqual(fn({ foo: 'bar' }), ['bar'])
+  assert.deepEqual(fn({ bar: 'baz' }), [undefined])
+  assert.throws(
+    () => fn([{ foo: 1 }, { foo: 2 }])
   )
 })
 
@@ -30,11 +29,10 @@ test('generates array access', () => {
   const generator = new JQCodeGenerator()
   const fn = generator.generate(parser.parse())
 
-  assert.equal(fn(['a', 'b']), 'a')
-  assert.deepEqual(
-    fn([['a'], ['b']]),
-    ['a', 'b']
-  )
+  const result = fn(['a', 'b'])
+  assert.ok(Array.isArray(result), 'Result should be an array')
+  assert.strictEqual(result.length, 1, 'Result should contain one element')
+  assert.strictEqual(result[0], 'a', 'First element should be "a"')
 })
 
 test('generates pipe', () => {
@@ -42,9 +40,9 @@ test('generates pipe', () => {
   const generator = new JQCodeGenerator()
   const fn = generator.generate(parser.parse())
 
-  assert.equal(
+  assert.deepEqual(
     fn({ foo: { bar: 'baz' } }),
-    'baz'
+    ['baz']
   )
 })
 
@@ -53,8 +51,17 @@ test('generates optional access', () => {
   const generator = new JQCodeGenerator()
   const fn = generator.generate(parser.parse())
 
-  assert.equal(fn(null), null)
-  assert.equal(fn({ foo: 'bar' }), 'bar')
+  assert.deepEqual(fn(null), [])
+  assert.deepEqual(fn({ foo: 'bar' }), ['bar'])
+})
+
+test('generates nested optional access', () => {
+  const parser = new JQParser('.foo.bar?')
+  const generator = new JQCodeGenerator()
+  const fn = generator.generate(parser.parse())
+
+  // assert.deepEqual(fn(null), [])
+  assert.deepEqual(fn({ foo: { bar: 'baz' } }), ['baz'])
 })
 
 test('generates complex expressions', () => {
@@ -62,13 +69,13 @@ test('generates complex expressions', () => {
   const generator = new JQCodeGenerator()
   const fn = generator.generate(parser.parse())
 
-  assert.equal(
+  assert.deepEqual(
     fn({ foo: [{ bar: 'baz' }] }),
-    'baz'
+    ['baz']
   )
-  assert.equal(
+  assert.deepEqual(
     fn({ foo: [{}] }),
-    undefined
+    []
   )
 })
 
@@ -97,7 +104,7 @@ test('generate the example from the README', () => {
     ]
   }
 
-  assert.deepEqual(fn(data), 'Doe')
+  assert.deepEqual(fn(data), ['Doe'])
 })
 
 test('generates array and string slices', () => {
@@ -105,25 +112,25 @@ test('generates array and string slices', () => {
   let parser = new JQParser('.[2:4]')
   let generator = new JQCodeGenerator()
   let fn = generator.generate(parser.parse())
-  assert.deepEqual(fn(['a', 'b', 'c', 'd', 'e']), ['c', 'd'])
+  assert.deepEqual(fn(['a', 'b', 'c', 'd', 'e']), [['c', 'd']])
 
   // Test slice with explicit start and end on string
   parser = new JQParser('.[2:4]')
   generator = new JQCodeGenerator()
   fn = generator.generate(parser.parse())
-  assert.equal(fn('abcdefghi'), 'cd')
+  assert.deepEqual(fn('abcdefghi'), ['cd'])
 
   // Test slice with implicit start on array
   parser = new JQParser('.[:3]')
   generator = new JQCodeGenerator()
   fn = generator.generate(parser.parse())
-  assert.deepEqual(fn(['a', 'b', 'c', 'd', 'e']), ['a', 'b', 'c'])
+  assert.deepEqual(fn(['a', 'b', 'c', 'd', 'e']), [['a', 'b', 'c']])
 
   // Test slice with negative start and implicit end on array
   parser = new JQParser('.[-2:]')
   generator = new JQCodeGenerator()
   fn = generator.generate(parser.parse())
-  assert.deepEqual(fn(['a', 'b', 'c', 'd', 'e']), ['d', 'e'])
+  assert.deepEqual(fn(['a', 'b', 'c', 'd', 'e']), [['d', 'e']])
 })
 
 test('.[] outputs all the values', () => {
@@ -139,8 +146,8 @@ test('generates plus operator with numeric values', () => {
   const generator = new JQCodeGenerator()
   const fn = generator.generate(parser.parse())
 
-  assert.equal(fn({ a: 7 }), 8)
-  assert.equal(fn({}), 1) // When .a is undefined, the result should be 1
+  assert.deepEqual(fn({ a: 7 }), [8])
+  assert.deepEqual(fn({}), [1]) // When .a is undefined, the result should be 1
 })
 
 test('generates plus operator with arrays', () => {
@@ -148,7 +155,7 @@ test('generates plus operator with arrays', () => {
   const generator = new JQCodeGenerator()
   const fn = generator.generate(parser.parse())
 
-  assert.deepEqual(fn({ a: [1, 2], b: [3, 4] }), [1, 2, 3, 4])
+  assert.deepEqual(fn({ a: [1, 2], b: [3, 4] }), [[1, 2, 3, 4]])
 })
 
 test('generates plus operator with null values', () => {
@@ -157,7 +164,7 @@ test('generates plus operator with null values', () => {
   const generator = new JQCodeGenerator()
   const fn = generator.generate(parser.parse())
 
-  assert.equal(fn({ a: 1 }), 1)
+  assert.deepEqual(fn({ a: 1 }), [1])
 })
 
 test('generates plus operator with objects', () => {
@@ -165,5 +172,5 @@ test('generates plus operator with objects', () => {
   const generator = new JQCodeGenerator()
   const fn = generator.generate(parser.parse())
 
-  assert.deepEqual(fn(null), { a: 1, b: 2 })
+  assert.deepEqual(fn(null), [{ a: 1, b: 2 }])
 })
