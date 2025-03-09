@@ -41,15 +41,15 @@ export const toString = (x: unknown): string[] => {
   if (Array.isArray(x)) {
     const len = x.length
     const result = new Array(len)
-    
+
     for (let i = 0; i < len; i++) {
       const item = x[i]
       result[i] = typeof item === 'string' ? item : JSON.stringify(item)
     }
-    
+
     return result
   }
-  
+
   if (typeof x === 'string') return [x]
   return [JSON.stringify(x)]
 }
