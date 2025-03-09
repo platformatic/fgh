@@ -29,6 +29,9 @@ A typescript implementation of the [JQ language](http://jqlang.org/).
 - Map Values (`map_values(f)`): Applies filter `f` to each value, taking only the first result for each input value
 - Select (`select(f)`): Produces its input unchanged if `f` returns true, and produces no output otherwise
 
+### String Functions
+- Tostring (`tostring`): Converts values to strings. Strings are left unchanged, while all other values are JSON-encoded.
+
 ## Array Return API
 
 All FGH query functions (both `compile()` and `query()`) always return an array of results, even for single values. This ensures consistency when handling query results and makes it easier to work with operations that may produce multiple values.
@@ -353,6 +356,36 @@ query('.[] | select(.val > 0)', [
 query('select(.value > 10)', { name: 'test', value: 15 })
 // => [{ name: 'test', value: 15 }]
 ```
+
+### Tostring Function
+The `tostring` function converts values to strings. Strings are left unchanged, while all other values are JSON-encoded:
+
+```javascript
+// Converting a string (unchanged)
+query('tostring', "hello")
+// => ["hello"]
+
+// Converting numbers
+query('tostring', 42)
+// => ["42"]
+
+// Converting arrays
+query('tostring', [1, 2, 3])
+// => ["[1,2,3]"]
+
+// Converting objects
+query('tostring', { name: "john", age: 30 })
+// => ["{\"name\":\"john\",\"age\":30}"]
+
+// Converting mixed arrays using array iteration
+query('.[] | tostring', [1, "1", [1]])
+// => ["1", "1", "[1]"]
+
+// Converting in a more complex expression
+query('.items[] | { value: ., string_value: tostring }', { items: [42, "text", true, null] })
+// => [{"value":42,"string_value":"42"}, {"value":"text","string_value":"text"}, {"value":true,"string_value":"true"}, {"value":null,"string_value":"null"}]
+```
+
 
 ## CLI Tool
 

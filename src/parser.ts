@@ -972,6 +972,16 @@ export class JQParser {
         }
       }
 
+      case 'TOSTRING': {
+        const pos = this.currentToken.position
+        this.advance() // Consume 'tostring'
+
+        return {
+          type: 'Tostring',
+          position: pos
+        }
+      }
+
       case 'MAP_VALUES': {
         const pos = this.currentToken.position
         this.advance() // Consume 'map_values'

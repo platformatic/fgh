@@ -52,7 +52,8 @@ import {
   logicalOr,
   logicalNot,
   getKeys,
-  getKeysUnsorted
+  getKeysUnsorted,
+  toString
 } from './helpers/index.ts'
 
 export class JQCodeGenerator implements CodeGenerator {
@@ -133,6 +134,8 @@ export class JQCodeGenerator implements CodeGenerator {
         return this.generateKeys(node)
       case 'KeysUnsorted':
         return this.generateKeysUnsorted(node)
+      case 'Tostring':
+        return this.generateTostring(node)
       default: {
         throw new Error(`Unknown node type: ${node}`)
       }
@@ -417,6 +420,11 @@ export class JQCodeGenerator implements CodeGenerator {
     return '[]'
   }
 
+  private generateTostring (node: any): string {
+    // Use the toString helper function to convert values to strings
+    return 'toString(input)'
+  }
+
   generate (ast: ASTNode): Function {
     const body = this.generateNode(ast)
 
@@ -464,6 +472,7 @@ return result;`
       'handleDefault',
       'getKeys',
       'getKeysUnsorted',
+      'toString',
       `return function(_input) { const input = [_input]; ${code} }`
     )
 
@@ -502,7 +511,8 @@ return result;`
       logicalNot,
       handleDefault,
       getKeys,
-      getKeysUnsorted
+      getKeysUnsorted,
+      toString
     )
   }
 }
