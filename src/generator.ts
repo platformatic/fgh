@@ -422,7 +422,7 @@ export class JQCodeGenerator implements CodeGenerator {
 
   private generateTostring (node: any): string {
     // Use the toString helper function to convert values to strings
-    return 'ensureArray(input).map(x => toString(x))'
+    return 'toString(input)'
   }
 
   generate (ast: ASTNode): Function {
