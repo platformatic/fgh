@@ -28,3 +28,15 @@ export const ensureArray = <T>(x: T | T[]): T[] => {
   if (Array.isArray(x)) return x
   return [x]
 }
+
+/**
+ * Converts a value to a string representation.
+ * Strings are returned as-is, all other types are JSON encoded.
+ *
+ * @param x The value to convert to a string
+ * @returns The string representation of the input
+ */
+export const toString = (x: unknown): string => {
+  if (typeof x === 'string') return x
+  return JSON.stringify(x)
+}

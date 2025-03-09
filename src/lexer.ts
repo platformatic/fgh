@@ -223,7 +223,7 @@ export class JQLexer implements Lexer {
     }
 
     // Check for keywords
-    const keywords = ['map', 'map_values', 'empty', 'if', 'then', 'else', 'elif', 'end', 'sort', 'sort_by', 'select', 'and', 'or', 'not', 'keys', 'keys_unsorted']
+    const keywords = ['map', 'map_values', 'empty', 'if', 'then', 'else', 'elif', 'end', 'sort', 'sort_by', 'select', 'and', 'or', 'not', 'keys', 'keys_unsorted', 'tostring']
     if (keywords.includes(value)) {
       return { type: value.toUpperCase() as any, value, position: startPos }
     }
