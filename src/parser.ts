@@ -982,6 +982,16 @@ export class JQParser {
         }
       }
 
+      case 'TONUMBER': {
+        const pos = this.currentToken.position
+        this.advance() // Consume 'tonumber'
+
+        return {
+          type: 'Tonumber',
+          position: pos
+        }
+      }
+
       case 'MAP_VALUES': {
         const pos = this.currentToken.position
         this.advance() // Consume 'map_values'

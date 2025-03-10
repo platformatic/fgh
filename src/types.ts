@@ -64,6 +64,7 @@ export type TokenType =
   | 'KEYS'
   | 'KEYS_UNSORTED'
   | 'TOSTRING'
+  | 'TONUMBER'
   | '//'
   | 'EOF'
 
@@ -122,6 +123,7 @@ export type NodeType =
   | 'KeysUnsorted'
   | 'Empty'
   | 'Tostring'
+  | 'Tonumber'
 
 export interface BaseNode {
   type: NodeType;
@@ -335,6 +337,10 @@ export interface TostringNode extends BaseNode {
   type: 'Tostring';
 }
 
+export interface TonumberNode extends BaseNode {
+  type: 'Tonumber';
+}
+
 export type ASTNode =
   | IdentityNode
   | PropertyAccessNode
@@ -374,6 +380,7 @@ export type ASTNode =
   | KeysUnsortedNode
   | EmptyNode
   | TostringNode
+  | TonumberNode
 
 export interface Parser {
   parse(): ASTNode;

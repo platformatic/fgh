@@ -53,7 +53,8 @@ import {
   logicalNot,
   getKeys,
   getKeysUnsorted,
-  toString
+  toString,
+  toNumber
 } from './helpers/index.ts'
 
 export class JQCodeGenerator implements CodeGenerator {
@@ -136,6 +137,8 @@ export class JQCodeGenerator implements CodeGenerator {
         return this.generateKeysUnsorted(node)
       case 'Tostring':
         return this.generateTostring(node)
+      case 'Tonumber':
+        return this.generateTonumber(node)
       default: {
         throw new Error(`Unknown node type: ${node}`)
       }
@@ -425,6 +428,11 @@ export class JQCodeGenerator implements CodeGenerator {
     return 'toString(input)'
   }
 
+  private generateTonumber (node: any): string {
+    // Use the toNumber helper function to convert values to numbers
+    return 'toNumber(input)'
+  }
+
   generate (ast: ASTNode): Function {
     const body = this.generateNode(ast)
 
@@ -473,6 +481,7 @@ return result;`
       'getKeys',
       'getKeysUnsorted',
       'toString',
+      'toNumber',
       `return function(_input) { const input = [_input]; ${code} }`
     )
 
@@ -512,7 +521,8 @@ return result;`
       handleDefault,
       getKeys,
       getKeysUnsorted,
-      toString
+      toString,
+      toNumber
     )
   }
 }
