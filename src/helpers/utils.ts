@@ -53,3 +53,55 @@ export const toString = (x: unknown): string[] => {
   if (typeof x === 'string') return [x]
   return [JSON.stringify(x)]
 }
+
+/**
+ * Converts a value to a number.
+ * Numbers are returned as-is, strings that represent valid numbers are converted,
+ * and all other types result in an error.
+ * When given an array, applies the conversion to each element.
+ *
+ * @param x The value or array of values to convert to numbers
+ * @returns Array of numeric representations of the input
+ * @throws Error when a value cannot be converted to a number
+ */
+export const toNumber = (x: unknown): number[] => {
+  if (Array.isArray(x)) {
+    const len = x.length
+    const result = new Array(len)
+
+    for (let i = 0; i < len; i++) {
+      result[i] = convertSingleValueToNumber(x[i])
+    }
+
+    return result
+  }
+
+  return [convertSingleValueToNumber(x)]
+}
+
+/**
+ * Helper function to convert a single value to a number.
+ *
+ * @param x The value to convert
+ * @returns The numeric representation of the input
+ * @throws Error when the value cannot be converted to a number
+ */
+const convertSingleValueToNumber = (x: unknown): number => {
+  // Numbers pass through unchanged
+  if (typeof x === 'number') return x
+
+  // Convert strings to numbers if they're valid numeric format
+  if (typeof x === 'string') {
+    const trimmed = x.trim()
+    const num = Number(trimmed)
+
+    if (!isNaN(num)) {
+      return num
+    }
+
+    throw new Error(`Cannot convert string to number: ${x}`)
+  }
+
+  // All other types result in an error
+  throw new Error(`Cannot convert ${typeof x} to number`)
+}

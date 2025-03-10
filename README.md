@@ -32,6 +32,9 @@ A typescript implementation of the [JQ language](http://jqlang.org/).
 ### String Functions
 - Tostring (`tostring`): Converts values to strings. Strings are left unchanged, while all other values are JSON-encoded.
 
+### Numeric Functions
+- Tonumber (`tonumber`): Converts values to numbers. Numbers are left unchanged, correctly-formatted strings are converted to their numeric equivalent, and all other input types result in an error.
+
 ## Array Return API
 
 All FGH query functions (both `compile()` and `query()`) always return an array of results, even for single values. This ensures consistency when handling query results and makes it easier to work with operations that may produce multiple values.
@@ -384,6 +387,49 @@ query('.[] | tostring', [1, "1", [1]])
 // Converting in a more complex expression
 query('.items[] | { value: ., string_value: tostring }', { items: [42, "text", true, null] })
 // => [{"value":42,"string_value":"42"}, {"value":"text","string_value":"text"}, {"value":true,"string_value":"true"}, {"value":null,"string_value":"null"}]
+```
+
+### Tonumber Function
+The `tonumber` function converts values to numbers. Numbers are left unchanged, correctly-formatted strings are converted to their numeric equivalent, and all other input types result in an error:
+
+```javascript
+// Converting a number (unchanged)
+query('tonumber', 42)
+// => [42]
+
+// Converting a numeric string
+query('tonumber', "123")
+// => [123]
+
+// Converting decimal strings
+query('tonumber', "3.14")
+// => [3.14]
+
+// Converting strings with whitespace
+query('tonumber', "  42  ")
+// => [42]
+
+// Converting mixed arrays using array iteration
+query('.[] | tonumber', [1, "1"])
+// => [1, 1]
+
+// Error handling - non-numeric strings
+try {
+  query('tonumber', "not-a-number")
+} catch (e) {
+  console.error(e) // Error: Cannot convert string to number: not-a-number
+}
+
+// Error handling - objects
+try {
+  query('tonumber', { val: 42 })
+} catch (e) {
+  console.error(e) // Error: Cannot convert object to number
+}
+
+// Using tonumber in a more complex expression
+query('.items[] | { original: ., as_number: tonumber }', { items: [42, "42"] })
+// => [{"original":42,"as_number":42}, {"original":"42","as_number":42}]
 ```
 
 
