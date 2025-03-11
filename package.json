@@ -1,6 +1,6 @@
 {
   "name": "fgh",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "description": "A typescript implementation of the JQ language",
   "main": "dist/fgh.js",
   "bin": {
