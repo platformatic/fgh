@@ -1436,46 +1436,32 @@ export class JQParser {
             input: expr
           }
         } else {
-          // Check if this is a comma-separated list of indices
-          const nextToken = this.lexer.nextToken()
-          if (nextToken) {
-            (this.lexer as any).position -= nextToken.value?.length || 0
-          }
-
-          // If it has a comma after a number, or it's a negative followed by a number then comma
-          const secondToken = nextToken?.type === 'NUM' as TokenType ? this.peekAhead(2) : null
-          const hasComma = secondToken?.type === ',' as TokenType
-
-          let isCommaIndices = hasComma
-
-          if (nextToken?.type === '-' as TokenType) {
-            const secondAfterMinus = this.peekAhead(2)
-            const thirdAfterMinus = this.peekAhead(3)
-            if (secondAfterMinus?.type === 'NUM' as TokenType && thirdAfterMinus?.type === ',' as TokenType) {
-              isCommaIndices = true
+          this.advance() // Consume [
+          
+          // Special handling for string key property access: ["x-user-id"]
+          if (this.currentToken?.type === 'STRING' as TokenType) {
+            const stringProperty = this.currentToken.value
+            this.advance() // Consume string
+            
+            // Ensure closing bracket
+            if (this.currentToken?.type !== ']' as TokenType) {
+              throw new ParseError(
+                `Expected closing bracket after string literal, got ${this.currentToken?.type ?? 'EOF'}`,
+                this.currentToken?.position ?? -1
+              )
             }
-          }
-
-          if (isCommaIndices) {
-            // Parse the comma-separated indices and create a sequence
-            const node = this.parseArrayIndices()
-
-            // Add the input to each index access in the sequence
-            if (node.type === 'IndexAccess') {
-              node.input = expr
-              expr = node
-            } else if (node.type === 'Sequence') {
-              // For sequences, add input to each expression
-              (node as any).expressions = (node as any).expressions.map((indexNode: ASTNode) => ({
-                ...indexNode,
-                input: expr
-              }))
-              expr = node
+            this.advance() // Consume ]
+            
+            // Create property access node with string key
+            expr = {
+              type: 'PropertyAccess',
+              position: pos,
+              property: stringProperty,
+              stringKey: true,
+              input: expr
             }
           } else {
-            this.advance()
-
-            // Handle both slices and index access
+            // Handle index access and slices
             if (this.currentToken?.type === ':' as TokenType) {
               // Handle slices starting with colon [:n]
               this.advance()
@@ -1497,7 +1483,14 @@ export class JQParser {
               let num: number
               if (this.currentToken.type === '-' as TokenType) {
                 this.advance()
-                num = -parseInt(this.expect('NUM').value, 10)
+                if (this.currentToken?.type !== 'NUM' as TokenType) {
+                  throw new ParseError(
+                    `Expected number after minus sign, got ${this.currentToken?.type ?? 'EOF'}`,
+                    this.currentToken?.position ?? -1
+                  )
+                }
+                num = -parseInt(this.currentToken.value, 10)
+                this.advance()
               } else {
                 num = parseInt(this.currentToken.value, 10)
                 this.advance()
@@ -1520,8 +1513,63 @@ export class JQParser {
                   end,
                   input: expr
                 }
+              } else if (this.currentToken?.type === ',' as TokenType) {
+                // It's a comma-separated list of indices
+                // First index is already consumed
+                const indices = [num]
+                
+                while (this.currentToken?.type === ',' as TokenType) {
+                  this.advance() // Consume comma
+                  
+                  // Parse next index
+                  if (this.currentToken?.type === 'NUM' as TokenType) {
+                    indices.push(parseInt(this.currentToken.value, 10))
+                    this.advance()
+                  } else if (this.currentToken?.type === '-' as TokenType) {
+                    this.advance()
+                    if (this.currentToken?.type !== 'NUM' as TokenType) {
+                      throw new ParseError(
+                        `Expected number after minus sign, got ${this.currentToken?.type ?? 'EOF'}`,
+                        this.currentToken?.position ?? -1
+                      )
+                    }
+                    indices.push(-parseInt(this.currentToken.value, 10))
+                    this.advance()
+                  } else {
+                    throw new ParseError(
+                      `Expected number or minus sign after comma, got ${this.currentToken?.type ?? 'EOF'}`,
+                      this.currentToken?.position ?? -1
+                    )
+                  }
+                }
+                
+                this.expect(']')
+                
+                // Create a sequence of index accesses
+                if (indices.length === 1) {
+                  expr = {
+                    type: 'IndexAccess',
+                    position: pos,
+                    index: indices[0],
+                    input: expr
+                  }
+                } else {
+                  // For multiple indices, create a Sequence
+                  const expressions = indices.map(index => ({
+                    type: 'IndexAccess',
+                    position: pos,
+                    index,
+                    input: expr
+                  }));
+                  
+                  expr = {
+                    type: 'Sequence',
+                    position: pos,
+                    expressions
+                  }
+                }
               } else {
-                // It's a regular index
+                // Regular index access
                 this.expect(']')
                 expr = {
                   type: 'IndexAccess',
@@ -1532,7 +1580,7 @@ export class JQParser {
               }
             } else {
               throw new ParseError(
-                `Expected number, minus, or colon after [, got ${this.currentToken?.type ?? 'EOF'}`,
+                `Expected string literal, number, minus, or colon after [, got ${this.currentToken?.type ?? 'EOF'}`,
                 this.currentToken?.position ?? -1
               )
             }
@@ -1554,6 +1602,38 @@ export class JQParser {
             position: this.basePos,
             property,
             input: expr
+          }
+          
+          // Check for string literal property access: .headers["x-user-id"]
+          if (this.currentToken?.type === '[' as TokenType) {
+            const bracketPos = this.currentToken.position
+            this.advance() // Consume [
+            
+            // Check for string literal
+            if (this.currentToken?.type === 'STRING' as TokenType) {
+              const stringProperty = this.currentToken.value
+              this.advance() // Consume string
+              
+              // Ensure closing bracket
+              if (this.currentToken?.type !== ']' as TokenType) {
+                throw new ParseError(`Expected closing bracket after string property, got ${this.currentToken?.type ?? 'EOF'}`, 
+                  this.currentToken?.position ?? -1)
+              }
+              this.advance() // Consume ]
+              
+              // Create a new property access node with the string property
+              expr = {
+                type: 'PropertyAccess',
+                position: this.basePos,
+                property: stringProperty,
+                stringKey: true,
+                input: expr
+              }
+            } else {
+              // This might be a different kind of bracket access, rewind the parser
+              (this.lexer as any).position -= 1 // Move back to before [
+              this.currentToken = { type: '[' as TokenType, value: '[', position: (this.lexer as any).position }
+            }
           }
         }
       } else {

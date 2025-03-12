@@ -137,6 +137,7 @@ export interface IdentityNode extends BaseNode {
 export interface PropertyAccessNode extends BaseNode {
   type: 'PropertyAccess';
   property: string;
+  stringKey?: boolean;
   input?: ASTNode;
 }
 
