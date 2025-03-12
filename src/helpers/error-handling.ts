@@ -1,4 +1,4 @@
-import { JQError, ParseError, ExecutionError as JQExecutionError } from '../types.ts'
+import { FGHError, ParseError, ExecutionError as FGHExecutionError } from '../types.ts'
 
 /**
  * Enhanced error handling functions for FGH
@@ -14,16 +14,16 @@ import { JQError, ParseError, ExecutionError as JQExecutionError } from '../type
  * @param fn The function to execute safely
  * @param errorMessage Optional custom error message to include in thrown errors
  * @returns The result of the function execution
- * @throws JQError or ExecutionError with enhanced context information
+ * @throws FGHError or ExecutionError with enhanced context information
  */
 export function safeExecute<T> (fn: () => T, errorMessage?: string): T | undefined {
   try {
     return fn()
   } catch (error) {
     // Re-throw FGH errors with additional context if provided
-    if (error instanceof JQError) {
+    if (error instanceof FGHError) {
       if (errorMessage) {
-        const enhancedError = new JQError(errorMessage)
+        const enhancedError = new FGHError(errorMessage)
         enhancedError.cause = error // Set original error as cause
         throw enhancedError
       }
@@ -31,7 +31,7 @@ export function safeExecute<T> (fn: () => T, errorMessage?: string): T | undefin
     }
 
     // Convert other errors to ExecutionError
-    const executionError = new JQExecutionError(errorMessage || error.message || 'Unknown error during execution')
+    const executionError = new FGHExecutionError(errorMessage || error.message || 'Unknown error during execution')
     executionError.cause = error // Set original error as cause
     throw executionError
   }
@@ -203,4 +203,4 @@ export function attemptErrorRecovery (
 }
 
 // Re-export necessary error types
-export { ParseError, JQExecutionError as ExecutionError }
+export { ParseError, FGHExecutionError as ExecutionError }

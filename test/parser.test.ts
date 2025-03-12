@@ -1,16 +1,16 @@
 import { test } from 'node:test'
 import assert from 'node:assert'
-import { JQParser } from '../src/parser.ts'
+import { FGHParser } from '../src/parser.ts'
 import { ParseError } from '../src/types.ts'
 
 test('parser handles identity', () => {
-  const parser = new JQParser('.')
+  const parser = new FGHParser('.')
   const ast = parser.parse()
   assert.deepEqual(ast, { type: 'Identity', position: 0 })
 })
 
 test('parser handles property access', () => {
-  const parser = new JQParser('.foo')
+  const parser = new FGHParser('.foo')
   const ast = parser.parse()
   assert.deepEqual(ast, {
     type: 'PropertyAccess',
@@ -20,7 +20,7 @@ test('parser handles property access', () => {
 })
 
 test('parser handles array construction', () => {
-  const parser = new JQParser('[0]')
+  const parser = new FGHParser('[0]')
   const ast = parser.parse()
   assert.deepEqual(ast, {
     elements: [
@@ -36,7 +36,7 @@ test('parser handles array construction', () => {
 })
 
 test('parser handles pipe', () => {
-  const parser = new JQParser('.foo | .bar')
+  const parser = new FGHParser('.foo | .bar')
   const ast = parser.parse()
   assert.deepEqual(ast, {
     type: 'Pipe',
@@ -55,7 +55,7 @@ test('parser handles pipe', () => {
 })
 
 test('parser handles optional', () => {
-  const parser = new JQParser('.foo?')
+  const parser = new FGHParser('.foo?')
   const ast = parser.parse()
   assert.deepEqual(ast, {
     type: 'Optional',
@@ -69,7 +69,7 @@ test('parser handles optional', () => {
 })
 
 test('parser handles complex expressions', () => {
-  const parser = new JQParser('.foo[0] | .bar.baz?')
+  const parser = new FGHParser('.foo[0] | .bar.baz?')
   const ast = parser.parse()
   assert.deepEqual(ast, {
     type: 'Pipe',
@@ -103,21 +103,21 @@ test('parser handles complex expressions', () => {
 
 test('parser throws on invalid input', () => {
   assert.throws(
-    () => new JQParser('@invalid').parse(),
+    () => new FGHParser('@invalid').parse(),
     ParseError
   )
 })
 
 test('parser throws on incomplete input', () => {
   assert.throws(
-    () => new JQParser('[').parse(),
+    () => new FGHParser('[').parse(),
     ParseError
   )
 })
 
 test('parser handles array and string slices', () => {
   // Test explicit start and end
-  let parser = new JQParser('.[2:4]')
+  let parser = new FGHParser('.[2:4]')
   let ast = parser.parse()
   assert.deepEqual(ast, {
     end: 4,
@@ -131,7 +131,7 @@ test('parser handles array and string slices', () => {
   })
 
   // Test implicit start
-  parser = new JQParser('.[:3]')
+  parser = new FGHParser('.[:3]')
   ast = parser.parse()
   assert.deepEqual(ast, {
     end: 3,
@@ -145,7 +145,7 @@ test('parser handles array and string slices', () => {
   })
 
   // Test negative index and implicit end
-  parser = new JQParser('.[-2:]')
+  parser = new FGHParser('.[-2:]')
   ast = parser.parse()
   assert.deepEqual(ast, {
     end: null,
@@ -160,7 +160,7 @@ test('parser handles array and string slices', () => {
 })
 
 test('parser handles plus operator with property and number', () => {
-  const parser = new JQParser('.a + 1')
+  const parser = new FGHParser('.a + 1')
   const ast = parser.parse()
   assert.deepEqual(ast, {
     type: 'Sum',
@@ -179,7 +179,7 @@ test('parser handles plus operator with property and number', () => {
 })
 
 test('parser handles plus operator with properties', () => {
-  const parser = new JQParser('.a + .b')
+  const parser = new FGHParser('.a + .b')
   const ast = parser.parse()
   assert.deepEqual(ast, {
     type: 'Sum',
@@ -198,7 +198,7 @@ test('parser handles plus operator with properties', () => {
 })
 
 test('parser handles plus operator with objects', () => {
-  const parser = new JQParser('{a: 1} + {b: 2}')
+  const parser = new FGHParser('{a: 1} + {b: 2}')
   const ast = parser.parse()
   // First check the structure is correct
   assert.equal(ast.type, 'Sum')

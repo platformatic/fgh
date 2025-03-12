@@ -6,9 +6,9 @@
  * and safe querying with error handling and recovery capabilities.
  */
 
-import { JQParser } from './parser.ts'
-import { JQCodeGenerator } from './generator.ts'
-import type { JQFunction, CompileOptions } from './types.ts'
+import { FGHParser } from './parser.ts'
+import { FGHCodeGenerator } from './generator.ts'
+import type { QueryFunction, CompileOptions } from './types.ts'
 import { ParseError } from './types.ts'
 import { safeExecute, attemptErrorRecovery, ExecutionError } from './helpers/error-handling.ts'
 
@@ -23,15 +23,15 @@ import { safeExecute, attemptErrorRecovery, ExecutionError } from './helpers/err
  * const getFirstName = compile('.name[0]');
  * const firstName = getFirstName({name: ['John', 'Doe']});
  */
-export function compile (expression: string, options?: CompileOptions): JQFunction {
+export function compile (expression: string, options?: CompileOptions): QueryFunction {
   try {
-    const parser = new JQParser(expression)
-    const generator = new JQCodeGenerator()
+    const parser = new FGHParser(expression)
+    const generator = new FGHCodeGenerator()
 
     const ast = parser.parse()
     const fn = generator.generate(ast)
 
-    return fn as JQFunction
+    return fn as QueryFunction
   } catch (error) {
     // Attempt error recovery
     if (error instanceof ParseError) {
@@ -42,12 +42,12 @@ export function compile (expression: string, options?: CompileOptions): JQFuncti
 
         try {
           // Try to compile the fixed expression
-          const parser = new JQParser(recovery.fixedExpression)
-          const generator = new JQCodeGenerator()
+          const parser = new FGHParser(recovery.fixedExpression)
+          const generator = new FGHCodeGenerator()
           const ast = parser.parse()
           const fn = generator.generate(ast)
 
-          return fn as JQFunction
+          return fn as QueryFunction
         } catch (secondError) {
           // If recovery also fails, throw a more informative error
           // but preserve the original error as the cause
@@ -118,4 +118,4 @@ export default {
 }
 
 // Export types
-export type { JQFunction, CompileOptions }
+export type { QueryFunction, CompileOptions }

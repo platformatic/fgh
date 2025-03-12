@@ -1,11 +1,11 @@
 import { test } from 'node:test'
 import assert from 'node:assert'
-import { JQParser } from '../src/parser.ts'
-import { JQCodeGenerator } from '../src/generator.ts'
+import { FGHParser } from '../src/parser.ts'
+import { FGHCodeGenerator } from '../src/generator.ts'
 
 test('generates identity function', () => {
-  const parser = new JQParser('.')
-  const generator = new JQCodeGenerator()
+  const parser = new FGHParser('.')
+  const generator = new FGHCodeGenerator()
   const fn = generator.generate(parser.parse())
 
   assert.deepEqual(fn(5), [5])
@@ -13,8 +13,8 @@ test('generates identity function', () => {
 })
 
 test('generates property access', () => {
-  const parser = new JQParser('.foo')
-  const generator = new JQCodeGenerator()
+  const parser = new FGHParser('.foo')
+  const generator = new FGHCodeGenerator()
   const fn = generator.generate(parser.parse())
 
   assert.deepEqual(fn({ foo: 'bar' }), ['bar'])
@@ -25,8 +25,8 @@ test('generates property access', () => {
 })
 
 test('generates array access', () => {
-  const parser = new JQParser('[0]')
-  const generator = new JQCodeGenerator()
+  const parser = new FGHParser('[0]')
+  const generator = new FGHCodeGenerator()
   const fn = generator.generate(parser.parse())
 
   const result = fn(['a', 'b'])
@@ -34,8 +34,8 @@ test('generates array access', () => {
 })
 
 test('generates pipe', () => {
-  const parser = new JQParser('.foo | .bar')
-  const generator = new JQCodeGenerator()
+  const parser = new FGHParser('.foo | .bar')
+  const generator = new FGHCodeGenerator()
   const fn = generator.generate(parser.parse())
 
   assert.deepEqual(
@@ -45,8 +45,8 @@ test('generates pipe', () => {
 })
 
 test('generates optional access', () => {
-  const parser = new JQParser('.foo?')
-  const generator = new JQCodeGenerator()
+  const parser = new FGHParser('.foo?')
+  const generator = new FGHCodeGenerator()
   const fn = generator.generate(parser.parse())
 
   assert.deepEqual(fn(null), [])
@@ -54,8 +54,8 @@ test('generates optional access', () => {
 })
 
 test('generates nested optional access', () => {
-  const parser = new JQParser('.foo.bar?')
-  const generator = new JQCodeGenerator()
+  const parser = new FGHParser('.foo.bar?')
+  const generator = new FGHCodeGenerator()
   const fn = generator.generate(parser.parse())
 
   // assert.deepEqual(fn(null), [])
@@ -63,8 +63,8 @@ test('generates nested optional access', () => {
 })
 
 test('generates complex expressions', () => {
-  const parser = new JQParser('.foo[0] | .bar?')
-  const generator = new JQCodeGenerator()
+  const parser = new FGHParser('.foo[0] | .bar?')
+  const generator = new FGHCodeGenerator()
   const fn = generator.generate(parser.parse())
 
   assert.deepEqual(
@@ -78,8 +78,8 @@ test('generates complex expressions', () => {
 })
 
 test('generate the example from the README', () => {
-  const parser = new JQParser('.users[] | .name.first')
-  const generator = new JQCodeGenerator()
+  const parser = new FGHParser('.users[] | .name.first')
+  const generator = new FGHCodeGenerator()
   const fn = generator.generate(parser.parse())
   const data = {
     users: [
@@ -92,8 +92,8 @@ test('generate the example from the README', () => {
 })
 
 test('generate the example from the README', () => {
-  const parser = new JQParser('.users[0].name.last')
-  const generator = new JQCodeGenerator()
+  const parser = new FGHParser('.users[0].name.last')
+  const generator = new FGHCodeGenerator()
   const fn = generator.generate(parser.parse())
   const data = {
     users: [
@@ -107,41 +107,41 @@ test('generate the example from the README', () => {
 
 test('generates array and string slices', () => {
   // Test slice with explicit start and end on array
-  let parser = new JQParser('.[2:4]')
-  let generator = new JQCodeGenerator()
+  let parser = new FGHParser('.[2:4]')
+  let generator = new FGHCodeGenerator()
   let fn = generator.generate(parser.parse())
   assert.deepEqual(fn(['a', 'b', 'c', 'd', 'e']), [['c', 'd']])
 
   // Test slice with explicit start and end on string
-  parser = new JQParser('.[2:4]')
-  generator = new JQCodeGenerator()
+  parser = new FGHParser('.[2:4]')
+  generator = new FGHCodeGenerator()
   fn = generator.generate(parser.parse())
   assert.deepEqual(fn('abcdefghi'), ['cd'])
 
   // Test slice with implicit start on array
-  parser = new JQParser('.[:3]')
-  generator = new JQCodeGenerator()
+  parser = new FGHParser('.[:3]')
+  generator = new FGHCodeGenerator()
   fn = generator.generate(parser.parse())
   assert.deepEqual(fn(['a', 'b', 'c', 'd', 'e']), [['a', 'b', 'c']])
 
   // Test slice with negative start and implicit end on array
-  parser = new JQParser('.[-2:]')
-  generator = new JQCodeGenerator()
+  parser = new FGHParser('.[-2:]')
+  generator = new FGHCodeGenerator()
   fn = generator.generate(parser.parse())
   assert.deepEqual(fn(['a', 'b', 'c', 'd', 'e']), [['d', 'e']])
 })
 
 test('.[] outputs all the values', () => {
-  const parser = new JQParser('.[]')
-  const generator = new JQCodeGenerator()
+  const parser = new FGHParser('.[]')
+  const generator = new FGHCodeGenerator()
   const fn = generator.generate(parser.parse())
 
   assert.deepEqual(fn({ a: 1, b: 2 }), [1, 2])
 })
 
 test('generates plus operator with numeric values', () => {
-  const parser = new JQParser('.a + 1')
-  const generator = new JQCodeGenerator()
+  const parser = new FGHParser('.a + 1')
+  const generator = new FGHCodeGenerator()
   const fn = generator.generate(parser.parse())
 
   assert.deepEqual(fn({ a: 7 }), [8])
@@ -149,8 +149,8 @@ test('generates plus operator with numeric values', () => {
 })
 
 test('generates plus operator with arrays', () => {
-  const parser = new JQParser('.a + .b')
-  const generator = new JQCodeGenerator()
+  const parser = new FGHParser('.a + .b')
+  const generator = new FGHCodeGenerator()
   const fn = generator.generate(parser.parse())
 
   assert.deepEqual(fn({ a: [1, 2], b: [3, 4] }), [[1, 2, 3, 4]])
@@ -158,16 +158,16 @@ test('generates plus operator with arrays', () => {
 
 test('generates plus operator with null values', () => {
   // Test with property + literal null
-  const parser = new JQParser('.a + null')
-  const generator = new JQCodeGenerator()
+  const parser = new FGHParser('.a + null')
+  const generator = new FGHCodeGenerator()
   const fn = generator.generate(parser.parse())
 
   assert.deepEqual(fn({ a: 1 }), [1])
 })
 
 test('generates plus operator with objects', () => {
-  const parser = new JQParser('{a: 1} + {b: 2}')
-  const generator = new JQCodeGenerator()
+  const parser = new FGHParser('{a: 1} + {b: 2}')
+  const generator = new FGHCodeGenerator()
   const fn = generator.generate(parser.parse())
 
   assert.deepEqual(fn(null), [{ a: 1, b: 2 }])

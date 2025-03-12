@@ -40,7 +40,7 @@ test('CLI processes valid JSON input correctly', async () => {
   const outputStream = new TestWritableStream()
   const stderrStream = new TestWritableStream()
 
-  // Process the stream with a JQ expression to extract names
+  // Process the stream with a FGH expression to extract names
   await processJsonStream({
     input,
     expression: '.name',
@@ -101,7 +101,7 @@ test('CLI handles invalid JSON input', async () => {
   }
 })
 
-test('CLI handles JQ execution errors', async () => {
+test('CLI handles FGH execution errors', async () => {
   // Setup input
   const input = createReadableFromArray([
     '{"name":"John", "age": 30}\n',
@@ -172,7 +172,7 @@ test('CLI handles empty lines', async () => {
   )
 })
 
-test('CLI handles complex JQ expressions', async () => {
+test('CLI handles complex FGH expressions', async () => {
   // Setup input
   const input = createReadableFromArray([
     '{"users": [{"name": "John", "role": "admin"}, {"name": "Alice", "role": "user"}]}\n',

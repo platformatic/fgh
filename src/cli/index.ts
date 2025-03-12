@@ -13,7 +13,7 @@ import { createInterface } from 'node:readline'
 import { Readable } from 'node:stream'
 import { parseArgs } from 'node:util'
 import { compile } from '../fgh.ts'
-import type { JQFunction } from '../types.ts'
+import type { QueryFunction } from '../types.ts'
 
 interface CliOptions {
   input: Readable
@@ -23,16 +23,16 @@ interface CliOptions {
 }
 
 /**
- * Processes a stream of newline-delimited JSON using a JQ expression
+ * Processes a stream of newline-delimited JSON using a FGH expression
  *
  * @param options.input - Input stream of newline-delimited JSON
- * @param options.expression - JQ expression to process each JSON line
+ * @param options.expression - FGH expression to process each JSON line
  * @param options.outputStream - Stream to write results (defaults to stdout)
  * @param options.exitOnError - Whether to exit on error (defaults to false)
  */
 export async function processJsonStream (options: CliOptions): Promise<void> {
   const { input, expression, outputStream, exitOnError } = options
-  const jqFn: JQFunction = compile(expression)
+  const queryFn: QueryFunction = compile(expression)
 
   const readline = createInterface({
     input,
@@ -52,8 +52,8 @@ export async function processJsonStream (options: CliOptions): Promise<void> {
       // Parse input line as JSON
       const jsonInput = JSON.parse(line)
 
-      // Apply the JQ function
-      const results = jqFn(jsonInput)
+      // Apply the FGH function
+      const results = queryFn(jsonInput)
 
       // Output each result as JSON on a separate line
       for (const result of results) {
@@ -102,7 +102,7 @@ if (process.argv[1] === new URL(import.meta.url).pathname) {
   // Show help and exit if no arguments or help flag
   if (values.help || positionals.length === 0) {
     console.log(`
-    fgh - Process newline-delimited JSON with JQ expressions
+    fgh - Process newline-delimited JSON with FGH expressions
     
     Usage:
       fgh [options] <expression>

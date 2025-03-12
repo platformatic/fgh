@@ -1,11 +1,11 @@
 import { test } from 'node:test'
 import assert from 'node:assert'
-import { JQError, ParseError, ExecutionError } from '../src/types.ts'
+import { FGHError, ParseError, ExecutionError } from '../src/types.ts'
 
-test('JQError should be properly constructed', () => {
-  const error = new JQError('test error')
+test('FGHError should be properly constructed', () => {
+  const error = new FGHError('test error')
   assert.equal(error.message, 'test error')
-  assert.equal(error.name, 'JQError')
+  assert.equal(error.name, 'FGHError')
 })
 
 test('ParseError should include position information', () => {

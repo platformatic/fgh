@@ -1,6 +1,6 @@
 import { test } from 'node:test'
 import assert from 'node:assert'
-import { JQCodeGenerator } from '../src/generator.ts'
+import { FGHCodeGenerator } from '../src/generator.ts'
 
 test('generator handles nested dynamic key in object construction', () => {
   const ast = {
@@ -25,7 +25,7 @@ test('generator handles nested dynamic key in object construction', () => {
     ]
   }
 
-  const generator = new JQCodeGenerator()
+  const generator = new FGHCodeGenerator()
   const fn = generator.generate(ast)
 
   // Test the function with an object that has a keyName property
@@ -88,7 +88,7 @@ test('generator handles complex nesting of expressions', () => {
     }
   }
 
-  const generator = new JQCodeGenerator()
+  const generator = new FGHCodeGenerator()
   const fn = generator.generate(ast)
 
   // Test the function with sample data
@@ -117,7 +117,7 @@ test('generator handles various expression types', () => {
     position: 0
   }
 
-  let generator = new JQCodeGenerator()
+  let generator = new FGHCodeGenerator()
   let fn = generator.generate(ast)
 
   // Empty should return an empty array for any input
@@ -134,7 +134,7 @@ test('generator handles various expression types', () => {
     }
   }
 
-  generator = new JQCodeGenerator()
+  generator = new FGHCodeGenerator()
   fn = generator.generate(ast)
 
   // Not true should return false
@@ -156,7 +156,7 @@ test('generator handles various expression types', () => {
     }
   }
 
-  generator = new JQCodeGenerator()
+  generator = new FGHCodeGenerator()
   fn = generator.generate(ast)
 
   // 10 % 3 should return 1
@@ -170,7 +170,7 @@ test('generator handles sort and sort_by expressions', () => {
     position: 0
   }
 
-  let generator = new JQCodeGenerator()
+  let generator = new FGHCodeGenerator()
   let fn = generator.generate(ast)
 
   // Sort should order the array
@@ -189,7 +189,7 @@ test('generator handles sort and sort_by expressions', () => {
     ]
   }
 
-  generator = new JQCodeGenerator()
+  generator = new FGHCodeGenerator()
   fn = generator.generate(ast)
 
   // Sort_by should order by the specified property

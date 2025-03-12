@@ -1,12 +1,12 @@
 import { test } from 'node:test'
 import assert from 'node:assert'
 import { query } from '../src/fgh.ts'
-import { JQParser } from '../src/parser.ts'
+import { FGHParser } from '../src/parser.ts'
 
 test('parser handles special array indices cases', () => {
   // Test array index with negative numbers and commas
   const expr = '[0, -1, -2]'
-  const parser = new JQParser(expr)
+  const parser = new FGHParser(expr)
   const ast = parser.parse()
 
   // The parser implementation treats this as an array construction

@@ -390,7 +390,7 @@ export interface Parser {
 /**
  * Base error class for all FGH errors
  */
-export class JQError extends Error {
+export class FGHError extends Error {
   /**
    * The underlying error that caused this error
    */
@@ -398,14 +398,14 @@ export class JQError extends Error {
 
   constructor (message: string) {
     super(message)
-    this.name = 'JQError'
+    this.name = 'FGHError'
   }
 }
 
 /**
  * Error thrown during parsing
  */
-export class ParseError extends JQError {
+export class ParseError extends FGHError {
   /**
    * Position in the input where the error occurred
    */
@@ -421,14 +421,14 @@ export class ParseError extends JQError {
 /**
  * Error thrown during query execution
  */
-export class ExecutionError extends JQError {
+export class ExecutionError extends FGHError {
   constructor (message: string) {
     super(message)
     this.name = 'ExecutionError'
   }
 }
 
-export type JQFunction = (input: unknown) => unknown[]
+export type QueryFunction = (input: unknown) => unknown[]
 
 // Following the refactoring to remove array flags, we no longer need the MarkedArray type
 // The standardizeResult function consistently handles arrays without the need for special flags
