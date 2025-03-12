@@ -1,6 +1,6 @@
 import { test } from 'node:test'
 import assert from 'node:assert'
-import { query as jqQuery } from '../src/fgh.ts'
+import { query } from '../src/fgh.ts'
 
 // Tests for the new string literal property access feature
 test('should access property using string literal', () => {
@@ -11,8 +11,8 @@ test('should access property using string literal', () => {
     }
   }
   
-  const queryFunction = jqQuery('.headers["x-user-id"]')
-  assert.deepStrictEqual(queryFunction(data), ['12345'])
+  const result = query('.headers["x-user-id"]', data)
+  assert.deepStrictEqual(result, ['12345'])
 })
 
 test('should access property with special characters', () => {
@@ -23,11 +23,11 @@ test('should access property with special characters', () => {
     }
   }
   
-  const queryFunction1 = jqQuery('.headers["x-user@id"]')
-  assert.deepStrictEqual(queryFunction1(data), ['12345'])
+  const result1 = query('.headers["x-user@id"]', data)
+  assert.deepStrictEqual(result1, ['12345'])
   
-  const queryFunction2 = jqQuery('.headers["123-key"]')
-  assert.deepStrictEqual(queryFunction2(data), ['value'])
+  const result2 = query('.headers["123-key"]', data)
+  assert.deepStrictEqual(result2, ['value'])
 })
 
 test('should handle nested properties with string literal access', () => {
@@ -40,8 +40,8 @@ test('should handle nested properties with string literal access', () => {
     }
   }
   
-  const queryFunction = jqQuery('.response.headers["content-type"]')
-  assert.deepStrictEqual(queryFunction(data), ['application/json'])
+  const result = query('.response.headers["content-type"]', data)
+  assert.deepStrictEqual(result, ['application/json'])
 })
 
 test('should handle array iteration with string literal access', () => {
@@ -50,15 +50,15 @@ test('should handle array iteration with string literal access', () => {
     { headers: { 'x-user-id': 'user2' } }
   ]
   
-  const queryFunction = jqQuery('.headers["x-user-id"]')
-  assert.deepStrictEqual(queryFunction(data), ['user1', 'user2'])
+  const result = query('.[].headers["x-user-id"]', data)
+  assert.deepStrictEqual(result, ['user1', 'user2'])
 })
 
 test('should handle missing properties gracefully', () => {
   const data = { headers: {} }
   
-  const queryFunction = jqQuery('.headers["x-user-id"]')
-  assert.deepStrictEqual(queryFunction(data), [undefined])
+  const result = query('.headers["x-user-id"]', data)
+  assert.deepStrictEqual(result, [undefined])
 })
 
 test('should work with optional operator', () => {
@@ -67,11 +67,11 @@ test('should work with optional operator', () => {
     meta: null
   }
   
-  const queryFunction1 = jqQuery('.headers["x-user-id"]?')
-  assert.deepStrictEqual(queryFunction1(data), ['abc'])
+  const result1 = query('.headers["x-user-id"]?', data)
+  assert.deepStrictEqual(result1, ['abc'])
   
-  const queryFunction2 = jqQuery('.meta["x-user-id"]?')
-  assert.deepStrictEqual(queryFunction2(data), [])
+  const result2 = query('.meta["x-user-id"]?', data)
+  assert.deepStrictEqual(result2, [])
 })
 
 test('should handle complex expressions with string literal property access', () => {
@@ -82,6 +82,6 @@ test('should handle complex expressions with string literal property access', ()
     ]
   }
   
-  const queryFunction = jqQuery('.responses[] | .headers["x-rate-limit"] | tonumber')
-  assert.deepStrictEqual(queryFunction(data), [100, 200])
+  const result = query('.responses[] | .headers["x-rate-limit"] | tonumber', data)
+  assert.deepStrictEqual(result, [100, 200])
 })
