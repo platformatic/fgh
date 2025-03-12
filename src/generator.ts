@@ -151,6 +151,12 @@ export class JQCodeGenerator implements CodeGenerator {
     if (node.input) {
       input = this.generateNode(node.input)
     }
+
+    // If it's a string literal property (from .obj["key"]), we don't need to escape it
+    if (node.stringKey) {
+      return `accessProperty(${input}, "${properties.join('.')}", ${optional})`
+    }
+
     return `accessProperty(${input}, '${properties.join('.')}', ${optional})`
   }
 
