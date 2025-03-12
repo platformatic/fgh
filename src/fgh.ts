@@ -12,7 +12,7 @@ import { ParseError } from './types.ts'
 import type {
   // Core types
   QueryFunction, ASTNode, BaseNode, JSONValue, QueryResult, NodeType,
-  
+
   // Node types
   IdentityNode, PropertyAccessNode, IndexAccessNode, PipeNode, OptionalNode,
   SequenceNode, ArrayIterationNode, SliceNode, ObjectFieldNode,
@@ -23,7 +23,7 @@ import type {
   LessThanNode, LessThanOrEqualNode, EqualNode, NotEqualNode,
   AndNode, OrNode, NotNode, DefaultNode, KeysNode, KeysUnsortedNode,
   EmptyNode, TostringNode, TonumberNode,
-  
+
   // Error types
   FGHError
 } from './types.ts'
@@ -178,10 +178,10 @@ export type {
   JSONValue,
   QueryResult,
   NodeType,
-  
+
   // Base node type
   BaseNode,
-  
+
   // AST node types
   ASTNode,
   IdentityNode,
@@ -223,7 +223,7 @@ export type {
   EmptyNode,
   TostringNode,
   TonumberNode,
-  
+
   // Error types
   FGHError,
   ParseError,

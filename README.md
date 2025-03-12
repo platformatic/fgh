@@ -2,6 +2,208 @@
 
 A typescript implementation of the [JQ language](http://jqlang.org/).
 
+## Installation
+
+```bash
+npm install fgh
+```
+
+## API
+
+### Basic API
+
+```javascript
+import { compile, query, safeQuery, parse, compileFromAST } from 'fgh';
+
+// Compile a JQ expression into a reusable function
+const getNames = compile('.users[].name');
+const names = getNames({ users: [{ name: 'John' }, { name: 'Jane' }] });
+// => ['John', 'Jane']
+
+// One-time query execution
+const result = query('.users[].name', { users: [{ name: 'John' }, { name: 'Jane' }] });
+// => ['John', 'Jane']
+
+// Safe query that returns empty array instead of throwing on error
+const safeResult = safeQuery('.invalid[', { name: 'John' });
+// => []
+
+// Parse a JQ expression into an AST without compiling
+const ast = parse('.users[].name');
+
+// Compile an AST into a function
+const fn = compileFromAST(ast);
+```
+
+## Working with the AST
+
+FGH provides an API for working with the Abstract Syntax Tree (AST) representation, enabling advanced use cases like AST analysis, transformation, and programmatic generation of queries.
+
+### Introduction
+
+The AST is a tree structure that represents the parsed form of a JQ expression. Each node in the tree corresponds to a specific operation or element in the query language. Using the `parse()` and `compileFromAST()` functions, you can separate the parsing and compilation steps, allowing you to inspect and modify the AST between these stages.
+
+### Basic Usage
+
+```typescript
+import { parse, compileFromAST } from 'fgh';
+
+// Parse a JQ expression into an AST
+const ast = parse('.users[].name');
+
+// Inspect or modify the AST
+console.log(JSON.stringify(ast, null, 2));
+
+// Compile the AST into an executable function
+const fn = compileFromAST(ast);
+
+// Execute the compiled function
+const result = fn({ users: [{ name: 'John' }, { name: 'Jane' }] });
+// => ['John', 'Jane']
+```
+
+### AST Structure
+
+The AST consists of nodes, where each node has a `type` property indicating its operation, and additional properties specific to that type. Here's a simplified overview of the main node types:
+
+#### Core Node Types
+
+##### Identity Node
+Represents the identity operation (`.`).
+
+```typescript
+{
+  type: 'Identity',
+  position: 0
+}
+```
+
+##### Property Access Node
+Represents property access (`.property`).
+
+```typescript
+{
+  type: 'PropertyAccess',
+  position: 0,
+  property: 'name'  // The property being accessed
+}
+```
+
+##### Index Access Node
+Represents array index access (`[index]`).
+
+```typescript
+{
+  type: 'IndexAccess',
+  position: 5,
+  index: 0,  // The index being accessed
+  input: { ... }  // Optional: the expression being indexed
+}
+```
+
+##### Pipe Node
+Represents the pipe operator (`|`).
+
+```typescript
+{
+  type: 'Pipe',
+  position: 0,
+  left: { ... },  // The expression on the left of the pipe
+  right: { ... }  // The expression on the right of the pipe
+}
+```
+
+##### Array Iteration Node
+Represents array iteration (`[]`).
+
+```typescript
+{
+  type: 'ArrayIteration',
+  position: 0,
+  input: { ... }  // Optional: the expression being iterated
+}
+```
+
+##### More Node Types
+FGH supports many other node types for operations like object construction, array construction, arithmetic operations, comparison operators, logical operators, and filters.
+
+### Creating and Modifying ASTs Programmatically
+
+You can create or modify ASTs programmatically by constructing the appropriate node objects:
+
+```typescript
+import { compileFromAST } from 'fgh';
+import type { ASTNode, PipeNode, PropertyAccessNode, ArrayIterationNode } from 'fgh';
+
+// Create a simple AST for .users[].name
+const ast: ASTNode = {
+  type: 'Pipe',
+  position: 0,
+  left: {
+    type: 'PropertyAccess',
+    position: 0,
+    property: 'users'
+  } as PropertyAccessNode,
+  right: {
+    type: 'Pipe',
+    position: 0,
+    left: {
+      type: 'ArrayIteration',
+      position: 0
+    } as ArrayIterationNode,
+    right: {
+      type: 'PropertyAccess',
+      position: 0,
+      property: 'name'
+    } as PropertyAccessNode
+  } as PipeNode
+} as PipeNode;
+
+// Compile the AST into a function
+const fn = compileFromAST(ast);
+
+// Execute the function
+const result = fn({ users: [{ name: 'John' }, { name: 'Jane' }] });
+// => ['John', 'Jane']
+```
+
+### Use Cases
+
+1. **Query Analysis and Validation**: Parse queries and analyze their structure to ensure they meet certain criteria or constraints.
+
+2. **Query Transformation**: Parse a query, modify its AST (e.g., adding additional filters or transformations), and then compile it.
+
+3. **Query Generation**: Programmatically build ASTs for complex queries based on runtime conditions, user input, or other dynamic factors.
+
+4. **Custom Query Execution Strategies**: Implement custom execution strategies by traversing the AST yourself and applying custom logic for specific node types.
+
+### Type Definitions
+
+For TypeScript users, FGH exports type definitions for all AST node types:
+
+```typescript
+import type { 
+  // Base types
+  ASTNode, BaseNode, NodeType,
+  
+  // Specific node types
+  IdentityNode, PropertyAccessNode, IndexAccessNode,
+  PipeNode, OptionalNode, SequenceNode,
+  ArrayIterationNode, SliceNode, ObjectConstructionNode,
+  // ...and many more
+} from 'fgh';
+```
+
+### Best Practices
+
+1. **Preserve Position Information**: When creating or modifying nodes, include realistic `position` values to ensure error messages are helpful.
+
+2. **Validate ASTs**: Before compiling, validate that the AST structure is sound and follows the expected patterns.
+
+3. **Prefer High-Level APIs**: For most use cases, it's simpler to use string expressions with the standard `compile()` function. Only use AST manipulation when you need fine-grained control.
+
+4. **Document AST Transformations**: When implementing AST transformations, document the expected input and output patterns clearly.
+
 ## Features
 
 ### Basic Filters
@@ -24,7 +226,7 @@ A typescript implementation of the [JQ language](http://jqlang.org/).
 - Comparison Operators (`>`, `>=`, `<`, `<=`): Compare values using the same ordering rules as the sort function
 - Boolean Operators (`and`, `or`, `not`): Perform logical operations on values
 
-### Map Filters
+### Map and Select Filters
 - Map (`map(f)`): Applies filter `f` to each value of input array or object and outputs an array of all values
 - Map Values (`map_values(f)`): Applies filter `f` to each value, taking only the first result for each input value
 - Select (`select(f)`): Produces its input unchanged if `f` returns true, and produces no output otherwise
