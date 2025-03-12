@@ -362,6 +362,35 @@ query('{ isEven: (.value % 2 == 0) }', { value: 6 })
 // => [{ isEven: true }]
 ```
 
+### Default Operator
+The default operator (`//`) provides fallback values when expressions produce no values or only `false` or `null`:
+
+```javascript
+// Basic usage with missing property
+query('.foo // 42', {})
+// => [42]
+
+// Basic usage with existing property
+query('.foo // 42', {foo: 19})
+// => [19]
+
+// Using empty as left operand
+query('empty // 42', null)
+// => [42]
+
+// With sequence operator - returns non-false/null values from left side
+query('(false, null, 1) // 42', null)
+// => [1]
+
+// Different behavior with pipe operator
+query('(false, null, 1) | . // 42', null)
+// => [42, 42, 1]
+
+// Using as a fallback in objects
+query('{ name: .name, status: (.status // "unknown") }', {name: "test"})
+// => [{"name": "test", "status": "unknown"}]
+```
+
 ### Mathematical Operations in Object Construction
 You can use arithmetic operators within object construction for calculating values:
 
@@ -381,6 +410,35 @@ query('{ weighted_avg: ((.a * 0.5) + (.b * 0.3) + (.c * 0.2)) }', { a: 10, b: 20
 // Using modulo to check for divisibility
 query('{ remainder: (10 % 3), even: (.value % 2 == 0) }', { value: 6 })
 // => [{ remainder: 1, even: true }]
+```
+
+### Object Construction
+You can create objects using curly braces and key-value pairs:
+
+```javascript
+// Basic object construction
+query('{ user: .name, years: .age }', { name: "John", age: 30 })
+// => [{ "user": "John", "years": 30 }]
+
+// Shorthand property names (when key name is the same as property name)
+query('{ name, age }', { name: "John", age: 30 })
+// => [{ "name": "John", "age": 30 }]
+
+// Dynamic keys (using property values as object keys)
+query('{(.user): .value}', { user: "john", value: 42 })
+// => [{ "john": 42 }]
+
+// String literal keys
+query('{ "message": . }', "hello")
+// => [{ "message": "hello" }]
+
+// Array expansion in object construction
+query('{ user, item: .items[] }', { user: "john", items: [1, 2, 3] })
+// => [
+//   { "user": "john", "item": 1 },
+//   { "user": "john", "item": 2 },
+//   { "user": "john", "item": 3 }
+// ]
 ```
 
 ### Boolean Operators
@@ -504,35 +562,6 @@ query('map_values(.+1)', {"a": 1, "b": 2, "c": 3})
 // Using map_values with a filter that produces no values for some keys (those keys are dropped)
 query('map_values(empty)', {"a": 1, "b": 2, "c": 3})
 // => [{}]
-```
-
-### Default Operator
-The default operator (`//`) provides fallback values when expressions produce no values or only `false` or `null`:
-
-```javascript
-// Basic usage with missing property
-query('.foo // 42', {})
-// => [42]
-
-// Basic usage with existing property
-query('.foo // 42', {foo: 19})
-// => [19]
-
-// Using empty as left operand
-query('empty // 42', null)
-// => [42]
-
-// With sequence operator - returns non-false/null values from left side
-query('(false, null, 1) // 42', null)
-// => [1]
-
-// Different behavior with pipe operator
-query('(false, null, 1) | . // 42', null)
-// => [42, 42, 1]
-
-// Using as a fallback in objects
-query('{ name: .name, status: (.status // "unknown") }', {name: "test"})
-// => [{"name": "test", "status": "unknown"}]
 ```
 
 ### Select Filter
@@ -703,6 +732,18 @@ npm run benchmark:report
 # Run benchmark and update documentation
 npm run benchmark:docs
 ```
+
+## Additional Examples
+
+For more advanced examples, check out the examples directory:
+
+- [AST Manipulation Examples](./examples/ast-manipulation.ts)
+- [Comma Operator Examples](./examples/comma-operator.ts)
+- [Complex Operations Examples](./examples/complex-operations.ts)
+- [Identity Object Examples](./examples/identity-object.js)
+- [Map Examples](./examples/map-examples.js)
+- [Select Filter Examples](./examples/select-filter.js)
+- [CLI Usage Examples](./examples/cli/usage-examples.md)
 
 ## License
 
