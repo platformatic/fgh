@@ -8,9 +8,67 @@
 
 import { FGHParser } from './parser.ts'
 import { FGHCodeGenerator } from './generator.ts'
-import type { QueryFunction } from './types.ts'
 import { ParseError } from './types.ts'
+import type {
+  // Core types
+  QueryFunction, ASTNode, BaseNode, JSONValue, QueryResult, NodeType,
+  
+  // Node types
+  IdentityNode, PropertyAccessNode, IndexAccessNode, PipeNode, OptionalNode,
+  SequenceNode, ArrayIterationNode, SliceNode, ObjectFieldNode,
+  ObjectConstructionNode, ArrayConstructionNode, SumNode, DifferenceNode,
+  MultiplyNode, DivideNode, ModuloNode, LiteralNode, RecursiveDescentNode,
+  MapFilterNode, MapValuesFilterNode, SelectFilterNode, ConditionalNode,
+  SortNode, SortByNode, GreaterThanNode, GreaterThanOrEqualNode,
+  LessThanNode, LessThanOrEqualNode, EqualNode, NotEqualNode,
+  AndNode, OrNode, NotNode, DefaultNode, KeysNode, KeysUnsortedNode,
+  EmptyNode, TostringNode, TonumberNode,
+  
+  // Error types
+  FGHError
+} from './types.ts'
 import { safeExecute, attemptErrorRecovery, ExecutionError } from './helpers/error-handling.ts'
+
+/**
+ * Compiles a JQ expression into a reusable function
+ *
+ * @param expression The JQ expression to compile
+ * @returns A function that can be called with input data
+ *
+ * @example
+ * const getFirstName = compile('.name[0]');
+ * const firstName = getFirstName({name: ['John', 'Doe']});
+ */
+/**
+ * Parses a JQ expression string into an AST
+ *
+ * @param expression The JQ expression to parse
+ * @returns The AST representation of the expression
+ *
+ * @example
+ * const ast = parse('.name[0]');
+ */
+export function parse (expression: string): ASTNode {
+  const parser = new FGHParser(expression)
+  return parser.parse()
+}
+
+/**
+ * Compiles an AST node into a reusable function
+ *
+ * @param node The AST node to compile
+ * @returns A function that can be called with input data
+ *
+ * @example
+ * const ast = parse('.name[0]');
+ * const fn = compileFromAST(ast);
+ * const result = fn({name: ['John', 'Doe']});
+ */
+export function compileFromAST (node: ASTNode): QueryFunction {
+  const generator = new FGHCodeGenerator()
+  const fn = generator.generate(node)
+  return fn as QueryFunction
+}
 
 /**
  * Compiles a JQ expression into a reusable function
@@ -24,13 +82,8 @@ import { safeExecute, attemptErrorRecovery, ExecutionError } from './helpers/err
  */
 export function compile (expression: string): QueryFunction {
   try {
-    const parser = new FGHParser(expression)
-    const generator = new FGHCodeGenerator()
-
-    const ast = parser.parse()
-    const fn = generator.generate(ast)
-
-    return fn as QueryFunction
+    const ast = parse(expression)
+    return compileFromAST(ast)
   } catch (error) {
     // Attempt error recovery
     if (error instanceof ParseError) {
@@ -109,12 +162,70 @@ export function safeQuery (expression: string, input: unknown): unknown[] {
   }
 }
 
-// Export compile and query functions as named exports and default exports
+// Export functions as named exports and default exports
 export default {
+  parse,
+  compileFromAST,
   compile,
   query,
   safeQuery
 }
 
 // Export types
-export type { QueryFunction }
+export type {
+  // Core types
+  QueryFunction,
+  JSONValue,
+  QueryResult,
+  NodeType,
+  
+  // Base node type
+  BaseNode,
+  
+  // AST node types
+  ASTNode,
+  IdentityNode,
+  PropertyAccessNode,
+  IndexAccessNode,
+  PipeNode,
+  OptionalNode,
+  SequenceNode,
+  ArrayIterationNode,
+  SliceNode,
+  ObjectFieldNode,
+  ObjectConstructionNode,
+  ArrayConstructionNode,
+  SumNode,
+  DifferenceNode,
+  MultiplyNode,
+  DivideNode,
+  ModuloNode,
+  LiteralNode,
+  RecursiveDescentNode,
+  MapFilterNode,
+  MapValuesFilterNode,
+  SelectFilterNode,
+  ConditionalNode,
+  SortNode,
+  SortByNode,
+  GreaterThanNode,
+  GreaterThanOrEqualNode,
+  LessThanNode,
+  LessThanOrEqualNode,
+  EqualNode,
+  NotEqualNode,
+  AndNode,
+  OrNode,
+  NotNode,
+  DefaultNode,
+  KeysNode,
+  KeysUnsortedNode,
+  EmptyNode,
+  TostringNode,
+  TonumberNode,
+  
+  // Error types
+  FGHError,
+  ParseError,
+  ExecutionError
+}

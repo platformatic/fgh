@@ -4,6 +4,50 @@ This document provides detailed information about the FGH API and the supported 
 
 ## Core Functions
 
+### parse(expression: string): ASTNode
+
+Parses a JQ expression into an Abstract Syntax Tree (AST) without compiling it to a function. This is useful for analyzing, transforming, or programmatically constructing query expressions.
+
+**Parameters:**
+- `expression`: A string containing a valid JQ expression
+
+**Returns:**
+- An AST node representing the parsed expression
+
+**Example:**
+```typescript
+import { parse } from 'fgh';
+
+const ast = parse('.people[].name');
+// ast contains the parsed structure that can be analyzed or modified
+```
+
+### compileFromAST(node: ASTNode): JQFunction
+
+Compiles an AST node into a reusable function. This allows you to execute programmatically generated or modified ASTs.
+
+**Parameters:**
+- `node`: An AST node representation of a JQ expression
+
+**Returns:**
+- A function that accepts JSON input and returns the transformed result
+
+**Example:**
+```typescript
+import { parse, compileFromAST } from 'fgh';
+
+// Parse the expression into an AST
+const ast = parse('.people[].name');
+
+// Modify the AST programmatically if needed
+// ...
+
+// Compile the AST into a function
+const getNames = compileFromAST(ast);
+const names = getNames({ people: [{ name: 'John' }, { name: 'Jane' }] });
+// => ['John', 'Jane']
+```
+
 ### compile(expression: string): JQFunction
 
 Compiles a JQ expression into a reusable function. This is the recommended approach for performance-critical applications that will reuse the same expression multiple times.
