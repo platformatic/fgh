@@ -8,7 +8,6 @@
 
 /* eslint no-new-func: "off" */
 import type {
-  CodeGenerator,
   ASTNode,
   PropertyAccessNode,
   IndexAccessNode,
@@ -57,7 +56,7 @@ import {
   toNumber
 } from './helpers/index.ts'
 
-export class FGHCodeGenerator implements CodeGenerator {
+export class FGHCodeGenerator {
   private generateNode (node: ASTNode): string {
     switch (node.type) {
       case 'Identity':

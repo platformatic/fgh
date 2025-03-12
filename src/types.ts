@@ -74,15 +74,6 @@ export interface Token {
   position: number;
 }
 
-export interface Lexer {
-  nextToken(): Token | null;
-  hasMoreTokens(): boolean;
-}
-
-export interface CodeGenerator {
-  generate(ast: ASTNode): Function;
-}
-
 // NodeType must include all possible node types used in the switch statement
 export type NodeType =
   | 'Identity'
