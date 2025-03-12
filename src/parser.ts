@@ -1437,12 +1437,12 @@ export class JQParser {
           }
         } else {
           this.advance() // Consume [
-          
+
           // Special handling for string key property access: ["x-user-id"]
           if (this.currentToken?.type === 'STRING' as TokenType) {
             const stringProperty = this.currentToken.value
             this.advance() // Consume string
-            
+
             // Ensure closing bracket
             if (this.currentToken?.type !== ']' as TokenType) {
               throw new ParseError(
@@ -1451,7 +1451,7 @@ export class JQParser {
               )
             }
             this.advance() // Consume ]
-            
+
             // Create property access node with string key
             expr = {
               type: 'PropertyAccess',
@@ -1517,10 +1517,10 @@ export class JQParser {
                 // It's a comma-separated list of indices
                 // First index is already consumed
                 const indices = [num]
-                
+
                 while (this.currentToken?.type === ',' as TokenType) {
                   this.advance() // Consume comma
-                  
+
                   // Parse next index
                   if (this.currentToken?.type === 'NUM' as TokenType) {
                     indices.push(parseInt(this.currentToken.value, 10))
@@ -1542,9 +1542,9 @@ export class JQParser {
                     )
                   }
                 }
-                
+
                 this.expect(']')
-                
+
                 // Create a sequence of index accesses
                 if (indices.length === 1) {
                   expr = {
@@ -1556,12 +1556,12 @@ export class JQParser {
                 } else {
                   // For multiple indices, create a Sequence
                   const expressions = indices.map(index => ({
-                    type: 'IndexAccess',
+                    type: 'IndexAccess' as const,
                     position: pos,
                     index,
                     input: expr
-                  }));
-                  
+                  }))
+
                   expr = {
                     type: 'Sequence',
                     position: pos,
@@ -1603,24 +1603,24 @@ export class JQParser {
             property,
             input: expr
           }
-          
+
           // Check for string literal property access: .headers["x-user-id"]
           if (this.currentToken?.type === '[' as TokenType) {
-            const bracketPos = this.currentToken.position
+            // Position is tracked through basePos, no need for bracketPos
             this.advance() // Consume [
-            
+
             // Check for string literal
             if (this.currentToken?.type === 'STRING' as TokenType) {
               const stringProperty = this.currentToken.value
               this.advance() // Consume string
-              
+
               // Ensure closing bracket
               if (this.currentToken?.type !== ']' as TokenType) {
-                throw new ParseError(`Expected closing bracket after string property, got ${this.currentToken?.type ?? 'EOF'}`, 
+                throw new ParseError(`Expected closing bracket after string property, got ${this.currentToken?.type ?? 'EOF'}`,
                   this.currentToken?.position ?? -1)
               }
               this.advance() // Consume ]
-              
+
               // Create a new property access node with the string property
               expr = {
                 type: 'PropertyAccess',

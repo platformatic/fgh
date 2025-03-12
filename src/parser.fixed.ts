@@ -16,16 +16,16 @@ export class JQParser {
   private currentToken: Token | null = null
   private basePos: number = 0
 
-  constructor(input: string) {
+  constructor (input: string) {
     this.lexer = new JQLexer(input)
     this.advance()
   }
 
-  private advance(): void {
+  private advance (): void {
     this.currentToken = this.lexer.nextToken()
   }
 
-  private expect(expectedType: TokenType): Token {
+  private expect (expectedType: TokenType): Token {
     const token = this.currentToken
     if (!token || token.type !== expectedType) {
       throw new ParseError(
@@ -38,7 +38,7 @@ export class JQParser {
   }
 
   // This is a complete rewrite of parseChain method with proper indentation and braces
-  private parseChain(): ASTNode {
+  private parseChain (): ASTNode {
     let expr = this.parsePrimary()
 
     while (this.currentToken) {
@@ -66,15 +66,15 @@ export class JQParser {
           if (nextToken) {
             (this.lexer as any).position -= nextToken.value?.length || 0
           }
-          
+
           // Check if this is a string literal access like ["x-user-id"]
           if (nextToken?.type === 'STRING' as TokenType) {
             this.advance() // Consume [
             const stringProperty = this.expect('STRING').value
-            
+
             // Ensure closing bracket
             this.expect(']')
-            
+
             // Create a property access node with the string property
             expr = {
               type: 'PropertyAccess',
@@ -86,7 +86,7 @@ export class JQParser {
           } else {
             // Handle other array access types
             this.advance() // Consume [
-            
+
             if (this.currentToken?.type === 'NUM' as TokenType) {
               const numValue = parseInt(this.currentToken.value, 10)
               this.advance() // Consume number
@@ -117,7 +117,7 @@ export class JQParser {
               // Negative number
               this.advance() // Consume -
               const num = -parseInt(this.expect('NUM').value, 10)
-              
+
               if (this.currentToken?.type === ':' as TokenType) {
                 // Slice with negative start
                 this.advance() // Consume :
@@ -169,21 +169,21 @@ export class JQParser {
             property,
             input: expr
           }
-          
+
           // Check for string literal property access: .headers["x-user-id"]
           if (this.currentToken?.type === '[' as TokenType) {
             this.advance() // Consume [
             if (this.currentToken?.type === 'STRING' as TokenType) {
               const stringProperty = this.currentToken.value
               this.advance() // Consume string
-              
+
               // Ensure closing bracket
               if (this.currentToken?.type !== ']' as TokenType) {
-                throw new ParseError(`Expected closing bracket after string property, got ${this.currentToken?.type ?? 'EOF'}`, 
+                throw new ParseError(`Expected closing bracket after string property, got ${this.currentToken?.type ?? 'EOF'}`,
                   this.currentToken?.position ?? -1)
               }
               this.advance() // Consume ]
-              
+
               // Create a new property access node with the string property
               expr = {
                 type: 'PropertyAccess',
@@ -211,20 +211,20 @@ export class JQParser {
   }
 
   // The rest of the methods would go here
-  
+
   // This is a placeholder for the other methods - they don't need to be functional for our test
   // because we'll only be testing the string property access feature which is in parseChain
-  
-  private parsePrimary(): ASTNode {
+
+  private parsePrimary (): ASTNode {
     if (!this.currentToken) {
       throw new ParseError('Unexpected end of input', -1)
     }
-    
+
     // Handle DOT token for property access
     if (this.currentToken.type === 'DOT' as TokenType) {
       const dotPos = this.basePos === 0 ? this.currentToken.position : this.basePos
       this.advance() // Consume dot
-      
+
       // If followed by an identifier, it's a property access
       if (this.currentToken?.type === 'IDENT' as TokenType) {
         const property = this.currentToken.value
@@ -235,25 +235,25 @@ export class JQParser {
           property
         }
       }
-      
+
       // If just a dot, it's an identity
       return { type: 'Identity', position: dotPos }
     }
-    
+
     // For all other token types, return identity (simplified for test)
     return { type: 'Identity', position: this.currentToken.position }
   }
-  
-  parse(): ASTNode {
-    const node = this.parseChain();
-    
+
+  parse (): ASTNode {
+    const node = this.parseChain()
+
     if (this.currentToken !== null) {
       throw new ParseError(
         `Unexpected token: ${this.currentToken.value}`,
         this.currentToken.position
-      );
+      )
     }
-    
-    return node;
+
+    return node
   }
 }
