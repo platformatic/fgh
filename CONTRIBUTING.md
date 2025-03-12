@@ -100,7 +100,23 @@ Please update documentation for any changes:
 1. Update JSDoc comments for public functions
 2. Add examples for new features
 3. Update the README.md if necessary
-4. Update API.md in the docs directory
+
+## CLI Development
+
+The CLI tool can be run directly from source during development using:
+
+```bash
+# Basic usage (reads from stdin)
+cat data.ndjson | node --no-warnings --experimental-strip-types src/cli/index.ts '.name'
+
+# Read from file
+node --no-warnings --experimental-strip-types src/cli/index.ts -f data.ndjson '.users[].name'
+
+# Exit on first error
+node --no-warnings --experimental-strip-types src/cli/index.ts -e -f data.ndjson '.complex.expression'
+```
+
+This is useful for testing CLI changes during development, but end-users should use the globally installed `fgh` command.
 
 ## License
 

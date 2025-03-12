@@ -666,28 +666,26 @@ query('.items[] | { original: ., as_number: tonumber }', { items: [42, "42"] })
 
 ## CLI Tool
 
-FGH includes a command-line interface (CLI) tool for processing newline-delimited JSON data using JQ expressions. To use it, you need to call the Node.js file directly:
+FGH includes a command-line interface (CLI) tool for processing newline-delimited JSON data using JQ expressions. To use it, you should install FGH globally:
+
+```bash
+npm install -g fgh
+```
+
+Once installed, you can use the `fgh` command directly from your terminal:
 
 ```bash
 # Basic usage (reads from stdin)
-cat data.ndjson | node --no-warnings --experimental-strip-types src/cli/index.ts '.name'
+cat data.ndjson | fgh '.name'
 
 # Read from file
-node --no-warnings --experimental-strip-types src/cli/index.ts -f data.ndjson '.users[].name'
+fgh -f data.ndjson '.users[].name'
 
 # Exit on first error
-node --no-warnings --experimental-strip-types src/cli/index.ts -e -f data.ndjson '.complex.expression'
+fgh -e -f data.ndjson '.complex.expression'
 ```
 
 The CLI processes each line of input as a separate JSON document, applies the JQ expression, and outputs the result as a newline-delimited JSON stream.
-
-If you install the package globally or use npm scripts, you can use the shorter form:
-
-```bash
-# When installed globally or via npm scripts
-cat data.ndjson | fgh '.name'
-fgh -f data.ndjson '.users[].name'
-```
 
 See [CLI usage examples](./examples/cli/usage-examples.md) for more details.
 
