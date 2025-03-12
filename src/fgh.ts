@@ -8,7 +8,7 @@
 
 import { FGHParser } from './parser.ts'
 import { FGHCodeGenerator } from './generator.ts'
-import type { QueryFunction, CompileOptions } from './types.ts'
+import type { QueryFunction } from './types.ts'
 import { ParseError } from './types.ts'
 import { safeExecute, attemptErrorRecovery, ExecutionError } from './helpers/error-handling.ts'
 
@@ -16,14 +16,13 @@ import { safeExecute, attemptErrorRecovery, ExecutionError } from './helpers/err
  * Compiles a JQ expression into a reusable function
  *
  * @param expression The JQ expression to compile
- * @param options Optional compilation options
  * @returns A function that can be called with input data
  *
  * @example
  * const getFirstName = compile('.name[0]');
  * const firstName = getFirstName({name: ['John', 'Doe']});
  */
-export function compile (expression: string, options?: CompileOptions): QueryFunction {
+export function compile (expression: string): QueryFunction {
   try {
     const parser = new FGHParser(expression)
     const generator = new FGHCodeGenerator()
@@ -118,4 +117,4 @@ export default {
 }
 
 // Export types
-export type { QueryFunction, CompileOptions }
+export type { QueryFunction }

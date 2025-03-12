@@ -423,20 +423,3 @@ export type QueryFunction = (input: unknown) => unknown[]
 
 // Following the refactoring to remove array flags, we no longer need the MarkedArray type
 // The standardizeResult function consistently handles arrays without the need for special flags
-
-export interface CompileOptions {
-  /**
-   * Whether to cache compiled expressions
-   */
-  cache?: boolean;
-
-  /**
-   * Whether to attempt error recovery for common syntax errors
-   */
-  attemptRecovery?: boolean;
-
-  /**
-   * Whether to enable debug logging
-   */
-  debug?: boolean;
-}
