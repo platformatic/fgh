@@ -8,16 +8,16 @@
 
 // src/parser.ts - Includes support for array construction [.prop1, .prop2[]]
 import { ParseError } from './types.ts'
-import type { Token, TokenType, Lexer, ASTNode } from './types.ts'
-import { JQLexer } from './lexer.ts'
+import type { Token, TokenType, ASTNode } from './types.ts'
+import { FGHLexer } from './lexer.ts'
 
-export class JQParser {
-  private lexer: Lexer
+export class FGHParser {
+  private lexer: FGHLexer
   private currentToken: Token | null = null
   private basePos: number = 0
 
   constructor (input: string) {
-    this.lexer = new JQLexer(input)
+    this.lexer = new FGHLexer(input)
     this.advance()
   }
 
@@ -25,7 +25,7 @@ export class JQParser {
     // Check for array literals [...]
     if (this.currentToken?.type === '[' as TokenType) {
       // Special case for array literals with quotes/strings
-      if (this.lexer instanceof JQLexer) {
+      if (this.lexer instanceof FGHLexer) {
         const input = (this.lexer as any).input
 
         // If the input contains quotes, this might be a string array literal
@@ -396,7 +396,7 @@ export class JQParser {
         const nextToken = this.lexer.nextToken()
         if (nextToken) {
           // Properly restore the lexer position
-          if (this.lexer instanceof JQLexer) {
+          if (this.lexer instanceof FGHLexer) {
             (this.lexer as any).position -= nextToken.value?.length || 0
             if (nextToken.type === 'STRING') {
               // Back up additionally for the quotes

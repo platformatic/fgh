@@ -74,15 +74,6 @@ export interface Token {
   position: number;
 }
 
-export interface Lexer {
-  nextToken(): Token | null;
-  hasMoreTokens(): boolean;
-}
-
-export interface CodeGenerator {
-  generate(ast: ASTNode): Function;
-}
-
 // NodeType must include all possible node types used in the switch statement
 export type NodeType =
   | 'Identity'
@@ -390,7 +381,7 @@ export interface Parser {
 /**
  * Base error class for all FGH errors
  */
-export class JQError extends Error {
+export class FGHError extends Error {
   /**
    * The underlying error that caused this error
    */
@@ -398,14 +389,14 @@ export class JQError extends Error {
 
   constructor (message: string) {
     super(message)
-    this.name = 'JQError'
+    this.name = 'FGHError'
   }
 }
 
 /**
  * Error thrown during parsing
  */
-export class ParseError extends JQError {
+export class ParseError extends FGHError {
   /**
    * Position in the input where the error occurred
    */
@@ -421,31 +412,14 @@ export class ParseError extends JQError {
 /**
  * Error thrown during query execution
  */
-export class ExecutionError extends JQError {
+export class ExecutionError extends FGHError {
   constructor (message: string) {
     super(message)
     this.name = 'ExecutionError'
   }
 }
 
-export type JQFunction = (input: unknown) => unknown[]
+export type QueryFunction = (input: unknown) => unknown[]
 
 // Following the refactoring to remove array flags, we no longer need the MarkedArray type
 // The standardizeResult function consistently handles arrays without the need for special flags
-
-export interface CompileOptions {
-  /**
-   * Whether to cache compiled expressions
-   */
-  cache?: boolean;
-
-  /**
-   * Whether to attempt error recovery for common syntax errors
-   */
-  attemptRecovery?: boolean;
-
-  /**
-   * Whether to enable debug logging
-   */
-  debug?: boolean;
-}

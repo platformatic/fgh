@@ -6,10 +6,10 @@
  * with support for string escaping and proper error reporting.
  */
 
-import type { Token, Lexer } from './types.ts'
+import type { Token } from './types.ts'
 import { ParseError } from './types.ts'
 
-export class JQLexer implements Lexer {
+export class FGHLexer {
   // For debugging
   log (message: string) {
     // console.log(`[Lexer] ${message}`)

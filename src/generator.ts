@@ -8,7 +8,6 @@
 
 /* eslint no-new-func: "off" */
 import type {
-  CodeGenerator,
   ASTNode,
   PropertyAccessNode,
   IndexAccessNode,
@@ -57,7 +56,7 @@ import {
   toNumber
 } from './helpers/index.ts'
 
-export class JQCodeGenerator implements CodeGenerator {
+export class FGHCodeGenerator {
   private generateNode (node: ASTNode): string {
     switch (node.type) {
       case 'Identity':
@@ -179,7 +178,7 @@ export class JQCodeGenerator implements CodeGenerator {
   private generateSequence (node: SequenceNode): string {
     const expressions = node.expressions.map((element: ASTNode) => {
       const elementCode = this.generateNode(element)
-      return JQCodeGenerator.wrapInFunction(elementCode)
+      return FGHCodeGenerator.wrapInFunction(elementCode)
     }).join(', ')
 
     return 'handleSequence(input, [' + expressions + '])'
@@ -196,7 +195,7 @@ export class JQCodeGenerator implements CodeGenerator {
   private generatePipe (node: PipeNode): string {
     const leftCode = this.generateNode(node.left)
     const rightCode = this.generateNode(node.right)
-    return `handlePipe(input, ${JQCodeGenerator.wrapInFunction(leftCode)}, ${JQCodeGenerator.wrapInFunction(rightCode)})`
+    return `handlePipe(input, ${FGHCodeGenerator.wrapInFunction(leftCode)}, ${FGHCodeGenerator.wrapInFunction(rightCode)})`
   }
 
   private generateObjectConstruction (node: any): string {
@@ -210,10 +209,10 @@ export class JQCodeGenerator implements CodeGenerator {
     if (node.isDynamic) {
       // Dynamic key: {(.user): .titles}
       const keyCode = this.generateNode(node.key)
-      return `{ isDynamic: true, key: ${JQCodeGenerator.wrapInFunction(keyCode)}, value: ${JQCodeGenerator.wrapInFunction(valueCode)} }`
+      return `{ isDynamic: true, key: ${FGHCodeGenerator.wrapInFunction(keyCode)}, value: ${FGHCodeGenerator.wrapInFunction(valueCode)} }`
     } else {
       // Static key: { user: .name }
-      return `{ isDynamic: false, key: '${node.key}', value: ${JQCodeGenerator.wrapInFunction(valueCode)} }`
+      return `{ isDynamic: false, key: '${node.key}', value: ${FGHCodeGenerator.wrapInFunction(valueCode)} }`
     }
   }
 
@@ -248,7 +247,7 @@ export class JQCodeGenerator implements CodeGenerator {
 
     const elements = node.elements.map((element: ASTNode) => {
       const elementCode = this.generateNode(element)
-      return JQCodeGenerator.wrapInFunctionWithAstType(elementCode, element.type)
+      return FGHCodeGenerator.wrapInFunctionWithAstType(elementCode, element.type)
     }).join(', ')
 
     // Use the constructArray helper which handles all array construction consistently
@@ -299,29 +298,29 @@ export class JQCodeGenerator implements CodeGenerator {
 
   private generateMapFilter (node: any): string {
     const filterCode = this.generateNode(node.filter)
-    const filterFn = JQCodeGenerator.wrapInFunction(filterCode)
+    const filterFn = FGHCodeGenerator.wrapInFunction(filterCode)
 
     return `handleMap(input, ${filterFn})`
   }
 
   private generateMapValuesFilter (node: any): string {
     const filterCode = this.generateNode(node.filter)
-    const filterFn = JQCodeGenerator.wrapInFunction(filterCode)
+    const filterFn = FGHCodeGenerator.wrapInFunction(filterCode)
 
     return `handleMapValues(input, ${filterFn})`
   }
 
   private generateSelectFilter (node: any): string {
     const conditionCode = this.generateNode(node.condition)
-    const conditionFn = JQCodeGenerator.wrapInFunction(conditionCode)
+    const conditionFn = FGHCodeGenerator.wrapInFunction(conditionCode)
 
     return `handleSelect(input, ${conditionFn})`
   }
 
   private generateConditional (node: any): string {
-    const conditionCode = JQCodeGenerator.wrapInFunction(this.generateNode(node.condition))
-    const thenCode = JQCodeGenerator.wrapInFunction(this.generateNode(node.thenBranch))
-    const elseCode = node.elseBranch ? JQCodeGenerator.wrapInFunction(this.generateNode(node.elseBranch)) : 'input'
+    const conditionCode = FGHCodeGenerator.wrapInFunction(this.generateNode(node.condition))
+    const thenCode = FGHCodeGenerator.wrapInFunction(this.generateNode(node.thenBranch))
+    const elseCode = node.elseBranch ? FGHCodeGenerator.wrapInFunction(this.generateNode(node.elseBranch)) : 'input'
 
     return `handleConditional(input, ${conditionCode}, ${thenCode}, ${elseCode})`
   }
@@ -333,7 +332,7 @@ export class JQCodeGenerator implements CodeGenerator {
   private generateSortBy (node: any): string {
     const pathFunctions = node.paths.map((path: any) => {
       const pathCode = this.generateNode(path)
-      return JQCodeGenerator.wrapInFunction(pathCode)
+      return FGHCodeGenerator.wrapInFunction(pathCode)
     }).join(', ')
 
     return `sortArrayBy(input, [${pathFunctions}])`

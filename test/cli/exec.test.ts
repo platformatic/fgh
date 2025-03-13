@@ -55,7 +55,7 @@ test('CLI can read from file', async () => {
 test('CLI exits on first error with -e flag', async () => {
   const filePath = path.resolve('examples/cli/sample.ndjson')
 
-  // Run with a JQ expression that will cause an error
+  // Run with a FGH expression that will cause an error
   const result = await runCLI(['-e', '-f', filePath, '.non_existent.property'])
 
   // We should get either an error in stderr or some kind of error indication

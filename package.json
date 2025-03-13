@@ -1,7 +1,7 @@
 {
   "name": "fgh",
   "version": "2.1.0",
-  "description": "A typescript implementation of the JQ language",
+  "description": "A typescript implementation of the JQ-like query language",
   "main": "dist/fgh.js",
   "bin": {
     "fgh": "dist/cli/index.js"

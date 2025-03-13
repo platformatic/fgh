@@ -1,16 +1,16 @@
 import { test } from 'node:test'
 import assert from 'node:assert'
-import { JQLexer } from '../src/lexer.ts'
+import { FGHLexer } from '../src/lexer.ts'
 import { ParseError } from '../src/types.ts'
 
 test('lexer handles empty input', () => {
-  const lexer = new JQLexer('')
+  const lexer = new FGHLexer('')
   assert.equal(lexer.hasMoreTokens(), false)
   assert.equal(lexer.nextToken(), null)
 })
 
 test('lexer tokenizes simple path', () => {
-  const lexer = new JQLexer('.foo')
+  const lexer = new FGHLexer('.foo')
 
   const dot = lexer.nextToken()
   assert.deepEqual(dot, { type: 'DOT', value: '.', position: 0 })
@@ -22,7 +22,7 @@ test('lexer tokenizes simple path', () => {
 })
 
 test('lexer tokenizes array access', () => {
-  const lexer = new JQLexer('[0]')
+  const lexer = new FGHLexer('[0]')
 
   const leftBracket = lexer.nextToken()
   assert.deepEqual(leftBracket, { type: '[', value: '[', position: 0 })
@@ -37,7 +37,7 @@ test('lexer tokenizes array access', () => {
 })
 
 test('lexer handles whitespace', () => {
-  const lexer = new JQLexer('  .  foo  ')
+  const lexer = new FGHLexer('  .  foo  ')
 
   const dot = lexer.nextToken()
   assert.deepEqual(dot, { type: 'DOT', value: '.', position: 2 })
@@ -49,20 +49,17 @@ test('lexer handles whitespace', () => {
 })
 
 test('lexer throws on invalid characters', () => {
-  const lexer = new JQLexer('@invalid')
+  const lexer = new FGHLexer('@invalid')
 
   assert.throws(
     () => lexer.nextToken(),
-    (err: unknown) => {
-      return err instanceof ParseError &&
-        err.message === 'Parse error at position 0: Unexpected character: @'
-    }
+    new ParseError('Unexpected character: @', 0)
   )
 })
 
 test('lexer handles array slices', () => {
   // Test explicit start and end
-  let lexer = new JQLexer('.[2:4]')
+  let lexer = new FGHLexer('.[2:4]')
   let expected = [
     { type: 'DOT', value: '.', position: 0 },
     { type: '[', value: '[', position: 1 },
@@ -79,7 +76,7 @@ test('lexer handles array slices', () => {
   assert.equal(lexer.nextToken(), null)
 
   // Test implicit start
-  lexer = new JQLexer('.[:3]')
+  lexer = new FGHLexer('.[:3]')
   expected = [
     { type: 'DOT', value: '.', position: 0 },
     { type: '[', value: '[', position: 1 },
@@ -95,7 +92,7 @@ test('lexer handles array slices', () => {
   assert.equal(lexer.nextToken(), null)
 
   // Test negative index
-  lexer = new JQLexer('.[-2:]')
+  lexer = new FGHLexer('.[-2:]')
   expected = [
     { type: 'DOT', value: '.', position: 0 },
     { type: '[', value: '[', position: 1 },
@@ -113,7 +110,7 @@ test('lexer handles array slices', () => {
 })
 
 test('lexer handles complex expressions', () => {
-  const lexer = new JQLexer('.foo[0] | .bar.baz ? .*')
+  const lexer = new FGHLexer('.foo[0] | .bar.baz ? .*')
   const expected = [
     { type: 'DOT', value: '.', position: 0 },
     { type: 'IDENT', value: 'foo', position: 1 },
@@ -139,7 +136,7 @@ test('lexer handles complex expressions', () => {
 })
 
 test('lexer handles plus operator', () => {
-  const lexer = new JQLexer('.a + 1')
+  const lexer = new FGHLexer('.a + 1')
   const expected = [
     { type: 'DOT', value: '.', position: 0 },
     { type: 'IDENT', value: 'a', position: 1 },
@@ -156,7 +153,7 @@ test('lexer handles plus operator', () => {
 })
 
 test('lexer handles string literals', () => {
-  const lexer = new JQLexer('["xml", "yaml"]')
+  const lexer = new FGHLexer('["xml", "yaml"]')
   const expected = [
     { type: '[', value: '[', position: 0 },
     { type: 'STRING', value: 'xml', position: 1 },

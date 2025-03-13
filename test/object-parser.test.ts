@@ -1,9 +1,9 @@
 import { test } from 'node:test'
 import assert from 'node:assert'
-import { JQParser } from '../src/parser.ts'
+import { FGHParser } from '../src/parser.ts'
 
 test('parser handles simple object construction', () => {
-  const parser = new JQParser('{ user, name }')
+  const parser = new FGHParser('{ user, name }')
   const ast = parser.parse()
 
   assert.deepEqual(ast, {
@@ -37,7 +37,7 @@ test('parser handles simple object construction', () => {
 })
 
 test('parser handles object construction with explicit values', () => {
-  const parser = new JQParser('{ user: .name, count: .items[] }')
+  const parser = new FGHParser('{ user: .name, count: .items[] }')
   const ast = parser.parse()
 
   assert.deepEqual(ast, {
@@ -75,7 +75,7 @@ test('parser handles object construction with explicit values', () => {
 })
 
 test('parser handles object construction with dynamic keys', () => {
-  const parser = new JQParser('{(.user): .titles}')
+  const parser = new FGHParser('{(.user): .titles}')
   const ast = parser.parse()
 
   assert.deepEqual(ast, {
@@ -102,7 +102,7 @@ test('parser handles object construction with dynamic keys', () => {
 })
 
 test('parser handles object construction within a pipe', () => {
-  const parser = new JQParser('.data | { name: .user.name, age: .user.age }')
+  const parser = new FGHParser('.data | { name: .user.name, age: .user.age }')
   const ast = parser.parse()
 
   // Extract the fields part for easier comparison

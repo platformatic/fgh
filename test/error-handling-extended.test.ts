@@ -24,7 +24,7 @@ describe('Extended error handling tests', async (t) => {
     }
   })
 
-  test('safeExecute should handle JQError objects properly', () => {
+  test('safeExecute should handle FGHError objects properly', () => {
     try {
       safeExecute(() => {
         const error = new ParseError('Parse error message', 10)
@@ -39,7 +39,7 @@ describe('Extended error handling tests', async (t) => {
     }
   })
 
-  test('safeExecute should preserve original JQError when no custom message', () => {
+  test('safeExecute should preserve original FGHError when no custom message', () => {
     try {
       safeExecute(() => {
         throw new ParseError('Original parse error', 5)
@@ -52,7 +52,7 @@ describe('Extended error handling tests', async (t) => {
     }
   })
 
-  test('safeExecute should wrap non-JQError in ExecutionError', () => {
+  test('safeExecute should wrap non-FGHError in ExecutionError', () => {
     try {
       safeExecute(() => {
         throw new TypeError('Type error')

@@ -3,11 +3,11 @@
 import { test, describe } from 'node:test'
 import assert from 'node:assert'
 import { query } from '../src/fgh.ts'
-import { JQLexer } from '../src/lexer.ts'
-import { JQParser } from '../src/parser.ts'
+import { FGHLexer } from '../src/lexer.ts'
+import { FGHParser } from '../src/parser.ts'
 
 test('recursive descent operator lexer test', () => {
-  const lexer = new JQLexer('..')
+  const lexer = new FGHLexer('..')
 
   const dotdot = lexer.nextToken()
   assert.deepEqual(dotdot, { type: 'DOT', value: '..', position: 0 })
@@ -16,7 +16,7 @@ test('recursive descent operator lexer test', () => {
 })
 
 test('recursive descent operator combined with pipe', () => {
-  const lexer = new JQLexer('.. | .a?')
+  const lexer = new FGHLexer('.. | .a?')
 
   const dotdot = lexer.nextToken()
   assert.deepEqual(dotdot, { type: 'DOT', value: '..', position: 0 })
@@ -37,7 +37,7 @@ test('recursive descent operator combined with pipe', () => {
 })
 
 test('parser handles recursive descent operator', () => {
-  const parser = new JQParser('..')
+  const parser = new FGHParser('..')
   const ast = parser.parse()
   assert.deepEqual(ast, {
     type: 'RecursiveDescent',
@@ -46,7 +46,7 @@ test('parser handles recursive descent operator', () => {
 })
 
 test('parser handles recursive descent operator with pipe', () => {
-  const parser = new JQParser('.. | .a')
+  const parser = new FGHParser('.. | .a')
   const ast = parser.parse()
   assert.deepEqual(ast, {
     type: 'Pipe',

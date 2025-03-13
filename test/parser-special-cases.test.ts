@@ -1,6 +1,6 @@
 import { test } from 'node:test'
 import assert from 'node:assert'
-import { JQParser } from '../src/parser.ts'
+import { FGHParser } from '../src/parser.ts'
 
 test('parser handles simple array literals correctly', () => {
   const expressions = [
@@ -11,7 +11,7 @@ test('parser handles simple array literals correctly', () => {
   ]
 
   for (const expr of expressions) {
-    const parser = new JQParser(expr)
+    const parser = new FGHParser(expr)
     const ast = parser.parse()
 
     assert.strictEqual(ast.type, 'ArrayConstruction', `Expression "${expr}" should parse as ArrayConstruction`)
@@ -25,7 +25,7 @@ test('parser handles simple array literals correctly', () => {
 })
 
 test('parser handles empty array construction', () => {
-  const parser = new JQParser('[]')
+  const parser = new FGHParser('[]')
   const ast = parser.parse()
 
   assert.strictEqual(ast.type, 'ArrayConstruction')
@@ -33,14 +33,14 @@ test('parser handles empty array construction', () => {
 })
 
 test('parser handles recursive descent operator', () => {
-  const parser = new JQParser('..')
+  const parser = new FGHParser('..')
   const ast = parser.parse()
 
   assert.strictEqual(ast.type, 'RecursiveDescent')
 })
 
 test('parser handles if-elif-else-end constructs', () => {
-  const parser = new JQParser('if .admin then .name elif .moderator then .username else .id end')
+  const parser = new FGHParser('if .admin then .name elif .moderator then .username else .id end')
   const ast = parser.parse()
 
   assert.strictEqual(ast.type, 'Conditional')
@@ -53,7 +53,7 @@ test('parser handles if-elif-else-end constructs', () => {
 })
 
 test('parser handles object construction with dynamic keys', () => {
-  const parser = new JQParser('{(.key): .value}')
+  const parser = new FGHParser('{(.key): .value}')
   const ast = parser.parse()
 
   assert.strictEqual(ast.type, 'ObjectConstruction')

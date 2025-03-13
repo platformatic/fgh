@@ -9,6 +9,24 @@
 - Lint: `npm run lint`
 - Fix linting issues: `npm run lint:fix`
 - Run examples: `npm run examples`
+- Use the node-runner tool that you have available to run the npm scripts.
+
+### Development CLI Usage
+
+For development and testing of the CLI, you can run it directly from source:
+
+```bash
+# Basic usage (reads from stdin)
+cat data.ndjson | node --no-warnings --experimental-strip-types src/cli/index.ts '.name'
+
+# Read from file
+node --no-warnings --experimental-strip-types src/cli/index.ts -f data.ndjson '.users[].name'
+
+# Exit on first error
+node --no-warnings --experimental-strip-types src/cli/index.ts -e -f data.ndjson '.complex.expression'
+```
+
+End-users should use the `fgh` command after installing the package globally.
 
 ## Code Style Guidelines
 - Use TypeScript with proper type annotations
