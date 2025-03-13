@@ -104,14 +104,14 @@ test('parser handles complex expressions', () => {
 test('parser throws on invalid input', () => {
   assert.throws(
     () => new FGHParser('@invalid').parse(),
-    ParseError
+    new ParseError('Unexpected character: @', 0)
   )
 })
 
 test('parser throws on incomplete input', () => {
   assert.throws(
     () => new FGHParser('[').parse(),
-    ParseError
+    new ParseError('Expected number, minus, or colon after [, got EOF', -1)
   )
 })
 

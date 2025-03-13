@@ -31,9 +31,10 @@ describe('Extended Lexer Tests', async (t) => {
   test('lexer handles unterminated string literal', () => {
     const lexer = new FGHLexer('"Unterminated string')
 
-    assert.throws(() => {
-      lexer.nextToken()
-    }, ParseError)
+    assert.throws(
+      () => lexer.nextToken(),
+      new ParseError('Unterminated string literal starting at position 0 in \'"Untermina...\'', 0)
+    )
   })
 
   test('lexer handles two-character operators', () => {
@@ -124,9 +125,10 @@ describe('Extended Lexer Tests', async (t) => {
   test('lexer handles unexpected characters', () => {
     const lexer = new FGHLexer('@')
 
-    assert.throws(() => {
-      lexer.nextToken()
-    }, ParseError)
+    assert.throws(
+      () => lexer.nextToken(),
+      new ParseError('Unexpected character: @', 0)
+    )
   })
 
   test('lexer properly recognizes all keywords', () => {
@@ -155,8 +157,9 @@ describe('Extended Lexer Tests', async (t) => {
   test('lexer handles unclosed escape sequence at end of string', () => {
     const lexer = new FGHLexer('"test\\')
 
-    assert.throws(() => {
-      lexer.nextToken()
-    }, ParseError)
+    assert.throws(
+      () => lexer.nextToken(),
+      new ParseError('Unterminated string literal starting at position 0 in \'"test\\...\'', 0)
+    )
   })
 })

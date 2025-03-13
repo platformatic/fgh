@@ -53,10 +53,7 @@ test('lexer throws on invalid characters', () => {
 
   assert.throws(
     () => lexer.nextToken(),
-    (err: unknown) => {
-      return err instanceof ParseError &&
-        err.message === 'Parse error at position 0: Unexpected character: @'
-    }
+    new ParseError('Unexpected character: @', 0)
   )
 })
 
