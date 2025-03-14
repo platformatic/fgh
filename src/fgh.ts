@@ -174,7 +174,7 @@ export function safeQuery (expression: string, input: unknown): unknown[] {
  * const ast = parse('.name[0]');
  * const formatted = format(ast); // Returns '.name[0]'
  */
-export function format(node: ASTNode, options: { pretty?: boolean, indentString?: string } = {}): string {
+export function format (node: ASTNode, options: { pretty?: boolean, indentString?: string } = {}): string {
   const formatter = new FGHFormatter()
   return formatter.format(node, options)
 }
@@ -189,7 +189,7 @@ export function format(node: ASTNode, options: { pretty?: boolean, indentString?
  * @example
  * const formatted = formatExpression('.foo|.bar'); // Returns '.foo | .bar'
  */
-export function formatExpression(expression: string, options: { pretty?: boolean, indentString?: string } = {}): string {
+export function formatExpression (expression: string, options: { pretty?: boolean, indentString?: string } = {}): string {
   const ast = parse(expression)
   return format(ast, options)
 }
