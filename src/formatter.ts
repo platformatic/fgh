@@ -409,8 +409,6 @@ export class FGHFormatter {
     if (node.elseBranch) {
       const elseBranch = this.formatNode(node.elseBranch, options)
       result += ` else ${elseBranch}`
-    } else {
-      // No else branch specified
     }
 
     result += ' end'
