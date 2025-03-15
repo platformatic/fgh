@@ -29,7 +29,7 @@ export const accessProperty = (
       results.push(obj.length)
       continue
     }
-    
+
     if (Array.isArray(obj)) {
       if (!optional) {
         throw new Error(`Cannot index array with string ${prop}`)

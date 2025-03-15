@@ -991,7 +991,7 @@ export class FGHParser {
           position: pos
         }
       }
-      
+
       case 'LENGTH': {
         const pos = this.currentToken.position
         this.advance() // Consume 'length'
