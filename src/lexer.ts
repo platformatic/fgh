@@ -223,7 +223,7 @@ export class FGHLexer {
     }
 
     // Check for keywords
-    const keywords = ['map', 'map_values', 'empty', 'if', 'then', 'else', 'elif', 'end', 'sort', 'sort_by', 'select', 'and', 'or', 'not', 'keys', 'keys_unsorted', 'tostring', 'tonumber']
+    const keywords = ['map', 'map_values', 'empty', 'if', 'then', 'else', 'elif', 'end', 'sort', 'sort_by', 'select', 'and', 'or', 'not', 'keys', 'keys_unsorted', 'tostring', 'tonumber', 'length']
     if (keywords.includes(value)) {
       return { type: value.toUpperCase() as any, value, position: startPos }
     }

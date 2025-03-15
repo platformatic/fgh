@@ -53,7 +53,8 @@ import {
   getKeys,
   getKeysUnsorted,
   toString,
-  toNumber
+  toNumber,
+  getLength
 } from './helpers/index.ts'
 
 export class FGHCodeGenerator {
@@ -138,6 +139,8 @@ export class FGHCodeGenerator {
         return this.generateTostring(node)
       case 'Tonumber':
         return this.generateTonumber(node)
+      case 'Length':
+        return this.generateLength(node)
       default: {
         throw new Error(`Unknown node type: ${node}`)
       }
@@ -438,6 +441,11 @@ export class FGHCodeGenerator {
     return 'toNumber(input)'
   }
 
+  private generateLength (node: any): string {
+    // Use the getLength helper function to get the length of values
+    return 'getLength(input)'
+  }
+
   generate (ast: ASTNode): Function {
     const body = this.generateNode(ast)
 
@@ -487,6 +495,7 @@ return result;`
       'getKeysUnsorted',
       'toString',
       'toNumber',
+      'getLength',
       `return function(_input) { const input = [_input]; ${code} }`
     )
 
@@ -527,7 +536,8 @@ return result;`
       getKeys,
       getKeysUnsorted,
       toString,
-      toNumber
+      toNumber,
+      getLength
     )
   }
 }

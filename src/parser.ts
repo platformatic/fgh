@@ -991,6 +991,16 @@ export class FGHParser {
           position: pos
         }
       }
+      
+      case 'LENGTH': {
+        const pos = this.currentToken.position
+        this.advance() // Consume 'length'
+
+        return {
+          type: 'Length',
+          position: pos
+        }
+      }
 
       case 'MAP_VALUES': {
         const pos = this.currentToken.position
