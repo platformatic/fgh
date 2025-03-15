@@ -8,6 +8,7 @@
 
 import { FGHParser } from './parser.ts'
 import { FGHCodeGenerator } from './generator.ts'
+import { FGHFormatter } from './formatter.ts'
 import { ParseError } from './types.ts'
 import type {
   // Core types
@@ -162,16 +163,52 @@ export function safeQuery (expression: string, input: unknown): unknown[] {
   }
 }
 
+/**
+ * Formats an AST node as a string representation of the query expression
+ *
+ * @param node The AST node to format
+ * @param options Formatting options
+ * @returns A string representation of the query expression
+ *
+ * @example
+ * const ast = parse('.name[0]');
+ * const formatted = format(ast); // Returns '.name[0]'
+ */
+export function format (node: ASTNode, options: { pretty?: boolean, indentString?: string } = {}): string {
+  const formatter = new FGHFormatter()
+  return formatter.format(node, options)
+}
+
+/**
+ * Parses a JQ expression string and formats it (potentially with pretty printing)
+ *
+ * @param expression The JQ expression to parse and format
+ * @param options Formatting options
+ * @returns A formatted string representation of the expression
+ *
+ * @example
+ * const formatted = formatExpression('.foo|.bar'); // Returns '.foo | .bar'
+ */
+export function formatExpression (expression: string, options: { pretty?: boolean, indentString?: string } = {}): string {
+  const ast = parse(expression)
+  return format(ast, options)
+}
+
 // Export functions as named exports and default exports
 export default {
   parse,
   compileFromAST,
   compile,
   query,
-  safeQuery
+  safeQuery,
+  format,
+  formatExpression
 }
 
 // Export types
+// Export the FGHFormatter class
+export { FGHFormatter }
+
 export type {
   // Core types
   QueryFunction,

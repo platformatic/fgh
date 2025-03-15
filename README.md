@@ -13,7 +13,7 @@ npm install fgh
 ### Basic API
 
 ```javascript
-import { compile, query, safeQuery, parse, compileFromAST } from 'fgh';
+import { compile, query, safeQuery, parse, compileFromAST, format, formatExpression } from 'fgh';
 
 // Compile a JQ expression into a reusable function
 const getNames = compile('.users[].name');
@@ -33,6 +33,14 @@ const ast = parse('.users[].name');
 
 // Compile an AST into a function
 const fn = compileFromAST(ast);
+
+// Format an AST back into a string expression
+const formatted = format(ast);
+// => '.users[].name'
+
+// Parse and format an expression in one step
+const normalizedExpr = formatExpression('.users[] | .name');
+// => '.users[] | .name'
 ```
 
 ## Working with the AST
@@ -132,7 +140,7 @@ FGH supports many other node types for operations like object construction, arra
 You can create or modify ASTs programmatically by constructing the appropriate node objects:
 
 ```typescript
-import { compileFromAST } from 'fgh';
+import { compileFromAST, format } from 'fgh';
 import type { ASTNode, PipeNode, PropertyAccessNode, ArrayIterationNode } from 'fgh';
 
 // Create a simple AST for .users[].name
@@ -162,6 +170,10 @@ const ast: ASTNode = {
 // Compile the AST into a function
 const fn = compileFromAST(ast);
 
+// Format the AST back to a string expression
+const expr = format(ast);
+// => '.users[] | .name'
+
 // Execute the function
 const result = fn({ users: [{ name: 'John' }, { name: 'Jane' }] });
 // => ['John', 'Jane']
@@ -175,7 +187,9 @@ const result = fn({ users: [{ name: 'John' }, { name: 'Jane' }] });
 
 3. **Query Generation**: Programmatically build ASTs for complex queries based on runtime conditions, user input, or other dynamic factors.
 
-4. **Custom Query Execution Strategies**: Implement custom execution strategies by traversing the AST yourself and applying custom logic for specific node types.
+4. **Query Formatting**: Parse queries and format them for display, normalization, or documentation purposes.
+
+5. **Custom Query Execution Strategies**: Implement custom execution strategies by traversing the AST yourself and applying custom logic for specific node types.
 
 ### Type Definitions
 
@@ -203,6 +217,77 @@ import type {
 3. **Prefer High-Level APIs**: For most use cases, it's simpler to use string expressions with the standard `compile()` function. Only use AST manipulation when you need fine-grained control.
 
 4. **Document AST Transformations**: When implementing AST transformations, document the expected input and output patterns clearly.
+
+## Formatter
+
+FGH includes a formatter that can convert AST nodes back to readable JQ-like expressions. This is useful for debugging, generating documentation, or normalizing query syntax.
+
+### Basic Formatter Usage
+
+```javascript
+import { parse, format, formatExpression } from 'fgh';
+
+// Format an AST node back to a string
+const ast = parse('.users[] | .name');
+const formatted = format(ast);
+// => '.users[] | .name'
+
+// Parse and format in one step (useful for normalizing)
+const normalized = formatExpression('.users[]|.name');
+// => '.users[] | .name'
+
+// Format with pretty printing for complex expressions
+const prettyFormatted = format(parse('{id: .id, values: [.x, .y, .z]}'), { pretty: true });
+// => '{
+  id: .id,
+  values: [
+    .x,
+    .y,
+    .z
+  ]
+}'
+
+// Custom indentation
+const customIndent = formatExpression('{id: .id, values: [.x, .y]}', { 
+  pretty: true, 
+  indentString: '    ' 
+});
+// => '{
+    id: .id,
+    values: [
+        .x,
+        .y
+    ]
+}'
+```
+
+### Formatter Options
+
+```typescript
+interface FormatterOptions {
+  /**
+   * Whether to format the output with indentation and line breaks
+   */
+  pretty?: boolean;
+  
+  /**
+   * Indentation string to use when pretty printing (default: '  ')
+   */
+  indentString?: string;
+}
+```
+
+### Use Cases for the Formatter
+
+1. **Debugging**: Convert ASTs back to readable expressions for debugging or logging.
+
+2. **Normalization**: Standardize query formatting by parsing and reformatting expressions.
+
+3. **Documentation**: Generate consistently formatted examples for documentation.
+
+4. **Readability**: Pretty-print complex queries with proper indentation for easier reading.
+
+5. **AST Validation**: Verify that programmatically generated ASTs produce the expected query syntax.
 
 ## Features
 
