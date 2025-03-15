@@ -45,7 +45,8 @@ import type {
   KeysUnsortedNode,
   EmptyNode,
   TostringNode,
-  TonumberNode
+  TonumberNode,
+  LengthNode
 } from './types.ts'
 
 export interface FormatterOptions {
@@ -184,6 +185,8 @@ export class FGHFormatter {
         return this.formatTostring(node, options)
       case 'Tonumber':
         return this.formatTonumber(node, options)
+      case 'Length':
+        return this.formatLength(node, options)
       default:
         throw new Error(`Unknown node type: ${(node as any).type}`)
     }
@@ -494,5 +497,9 @@ export class FGHFormatter {
 
   private formatTonumber (node: TonumberNode, options: Required<FormatterOptions>): string {
     return 'tonumber'
+  }
+
+  private formatLength (node: LengthNode, options: Required<FormatterOptions>): string {
+    return 'length'
   }
 }

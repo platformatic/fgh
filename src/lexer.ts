@@ -223,8 +223,12 @@ export class FGHLexer {
     }
 
     // Check for keywords
-    const keywords = ['map', 'map_values', 'empty', 'if', 'then', 'else', 'elif', 'end', 'sort', 'sort_by', 'select', 'and', 'or', 'not', 'keys', 'keys_unsorted', 'tostring', 'tonumber', 'length']
-    if (keywords.includes(value)) {
+    const keywords = ['map', 'map_values', 'empty', 'if', 'then', 'else', 'elif', 'end', 'sort', 'sort_by', 'select', 'and', 'or', 'not', 'keys', 'keys_unsorted', 'tostring', 'tonumber']
+    
+    // Handle 'length' as a special case - only tokenize as a keyword if it's not in property access context
+    if (value === 'length' && this.position > 0 && this.input[this.position - value.length - 1] !== '.') {
+      return { type: 'LENGTH', value, position: startPos }
+    } else if (keywords.includes(value)) {
       return { type: value.toUpperCase() as any, value, position: startPos }
     }
 

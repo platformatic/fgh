@@ -24,6 +24,12 @@ export const accessProperty = (
   const results: any[] = []
 
   for (const obj of input) {
+    // Special case for accessing .length property on arrays and strings
+    if (prop === 'length' && (Array.isArray(obj) || typeof obj === 'string')) {
+      results.push(obj.length)
+      continue
+    }
+    
     if (Array.isArray(obj)) {
       if (!optional) {
         throw new Error(`Cannot index array with string ${prop}`)
