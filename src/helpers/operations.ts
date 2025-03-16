@@ -156,21 +156,48 @@ export const handleSequence = (input: Array<any>, fns: ((input: Array<any>) => A
  * @throws Error when attempting to map over non-array and non-object values
  */
 export const handleMap = (input: Array<any>, fn: (input: any) => any): Array<any> => {
-  const results = []
+  // Results array will hold one array containing all mapped values
+  const finalResults = [];
+  const allResults = [];
 
   for (const item of input) {
     if (Array.isArray(item)) {
-      const result = fn(item)
-      results.push(result)
-    } else if (typeof item === 'object') {
-      const result = fn(Object.values(item))
-      results.push(result)
+      // For arrays, apply the function directly to each element
+      for (const element of item) {
+        // Get all results from applying the function to this element
+        const results = fn([element]);
+        // Add all results to our collection
+        for (const result of results) {
+          allResults.push(result);
+        }
+      }
+    } else if (typeof item === 'object' && item !== null) {
+      // For objects, extract property values and apply function to each
+      const values = Object.values(item);
+      
+      // When mapping over an object, apply the function to each property individually
+      for (const value of values) {
+        // Get all results from applying the function to this value
+        const results = fn([value]);
+        // Add all results to our collection
+        for (const result of results) {
+          allResults.push(result);
+        }
+      }
     } else {
       throw new Error('Cannot map over non-array or object')
     }
   }
 
-  return results
+  // Handle empty results array (for the "empty" filter case)
+  if (allResults.length === 0 || allResults.every(r => r === undefined)) {
+    finalResults.push([]);
+  } else {
+    // Return a single array containing all the mapped values
+    finalResults.push(allResults.filter(r => r !== undefined));
+  }
+  
+  return finalResults;
 }
 
 /**
