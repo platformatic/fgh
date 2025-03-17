@@ -54,7 +54,8 @@ import {
   getKeysUnsorted,
   toString,
   toNumber,
-  getLength
+  getLength,
+  hasKey
 } from './helpers/index.ts'
 
 export class FGHCodeGenerator {
@@ -141,6 +142,8 @@ export class FGHCodeGenerator {
         return this.generateTonumber(node)
       case 'Length':
         return this.generateLength(node)
+      case 'HasKey':
+        return this.generateHasKey(node)
       default: {
         throw new Error(`Unknown node type: ${node}`)
       }
@@ -446,6 +449,14 @@ export class FGHCodeGenerator {
     return 'getLength(input)'
   }
 
+  private generateHasKey (node: any): string {
+    // Generate code for the key argument
+    const keyCode = this.generateNode(node.key)
+
+    // Call the hasKey helper function with the input and the key
+    return `hasKey(input, ${keyCode})`
+  }
+
   generate (ast: ASTNode): Function {
     const body = this.generateNode(ast)
 
@@ -496,6 +507,7 @@ return result;`
       'toString',
       'toNumber',
       'getLength',
+      'hasKey',
       `return function(_input) { const input = [_input]; ${code} }`
     )
 
@@ -537,7 +549,8 @@ return result;`
       getKeysUnsorted,
       toString,
       toNumber,
-      getLength
+      getLength,
+      hasKey
     )
   }
 }

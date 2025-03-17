@@ -316,6 +316,9 @@ interface FormatterOptions {
 - Map Values (`map_values(f)`): Applies filter `f` to each value, taking only the first result for each input value
 - Select (`select(f)`): Produces its input unchanged if `f` returns true, and produces no output otherwise
 
+### Has Filter
+- Has (`has(key)`): Tests whether an object has a specified key or an array has an element at a specified index. Returns true if the input has the key/index, false otherwise.
+
 ### String Functions
 - Tostring (`tostring`): Converts values to strings. Strings are left unchanged, while all other values are JSON-encoded.
 
@@ -474,6 +477,55 @@ query('(false, null, 1) | . // 42', null)
 // Using as a fallback in objects
 query('{ name: .name, status: (.status // "unknown") }', {name: "test"})
 // => [{"name": "test", "status": "unknown"}]
+```
+
+### Has Filter
+The `has` filter tests whether an object has a specified key or an array has an element at a specified index:
+
+```javascript
+// Check if an object has a property
+query('has("foo")', { foo: 42, bar: null })
+// => [true]
+
+// Even if the property value is null, has still returns true
+query('has("bar")', { foo: 42, bar: null })
+// => [true]
+
+// Check for a non-existent property
+query('has("baz")', { foo: 42, bar: null })
+// => [false]
+
+// Check if an array has an element at a specific index
+query('has(0)', [10, 20, 30])
+// => [true]
+
+// Check for an out-of-bounds index
+query('has(3)', [10, 20, 30])
+// => [false]
+
+// Negative indices always return false (unlike JavaScript arrays which allow negative indices)
+query('has(-1)', [10, 20, 30])
+// => [false]
+
+// String indices work for arrays (will be converted to numbers)
+query('has("2")', [10, 20, 30])
+// => [true]
+
+// Using the has filter with map to check each object in an array
+query('map(has("foo"))', [{ foo: 42 }, {}])
+// => [[true, false]]
+
+// Using the has filter with map to check each array in a nested array
+query('map(has(2))', [[0, 1], ["a", "b", "c"]])
+// => [[false, true]]
+
+// The has filter can only be used with string or number literals
+// Using dynamic properties is not supported
+try {
+  query('.user | has(.property)', { user: { name: "Alice" }, property: "name" })
+} catch (e) {
+  console.error(e) // Error: The has filter requires a string or number argument
+}
 ```
 
 ### Mathematical Operations in Object Construction

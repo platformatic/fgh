@@ -23,7 +23,7 @@ import type {
   SortNode, SortByNode, GreaterThanNode, GreaterThanOrEqualNode,
   LessThanNode, LessThanOrEqualNode, EqualNode, NotEqualNode,
   AndNode, OrNode, NotNode, DefaultNode, KeysNode, KeysUnsortedNode,
-  EmptyNode, TostringNode, TonumberNode,
+  EmptyNode, TostringNode, TonumberNode, HasKeyNode,
 
   // Error types
   FGHError
@@ -260,6 +260,7 @@ export type {
   EmptyNode,
   TostringNode,
   TonumberNode,
+  HasKeyNode,
 
   // Error types
   FGHError,
