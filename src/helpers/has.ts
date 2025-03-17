@@ -12,9 +12,9 @@
  * @param key The key (string) or index (number) to check
  * @returns Array of boolean values indicating whether each input item has the key/index
  */
-export const hasKey = (input: Array<any>, keyArray: string | number | string[] | number[]): boolean[] => {
+export const hasKey = (input: Array<any>, _keyArray: string | number | string[] | number[]): boolean[] => {
   const results: boolean[] = []
-  keyArray = Array.isArray(keyArray) ? keyArray : [keyArray]
+  const keyArray = Array.isArray(_keyArray) ? _keyArray : [_keyArray]
 
   for (const key of keyArray) {
     if (typeof key !== 'string' && typeof key !== 'number') {
