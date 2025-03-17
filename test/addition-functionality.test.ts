@@ -1,13 +1,13 @@
-import test from 'node:test'
+import { test, describe } from 'node:test'
 import assert from 'node:assert'
 import { query, parse } from '../src/fgh.ts'
 import { addValues } from '../src/helpers/math.ts'
 
 // Test suite demonstrating fixed and known issues with addition operations
-test('Addition functionality test suite', async (t) => {
+describe('Addition functionality test suite', async (t) => {
   
   // Fixed Issues
-  await t.test('FIXED: Addition with undefined property returns just the left side', () => {
+  test('FIXED: Addition with undefined property returns just the left side', () => {
     const filter = '"product-" + .baz'
     const input = { "foo": { "bar": 42 } }
     
@@ -15,7 +15,7 @@ test('Addition functionality test suite', async (t) => {
     assert.strictEqual(result[0], 'product-')
   })
   
-  await t.test('FIXED: Addition with undefined right side returns just the left side', () => {
+  test('FIXED: Addition with undefined right side returns just the left side', () => {
     const filter = '"prefix-" + null'
     const input = {}
     
@@ -23,7 +23,7 @@ test('Addition functionality test suite', async (t) => {
     assert.strictEqual(result[0], 'prefix-')
   })
   
-  await t.test('FIXED: Addition with undefined left side returns just the right side', () => {
+  test('FIXED: Addition with undefined left side returns just the right side', () => {
     const filter = 'null + "suffix"'
     const input = {}
     
@@ -31,7 +31,7 @@ test('Addition functionality test suite', async (t) => {
     assert.strictEqual(result[0], 'suffix')
   })
   
-  await t.test('FIXED: Direct array concatenation with correctly wrapped arrays works', () => {
+  test('FIXED: Direct array concatenation with correctly wrapped arrays works', () => {
     // Note: arrays must be doubly-wrapped to simulate how they're passed in the query system
     const leftArr = [[1, 2]];
     const rightArr = [[3, 4]];
@@ -41,7 +41,7 @@ test('Addition functionality test suite', async (t) => {
   })
   
   // Working Functionality
-  await t.test('Regular addition with defined values works correctly', () => {
+  test('Regular addition with defined values works correctly', () => {
     const filter = '.foo.bar + 8'
     const input = { "foo": { "bar": 42 } }
     
@@ -49,7 +49,7 @@ test('Addition functionality test suite', async (t) => {
     assert.strictEqual(result[0], 50)
   })
   
-  await t.test('String concatenation works correctly', () => {
+  test('String concatenation works correctly', () => {
     const filter = '"hello " + "world"'
     const input = {}
     
@@ -57,7 +57,7 @@ test('Addition functionality test suite', async (t) => {
     assert.strictEqual(result[0], 'hello world')
   })
   
-  await t.test('Object merging works correctly', () => {
+  test('Object merging works correctly', () => {
     const filter = '{"a": 1} + {"b": 2}'
     const input = {}
     
@@ -66,7 +66,7 @@ test('Addition functionality test suite', async (t) => {
   })
   
   // Known Issues  
-  await t.test('KNOWN ISSUE: Array literal concatenation in query does not work', () => {
+  test('KNOWN ISSUE: Array literal concatenation in query does not work', () => {
     console.log('This test is expected to fail - known issue with array literal concatenation')
     const filter = '[1, 2] + [3, 4]'
     const input = {}
@@ -86,7 +86,7 @@ test('Addition functionality test suite', async (t) => {
     }
   })
   
-  await t.test('KNOWN ISSUE: Direct array addition misbehaves with single-wrapped arrays', () => {
+  test('KNOWN ISSUE: Direct array addition misbehaves with single-wrapped arrays', () => {
     console.log('This test is expected to fail - known issue with direct array addition')
     
     const left = [1, 2];
