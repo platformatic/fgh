@@ -65,10 +65,12 @@ export class FGHParser {
       }
 
       // Re-throw unexpected errors
-      throw new ParseError(
+      const newError = new ParseError(
         `Parsing error: ${(error as Error).message}`,
         this.currentToken?.position ?? -1
       )
+      newError.cause = error as Error
+      throw newError
     }
   }
 
@@ -394,19 +396,14 @@ export class FGHParser {
 
         // If we see a string token, use the simple array literal parser
         if (nextToken?.type === 'STRING' as TokenType) {
-          try {
-            const right = this._parseSimpleArrayLiteral()
-            left = {
-              type: 'Difference',
-              position: startPos,
-              left,
-              right
-            }
-            continue // Continue to the next operator
-          } catch (e) {
-            // If parsing as a simple array literal fails, try the normal approach
-            console.error('Failed to parse as simple array literal:', e)
+          const right = this._parseSimpleArrayLiteral()
+          left = {
+            type: 'Difference',
+            position: startPos,
+            left,
+            right
           }
+          continue // Continue to the next operator
         }
       }
 
