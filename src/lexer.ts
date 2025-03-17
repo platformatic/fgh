@@ -282,8 +282,16 @@ export class FGHLexer {
     }
 
     if (!this.hasMoreTokens() || this.input[this.position] !== quote) {
-      // Improved error message with context and proper position information
-      throw new ParseError(`Unterminated string literal starting at position ${startPos} in '${this.input.substring(Math.max(0, startPos - 5), startPos)}${this.input.substring(startPos, Math.min(this.input.length, startPos + 10))}...'`, startPos)
+      // Check for common issues in array contexts
+      if (this.input.includes('[') && this.input.includes(']')) {
+        // If we're in what looks like an array literal with a missing quote,
+        // provide a more specific error message
+        let context = this.input.substring(Math.max(0, startPos - 10), Math.min(this.input.length, startPos + 20));
+        throw new ParseError(`Unterminated string literal in array at position ${startPos}. Check for missing closing quote in: '${context}'`, startPos);
+      } else {
+        // General unterminated string error
+        throw new ParseError(`Unterminated string literal starting at position ${startPos} in '${this.input.substring(Math.max(0, startPos - 5), startPos)}${this.input.substring(startPos, Math.min(this.input.length, startPos + 10))}...'`, startPos);
+      }
     }
 
     this.position++ // Skip the closing quote

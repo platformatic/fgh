@@ -22,17 +22,54 @@ export class FGHParser {
   }
 
   parse (): ASTNode {
-    // Handle expressions with potential array literals and operators
-    const node = this.parseExpression()
+    try {
+      // Try to parse as a simple array literal for the special cases
+      if (this.currentToken?.type === '[' as TokenType) {
+        // Check next token to see if it's likely an array literal
+        const next = this.lexer.nextToken();
+        
+        if (next) {
+          // Put the lexer position back
+          if (this.lexer instanceof FGHLexer) {
+            (this.lexer as any).position -= next.value?.length || 0;
+            if (next.type === 'STRING') {
+              // Also back up for quotes
+              (this.lexer as any).position -= 2; // For quotes
+            }
+          }
+          
+          // If it looks like a simple array literal, parse it directly
+          if (next.type === 'STRING' as TokenType || 
+              next.type === 'NUM' as TokenType || 
+              (next.type === 'IDENT' as TokenType && 
+               (next.value === 'true' || next.value === 'false' || next.value === 'null'))) {
+            return this.parseArrayConstruction();
+          }
+        }
+      }
+      
+      // Handle expressions with potential array literals and operators
+      const node = this.parseExpression()
 
-    if (this.currentToken !== null) {
+      if (this.currentToken !== null) {
+        throw new ParseError(
+          `Unexpected token: ${this.currentToken.value}`,
+          this.currentToken.position
+        )
+      }
+
+      return node
+    } catch (error) {
+      if (error instanceof ParseError) {
+        throw error;
+      }
+      
+      // Re-throw unexpected errors
       throw new ParseError(
-        `Unexpected token: ${this.currentToken.value}`,
-        this.currentToken.position
-      )
+        `Parsing error: ${(error as Error).message}`,
+        this.currentToken?.position ?? -1
+      );
     }
-
-    return node
   }
 
   // Helper method to parse simple array literals like ["xml", "yaml"]
@@ -650,7 +687,9 @@ export class FGHParser {
         })
       } else if (this.currentToken.type === 'NUM' as TokenType) {
         // Handle numeric literal
-        const numValue = parseInt(this.currentToken.value, 10)
+        const numValue = this.currentToken.value.includes('.')
+          ? parseFloat(this.currentToken.value)
+          : parseInt(this.currentToken.value, 10)
         const numPos = this.currentToken.position
         this.advance() // Consume number
 
@@ -740,7 +779,14 @@ export class FGHParser {
     }
 
     // Consume the closing bracket
-    this.expect(']')
+    if (!this.currentToken || this.currentToken.type !== ']' as TokenType) {
+      throw new ParseError(
+        `Expected closing bracket ']' for array literal`,
+        this.currentToken?.position ?? -1
+      )
+    }
+    
+    this.advance() // Consume ]
     
     // Create the array node
     const arrayNode = {
