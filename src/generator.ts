@@ -452,7 +452,7 @@ export class FGHCodeGenerator {
   private generateHasKey (node: any): string {
     // Generate code for the key argument
     const keyCode = this.generateNode(node.key)
-    
+
     // Call the hasKey helper function with the input and the key
     return `hasKey(input, ${keyCode})`
   }

@@ -12,30 +12,37 @@
  * @param key The key (string) or index (number) to check
  * @returns Array of boolean values indicating whether each input item has the key/index
  */
-export const hasKey = (input: Array<any>, key: string | number): boolean[] => {
+export const hasKey = (input: Array<any>, keyArray: string | number | string[] | number[]): boolean[] => {
   const results: boolean[] = []
+  keyArray = Array.isArray(keyArray) ? keyArray : [keyArray]
 
-  for (const item of input) {
-    // For arrays, check if the index is within bounds
-    if (Array.isArray(item)) {
-      // Convert key to number if it's a string representing a number
-      const index = typeof key === 'string' ? parseInt(key, 10) : key
-      
-      // Check if index is valid (a non-negative number less than array length)
-      const hasIndex = typeof index === 'number' && 
-                       !isNaN(index) && 
-                       index >= 0 && 
-                       index < item.length
-      
-      results.push(hasIndex)
-    } 
-    // For objects, check if the key exists
-    else if (typeof item === 'object' && item !== null) {
-      results.push(key in item)
-    } 
-    // For other types, return false
-    else {
-      results.push(false)
+  for (const key of keyArray) {
+    if (typeof key !== 'string' && typeof key !== 'number') {
+      throw new Error('The has filter requires a string or number argument')
+    }
+
+    for (const item of input) {
+      // For arrays, check if the index is within bounds
+      if (Array.isArray(item)) {
+        // Convert key to number if it's a string representing a number
+        const index = typeof key === 'string' ? parseInt(key, 10) : key
+
+        // Check if index is valid (a non-negative number less than array length)
+        const hasIndex = typeof index === 'number' &&
+          !isNaN(index) &&
+          index >= 0 &&
+          index < item.length
+
+        results.push(hasIndex)
+
+        // For objects, check if the key exists
+      } else if (typeof item === 'object' && item !== null) {
+        results.push(key in item)
+
+        // For other types, return false
+      } else {
+        results.push(false)
+      }
     }
   }
 
