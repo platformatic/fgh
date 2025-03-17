@@ -26,28 +26,28 @@ export class FGHParser {
       // Try to parse as a simple array literal for the special cases
       if (this.currentToken?.type === '[' as TokenType) {
         // Check next token to see if it's likely an array literal
-        const next = this.lexer.nextToken();
-        
+        const next = this.lexer.nextToken()
+
         if (next) {
           // Put the lexer position back
           if (this.lexer instanceof FGHLexer) {
-            (this.lexer as any).position -= next.value?.length || 0;
+            (this.lexer as any).position -= next.value?.length || 0
             if (next.type === 'STRING') {
               // Also back up for quotes
-              (this.lexer as any).position -= 2; // For quotes
+              (this.lexer as any).position -= 2 // For quotes
             }
           }
-          
+
           // If it looks like a simple array literal, parse it directly
-          if (next.type === 'STRING' as TokenType || 
-              next.type === 'NUM' as TokenType || 
-              (next.type === 'IDENT' as TokenType && 
+          if (next.type === 'STRING' as TokenType ||
+              next.type === 'NUM' as TokenType ||
+              (next.type === 'IDENT' as TokenType &&
                (next.value === 'true' || next.value === 'false' || next.value === 'null'))) {
-            return this.parseArrayConstruction();
+            return this.parseArrayConstruction()
           }
         }
       }
-      
+
       // Handle expressions with potential array literals and operators
       const node = this.parseExpression()
 
@@ -61,14 +61,14 @@ export class FGHParser {
       return node
     } catch (error) {
       if (error instanceof ParseError) {
-        throw error;
+        throw error
       }
-      
+
       // Re-throw unexpected errors
       throw new ParseError(
         `Parsing error: ${(error as Error).message}`,
         this.currentToken?.position ?? -1
-      );
+      )
     }
   }
 
@@ -597,12 +597,12 @@ export class FGHParser {
         position: pos,
         elements
       }
-      
+
       // Check if this array is followed by a + operator
       if (this.currentToken && this.currentToken.type === '+' as TokenType) {
         this.advance() // Consume +
         const right = this.parseProduct()
-        
+
         return {
           type: 'Sum',
           position: pos,
@@ -610,7 +610,7 @@ export class FGHParser {
           right
         }
       }
-      
+
       return arrayNode
     }
 
@@ -781,26 +781,26 @@ export class FGHParser {
     // Consume the closing bracket
     if (!this.currentToken || this.currentToken.type !== ']' as TokenType) {
       throw new ParseError(
-        `Expected closing bracket ']' for array literal`,
+        'Expected closing bracket \']\' for array literal',
         this.currentToken?.position ?? -1
       )
     }
-    
+
     this.advance() // Consume ]
-    
+
     // Create the array node
     const arrayNode = {
       type: 'ArrayConstruction' as const,
       position: pos,
       elements
     }
-    
+
     // Check if this array is followed by a + operator
     if (this.currentToken && this.currentToken.type === '+' as TokenType) {
       // Continue parsing as a sum expression
       this.advance() // Consume +
       const right = this.parseProduct()
-      
+
       return {
         type: 'Sum',
         position: pos,
