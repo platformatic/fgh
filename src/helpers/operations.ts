@@ -163,6 +163,13 @@ export const handleMap = (input: Array<any>, fn: (input: any) => any): Array<any
   for (const item of input) {
     if (Array.isArray(item)) {
       // For arrays, apply the function directly to each element
+      // We cannot call fn(item) directly because it would process the entire array
+      // while we need to map each individual element. This matter for
+      // some cases, like 'map(.price * .quantity)' and each element must be processed
+      // individually. Passing the full array will have `.price` return the full array
+      // of prices, and `.quantity` the full array of quantities, which will result in
+      // NxN results instead of N results.
+      // There might be a bug lurking here, but I'm not sure how to fix it for now.
       for (const element of item) {
         // Get all results from applying the function to this element
         const fnResults = fn([element])
