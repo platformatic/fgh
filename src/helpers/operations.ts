@@ -169,7 +169,7 @@ export const handleMap = (input: Array<any>, fn: (input: any) => any): Array<any
       // individually. Passing the full array will have `.price` return the full array
       // of prices, and `.quantity` the full array of quantities, which will result in
       // NxN results instead of N results.
-      // There might be a bug lurking here, but I'm not sure how to fix it for now.
+      // This is due to how the accessProperty node works.
       for (const element of item) {
         // Get all results from applying the function to this element
         const fnResults = fn([element])
