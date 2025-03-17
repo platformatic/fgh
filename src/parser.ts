@@ -22,57 +22,7 @@ export class FGHParser {
   }
 
   parse (): ASTNode {
-    // Check for array literals [...]
-    if (this.currentToken?.type === '[' as TokenType) {
-      // Special case for array literals with quotes/strings
-      if (this.lexer instanceof FGHLexer) {
-        const input = (this.lexer as any).input
-
-        // If the input contains quotes, this might be a string array literal
-        if (input.includes('"') || input.includes("'")) {
-          // Use our string array literal parser for any case that includes quotes
-          return this._parseSimpleArrayLiteral()
-        }
-      }
-
-      // Peek at the next token
-      const nextToken = this.lexer.nextToken()
-
-      // Revert peek
-      if (nextToken) {
-        (this.lexer as any).position -= nextToken.value?.length || 0
-      }
-
-      // If it's a closing bracket, we have an empty array []
-      if (nextToken?.type === ']' as TokenType) {
-        const pos = this.currentToken.position
-
-        // Consume the tokens
-        this.advance() // Consume [
-        this.advance() // Consume ]
-
-        // Return the empty array construction node
-        return {
-          type: 'ArrayConstruction',
-          position: pos,
-          elements: []
-        }
-      }
-
-      // Check if next token is a string literal - definitely an array literal
-      if (nextToken?.type === 'STRING' as TokenType) {
-        return this._parseSimpleArrayLiteral()
-      }
-
-      // For non-empty arrays, check if it's an array construction
-      const peekType = nextToken?.type
-      if (peekType === 'DOT' as TokenType || peekType === ']' as TokenType || peekType === 'STRING' as TokenType ||
-          peekType === 'NUM' as TokenType || peekType === '-' as TokenType) {
-        return this.parseArrayConstruction()
-      }
-    }
-
-    // Handle other expressions
+    // Handle expressions with potential array literals and operators
     const node = this.parseExpression()
 
     if (this.currentToken !== null) {
@@ -605,11 +555,26 @@ export class FGHParser {
     // Handle empty array case
     if (this.currentToken && this.currentToken.type === ']' as TokenType) {
       this.advance() // Consume ]
-      return {
-        type: 'ArrayConstruction',
+      const arrayNode = {
+        type: 'ArrayConstruction' as const,
         position: pos,
         elements
       }
+      
+      // Check if this array is followed by a + operator
+      if (this.currentToken && this.currentToken.type === '+' as TokenType) {
+        this.advance() // Consume +
+        const right = this.parseProduct()
+        
+        return {
+          type: 'Sum',
+          position: pos,
+          left: arrayNode,
+          right
+        }
+      }
+      
+      return arrayNode
     }
 
     // Parse array elements until we hit closing bracket
@@ -776,12 +741,30 @@ export class FGHParser {
 
     // Consume the closing bracket
     this.expect(']')
-
-    return {
-      type: 'ArrayConstruction',
+    
+    // Create the array node
+    const arrayNode = {
+      type: 'ArrayConstruction' as const,
       position: pos,
       elements
     }
+    
+    // Check if this array is followed by a + operator
+    if (this.currentToken && this.currentToken.type === '+' as TokenType) {
+      // Continue parsing as a sum expression
+      this.advance() // Consume +
+      const right = this.parseProduct()
+      
+      return {
+        type: 'Sum',
+        position: pos,
+        left: arrayNode,
+        right
+      }
+    }
+
+    // Regular array with no + operator
+    return arrayNode
   }
 
   private parseObjectConstruction (): ASTNode {

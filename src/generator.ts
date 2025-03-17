@@ -458,6 +458,7 @@ export class FGHCodeGenerator {
   }
 
   generate (ast: ASTNode): Function {
+    console.log('AST:', JSON.stringify(ast, null, 2))
     const body = this.generateNode(ast)
 
     // Create a function that uses the helper functions
