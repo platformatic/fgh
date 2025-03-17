@@ -1,6 +1,6 @@
 import { test, describe } from 'node:test'
 import assert from 'node:assert'
-import { query, parse } from '../src/fgh.ts'
+import { query } from '../src/fgh.ts'
 import { addValues } from '../src/helpers/math.ts'
 
 // Test suite demonstrating fixed and known issues with addition operations
@@ -65,17 +65,12 @@ describe('Addition functionality test suite', async (t) => {
   })
 
   test('Array literal concatenation in query does not work', () => {
-    console.log('This test is expected to fail - known issue with array literal concatenation')
     const filter = '[1, 2] + [3, 4]'
     const input = {}
 
-    const ast = parse(filter)
-    console.log('AST for array addition (issue):', JSON.stringify(ast, null, 2))
-
     const result = query(filter, input)
-    console.log('Query API array result (incomplete):', result)
 
     // This assertion will fail, demonstrating the known issue
-    assert.deepStrictEqual(result[0], [1, 2, 3, 4])
+    assert.deepStrictEqual(result, [[1, 2, 3, 4]])
   })
 })

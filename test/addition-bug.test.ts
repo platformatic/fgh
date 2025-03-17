@@ -7,7 +7,6 @@ test('Addition with undefined property', () => {
   const input = { foo: { bar: 42 } }
 
   const result = query(filter, input)
-  console.log('Result:', result)
 
   // Expected: product-
   // Actual: product-undefined

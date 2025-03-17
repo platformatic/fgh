@@ -35,12 +35,11 @@ describe('Addition operation test suite', async (t) => {
     assert.strictEqual(result[0], 'hello world')
   })
 
-  test.only('Array concatenation works', () => {
+  test('Array concatenation works', () => {
     const filter = '[1, 2] + [3, 4]'
     const input = {}
 
     const result = query(filter, input)
-    console.log('Array concatenation result:', result)
     assert.deepStrictEqual(result[0], [1, 2, 3, 4])
   })
 

@@ -135,7 +135,7 @@ export class FGHParser {
         })
       } else {
         // Skip unknown tokens to try to recover
-        console.log(`Skipping unexpected token '${this.currentToken.type}' in array literal`)
+
         this.advance()
       }
 

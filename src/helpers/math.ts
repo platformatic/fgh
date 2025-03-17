@@ -25,9 +25,6 @@ export const addValues = (leftArray: any, rightArray: any): Array<any> => {
 
   const results: any[] = []
 
-  console.log('leftArray:', leftArray)
-  console.log('rightArray:', rightArray)
-
   // Regular case-by-case handling
   for (let i = 0; i < leftArray.length; i++) {
     for (let k = 0; k < rightArray.length; k++) {
@@ -57,8 +54,6 @@ export const addValues = (leftArray: any, rightArray: any): Array<any> => {
       }
     }
   }
-
-  console.log('results:', results)
 
   return results
 }
