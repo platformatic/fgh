@@ -19,31 +19,52 @@ import { isNullOrUndefined, ensureArray } from './utils.ts'
  * @throws Error when attempting incompatible operations like array+non-array
  */
 export const addValues = (leftArray: any, rightArray: any): Array<any> => {
+  // Ensure leftArray and rightArray are properly wrapped
   leftArray = ensureArray(leftArray)
   rightArray = ensureArray(rightArray)
 
   const results: any[] = []
 
+  console.log('leftArray:', leftArray)
+  console.log('rightArray:', rightArray)
+
+  // Regular case-by-case handling
   for (let i = 0; i < leftArray.length; i++) {
     for (let k = 0; k < rightArray.length; k++) {
       const left = leftArray[i]
       const right = rightArray[k]
 
+      // First handle array concatenation
       if (Array.isArray(left) && Array.isArray(right)) {
+        // Use array spread operator for proper array concatenation
         results.push([...left, ...right])
-      } else if (typeof left === 'object' && typeof right === 'object' && left !== null && right !== null) {
+      } 
+      // Handle object merging
+      else if (typeof left === 'object' && typeof right === 'object' && left !== null && right !== null) {
         results.push({ ...left, ...right })
-      } else if (left === undefined || left === null) {
+      } 
+      // Handle null/undefined on either side
+      else if (left === undefined || left === null) {
         results.push(right)
-      } else if (Array.isArray(left) && right !== null) {
+      } 
+      else if (right === undefined || right === null) {
+        results.push(left)
+      } 
+      // Prevent mixing arrays with non-arrays
+      else if (Array.isArray(left)) {
         throw new Error('Cannot add array to non-array')
-      } else if (Array.isArray(right) && left !== null) {
+      } 
+      else if (Array.isArray(right)) {
         throw new Error('Cannot add array to non-array')
-      } else {
+      } 
+      // Default case: convert to string or number and add
+      else {
         results.push(left + right)
       }
     }
   }
+
+  console.log('results:', results)
 
   return results
 }
