@@ -156,20 +156,52 @@ export const handleSequence = (input: Array<any>, fns: ((input: Array<any>) => A
  * @throws Error when attempting to map over non-array and non-object values
  */
 export const handleMap = (input: Array<any>, fn: (input: any) => any): Array<any> => {
+// Results array will hold one array containing all mapped values
   const results = []
+  const mappedValues = []
 
   for (const item of input) {
     if (Array.isArray(item)) {
-      const result = fn(item)
-      results.push(result)
-    } else if (typeof item === 'object') {
-      const result = fn(Object.values(item))
-      results.push(result)
+      // For arrays, apply the function directly to each element
+      // We cannot call fn(item) directly because it would process the entire array
+      // while we need to map each individual element. This matter for
+      // some cases, like 'map(.price * .quantity)' and each element must be processed
+      // individually. Passing the full array will have `.price` return the full array
+      // of prices, and `.quantity` the full array of quantities, which will result in
+      // NxN results instead of N results.
+      // This is due to how the accessProperty node works.
+      for (const element of item) {
+        // Get all results from applying the function to this element
+        const fnResults = fn([element])
+        // Add non-undefined results directly to our collection
+        for (const result of fnResults) {
+          if (result !== undefined) {
+            mappedValues.push(result)
+          }
+        }
+      }
+    } else if (typeof item === 'object' && item !== null) {
+      // For objects, extract property values and apply function to each
+      const values = Object.values(item)
+
+      // When mapping over an object, apply the function to each property individually
+      for (const value of values) {
+        // Get all results from applying the function to this value
+        const fnResults = fn([value])
+        // Add non-undefined results directly to our collection
+        for (const result of fnResults) {
+          if (result !== undefined) {
+            mappedValues.push(result)
+          }
+        }
+      }
     } else {
       throw new Error('Cannot map over non-array or object')
     }
   }
 
+  // Return empty array for empty or all-undefined results
+  results.push(mappedValues.length > 0 ? mappedValues : [])
   return results
 }
 
