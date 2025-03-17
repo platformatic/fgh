@@ -1002,6 +1002,22 @@ export class FGHParser {
         }
       }
 
+      case 'HAS': {
+        const pos = this.currentToken.position
+        this.advance() // Consume 'has'
+
+        // Parse the key parameter
+        this.expect('(')
+        const key = this.parseExpression()
+        this.expect(')')
+
+        return {
+          type: 'HasKey',
+          position: pos,
+          key
+        }
+      }
+
       case 'MAP_VALUES': {
         const pos = this.currentToken.position
         this.advance() // Consume 'map_values'
