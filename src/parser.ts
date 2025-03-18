@@ -732,48 +732,10 @@ export class FGHParser {
       if (this.currentToken?.type === ',' as TokenType) {
         this.advance()
       } else if (this.currentToken?.type !== ']' as TokenType) {
-        // Handle the case where a comma might be missing between elements
-        // This allows us to be more forgiving in array construction
-        if (this.currentToken?.type === 'STRING' as TokenType ||
-            this.currentToken?.type === 'NUM' as TokenType ||
-            (this.currentToken?.type === 'IDENT' as TokenType &&
-            (this.currentToken.value === 'true' ||
-             this.currentToken.value === 'false' ||
-             this.currentToken.value === 'null'))) {
-          // Handle missing comma by treating the token as a new element
-          if (this.currentToken.type === 'STRING' as TokenType) {
-            elements.push({
-              type: 'Literal',
-              position: this.currentToken.position,
-              value: this.currentToken.value
-            })
-            this.advance() // Consume the token
-          } else if (this.currentToken.type === 'NUM' as TokenType) {
-            elements.push({
-              type: 'Literal',
-              position: this.currentToken.position,
-              value: this.currentToken.value.includes('.')
-                ? parseFloat(this.currentToken.value)
-                : parseInt(this.currentToken.value, 10)
-            })
-            this.advance() // Consume the token
-          } else { // IDENT (true, false, null)
-            const value = this.currentToken.value === 'true'
-              ? true
-              : this.currentToken.value === 'false' ? false : null
-            elements.push({
-              type: 'Literal',
-              position: this.currentToken.position,
-              value
-            })
-            this.advance() // Consume the identifier
-          }
-        } else {
-          throw new ParseError(
-            `Expected comma or closing bracket, got ${this.currentToken?.type ?? 'EOF'}`,
-            this.currentToken?.position ?? -1
-          )
-        }
+        throw new ParseError(
+        `Expected comma or closing bracket, got ${this.currentToken?.type ?? 'EOF'}`,
+        this.currentToken?.position ?? -1
+        )
       }
     }
 
