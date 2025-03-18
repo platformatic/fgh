@@ -45,9 +45,9 @@ describe('Access Helper Functions', () => {
   })
 
   describe('accessIndex', () => {
-    it('should return empty array for null or undefined objects', () => {
-      assert.deepStrictEqual(accessIndex([null], 0), [])
-      assert.deepStrictEqual(accessIndex([undefined], 0), [])
+    it('should throw for null or undefined objects', () => {
+      assert.throws(() => accessIndex([null], 0))
+      assert.throws(() => accessIndex([undefined], 0))
     })
 
     it('should access array elements by index', () => {
