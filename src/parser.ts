@@ -6,7 +6,6 @@
  * property access, filtering, and more, with comprehensive error handling and recovery.
  */
 
-// src/parser.ts - Includes support for array construction [.prop1, .prop2[]]
 import { ParseError } from './types.ts'
 import type { Token, TokenType, ASTNode } from './types.ts'
 import { FGHLexer } from './lexer.ts'
