@@ -348,6 +348,46 @@ console.log(result3) // []
 
 ## Examples
 
+### If-Then-Else Conditional
+The if-then-else structure provides conditional logic in FGH. It evaluates the condition and processes input through either the "then" branch (when the condition is true) or the "else" branch (when the condition is false). The `elif` keyword allows for chaining multiple conditions.
+
+```javascript
+// Basic usage with literal condition
+query('if true then "yes" else "no" end', null)
+// => ["yes"]
+
+// Using properties in condition
+query('if .value > 10 then "high" else "low" end', { value: 15 })
+// => ["high"]
+
+query('if .value > 10 then "high" else "low" end', { value: 5 })
+// => ["low"]
+
+// Using elif to chain multiple conditions
+query('if .temp > 30 then "hot" elif .temp > 20 then "warm" else "cold" end', { temp: 25 })
+// => ["warm"]
+
+// Using if-then-else with array iteration
+query('.[] | if . % 2 == 0 then "even" else "odd" end', [1, 2, 3, 4])
+// => ["odd", "even", "odd", "even"]
+
+// Omitting else branch (uses input unchanged as default)
+query('if false then "yes" end', "input")
+// => ["input"]
+
+// Nested if statements
+query('if .a then if .b then "a and b" else "just a" end else "neither" end', { a: true, b: false })
+// => ["just a"]
+
+// Building an object with conditional logic
+query('{ status: (if .score > 70 then "pass" else "fail" end) }', { score: 85 })
+// => [{ "status": "pass" }]
+
+// Multiple elif conditions
+query('if .grade >= 90 then "A" elif .grade >= 80 then "B" elif .grade >= 70 then "C" else "F" end', { grade: 82 })
+// => ["B"]
+```
+
 ### Comma Operator
 The comma operator combines the results of two or more filters into a single output array:
 
