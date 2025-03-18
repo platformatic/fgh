@@ -1,6 +1,6 @@
 import { test, describe } from 'node:test'
 import assert from 'node:assert'
-import { query, safeQuery } from '../src/fgh.ts'
+import { query } from '../src/fgh.ts'
 
 describe('Property and index access on scalars', async (t) => {
   test('should throw when accessing property on scalar', () => {
@@ -9,8 +9,8 @@ describe('Property and index access on scalars', async (t) => {
       () => query('.foo', 42),
       (err) => {
         // Check both the outer error and the error cause
-        return err.message.includes('Error executing expression') && 
-               err.cause && 
+        return err.message.includes('Error executing expression') &&
+               err.cause &&
                /Cannot index scalar with string: foo/.test(err.cause.message)
       }
     )
@@ -22,8 +22,8 @@ describe('Property and index access on scalars', async (t) => {
       () => query('.[2]', 42),
       (err) => {
         // Check both the outer error and the error cause
-        return err.message.includes('Error executing expression') && 
-               err.cause && 
+        return err.message.includes('Error executing expression') &&
+               err.cause &&
                /Cannot index scalar with number: 2/.test(err.cause.message)
       }
     )
@@ -47,8 +47,8 @@ describe('Property and index access on scalars', async (t) => {
       () => query('.foo', 'hello'),
       (err) => {
         // Check both the outer error and the error cause
-        return err.message.includes('Error executing expression') && 
-               err.cause && 
+        return err.message.includes('Error executing expression') &&
+               err.cause &&
                /Cannot index scalar with string: foo/.test(err.cause.message)
       }
     )
