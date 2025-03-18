@@ -1,5 +1,5 @@
 import type { ASTNode, Parser } from './types.ts'
-import { parseSimpleArrayLiteral } from './array-literal.ts'
+import { parseArrayConstruction } from './array-construction.ts'
 import { parseProduct } from './product.ts'
 import { parseChain } from './chain.ts'
 
@@ -14,25 +14,14 @@ export function parseSum (parser: Parser): ASTNode {
 
     // Special case for array literals after minus operator
     if (operator === '-' as TokenType && parser.currentToken?.type === '[' as TokenType) {
-      // Check if the next token is a STRING, suggesting a string array literal
-      const nextToken = parser.peekAhead(1)
-
-      // If we see a string token, use the simple array literal parser
-      if (nextToken?.type === 'STRING' as TokenType) {
-        try {
-          const right = parseSimpleArrayLiteral(parser)
-          left = {
-            type: 'Difference',
-            position: startPos,
-            left,
-            right
-          }
-          continue // Continue to the next operator
-        } catch (e) {
-          // If parsing as a simple array literal fails, try the normal approach
-          console.error('Failed to parse as simple array literal:', e)
-        }
+      const right = parseArrayConstruction(parser)
+      left = {
+        type: 'Difference',
+        position: startPos,
+        left,
+        right
       }
+      continue
     }
 
     // Normal handling for other cases
