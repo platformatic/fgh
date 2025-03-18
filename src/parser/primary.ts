@@ -2,7 +2,6 @@ import { ParseError } from '../types.ts'
 import type { ASTNode, Parser } from '../types.ts'
 import { parseExpression } from './expression.ts'
 import { parseArrayConstruction } from './array-construction.ts'
-import { parseArrayIndices } from './array-indices.ts'
 import { parseObjectConstruction } from './object-construction.ts'
 
 export function parsePrimary (parser: Parser): ASTNode {
@@ -60,13 +59,47 @@ export function parsePrimary (parser: Parser): ASTNode {
       const paths: ASTNode[] = []
 
       parser.expect('(')
-      // Parse the first path expression
-      paths.push(parseExpression(parser))
+      
+      // Handle unary minus before the path expression
+      if (parser.currentToken && parser.currentToken.type === '-') {
+        const minusPos = parser.currentToken.position;
+        parser.advance(); // Consume the minus
+        
+        // Parse the expression after minus
+        const expr = parseExpression(parser);
+        
+        // Create a unary minus node
+        paths.push({
+          type: 'UnaryMinus',
+          position: minusPos,
+          expression: expr
+        });
+      } else {
+        // Parse the first path expression normally
+        paths.push(parseExpression(parser));
+      }
 
       // Parse additional path expressions if present (comma separated)
       while (parser.currentToken && parser.currentToken.type === ',') {
         parser.advance() // Consume comma
-        paths.push(parseExpression(parser))
+        
+        // Handle unary minus for additional paths
+        if (parser.currentToken && parser.currentToken.type === '-') {
+          const minusPos = parser.currentToken.position;
+          parser.advance(); // Consume the minus
+          
+          // Parse the expression after minus
+          const expr = parseExpression(parser);
+          
+          // Create a unary minus node
+          paths.push({
+            type: 'UnaryMinus',
+            position: minusPos,
+            expression: expr
+          });
+        } else {
+          paths.push(parseExpression(parser));
+        }
       }
 
       parser.expect(')')
@@ -246,6 +279,22 @@ export function parsePrimary (parser: Parser): ASTNode {
         elseBranch
       }
     }
+    
+    case '-': {
+      // Handle unary minus operator
+      const pos = parser.currentToken.position
+      parser.advance() // Consume '-'
+      
+      // Parse the expression after the minus
+      const expression = parsePrimary(parser)
+      
+      return {
+        type: 'UnaryMinus',
+        position: pos,
+        expression
+      }
+    }
+    
     case 'DOT': {
       const dotPos = parser.basePos === 0 ? parser.currentToken.position : parser.basePos
       const dotValue = parser.currentToken.value
@@ -378,15 +427,6 @@ export function parsePrimary (parser: Parser): ASTNode {
       // If it has a comma after a number, it's a comma-separated list of indices
       if (hasComma) {
         return parseArrayIndices(parser)
-      }
-
-      // Check if the first token is a minus followed by a number, then comma
-      if (nextToken?.type === '-' as TokenType) {
-        const secondAfterMinus = parser.peekAhead(2)
-        const thirdAfterMinus = parser.peekAhead(3)
-        if (secondAfterMinus?.type === 'NUM' as TokenType && thirdAfterMinus?.type === ',' as TokenType) {
-          return parser.parseArrayIndices()
-        }
       }
 
       // Otherwise process as regular index access or slice

@@ -3,7 +3,7 @@ import assert from 'node:assert'
 import { query } from '../src/fgh.ts'
 import { FGHParser } from '../src/parser.ts'
 
-test('parser handles special array indices cases', () => {
+test.only('parser handles special array indices cases', () => {
   // Test array index with negative numbers and commas
   const expr = '[0, -1, -2]'
   const parser = new FGHParser(expr)

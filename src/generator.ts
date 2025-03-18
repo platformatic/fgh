@@ -144,6 +144,8 @@ export class FGHCodeGenerator {
         return this.generateLength(node)
       case 'HasKey':
         return this.generateHasKey(node)
+      case 'UnaryMinus':
+        return this.generateUnaryMinus(node)
       default: {
         throw new Error(`Unknown node type: ${node}`)
       }
@@ -457,6 +459,14 @@ export class FGHCodeGenerator {
 
     // Call the hasKey helper function with the input and the key
     return `hasKey(input, ${keyCode})`
+  }
+
+  private generateUnaryMinus (node: any): string {
+    // Generate code for the expression to negate
+    const expressionCode = this.generateNode(node.expression)
+    
+    // Apply unary minus to the expression
+    return `(-(${expressionCode}))`
   }
 
   generate (ast: ASTNode): Function {

@@ -1,6 +1,6 @@
 import { ParseError } from '../types.ts'
 import type { ASTNode, Parser } from '../types.ts'
-import { parseChain } from './chain.ts'
+import { parsePipe } from './expression.ts'
 
 export function parseArrayConstruction (parser: Parser): ASTNode {
   if (!parser.currentToken || parser.currentToken.type !== '[') {
@@ -24,7 +24,8 @@ export function parseArrayConstruction (parser: Parser): ASTNode {
 
   // Parse array elements until we hit closing bracket
   while (parser.currentToken && parser.currentToken.type !== ']' as TokenType) {
-    const node = parseChain(parser)
+    // Use parseExpression instead of parseChain to handle complex expressions with pipes
+    const node = parsePipe(parser)
     elements.push(node)
 
     // If next token is a comma, consume it

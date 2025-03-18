@@ -1,7 +1,7 @@
 import type { ASTNode, Parser } from './types.ts'
 import { parseLogical } from './logical.ts'
 
-export function parseExpression (parser: Parser): ASTNode {
+export function parsePipe (parser: Parser): ASTNode {
   const startPos = parser.currentToken?.position ?? 0
   let left = parseLogical(parser)
 
@@ -18,9 +18,17 @@ export function parseExpression (parser: Parser): ASTNode {
       left,
       right
     }
+  }
 
-    // Handle comma operator for sequence expressions
-  } else if (parser.currentToken && parser.currentToken.type === ',' as TokenType) {
+  return left
+}
+
+export function parseExpression (parser: Parser): ASTNode {
+  const startPos = parser.currentToken?.position ?? 0
+  let left = parsePipe(parser)
+
+  // Handle comma operator for sequence expressions
+  if (parser.currentToken && parser.currentToken.type === ',' as TokenType) {
     // Create a sequence node with the current expression as the first element
     const expressions: ASTNode[] = [left]
 
