@@ -22,67 +22,31 @@ export class FGHParser {
   }
 
   parse (): ASTNode {
-    // Check for array literals [...]
-    if (this.currentToken?.type === '[' as TokenType) {
-      // Special case for array literals with quotes/strings
-      if (this.lexer instanceof FGHLexer) {
-        const input = (this.lexer as any).input
+    try {
+      // Handle expressions with potential array literals and operators
+      const node = this.parseExpression()
 
-        // If the input contains quotes, this might be a string array literal
-        if (input.includes('"') || input.includes("'")) {
-          // Use our string array literal parser for any case that includes quotes
-          return this._parseSimpleArrayLiteral()
-        }
+      if (this.currentToken !== null) {
+        throw new ParseError(
+          `Unexpected token: ${this.currentToken.value}`,
+          this.currentToken.position
+        )
       }
 
-      // Peek at the next token
-      const nextToken = this.lexer.nextToken()
-
-      // Revert peek
-      if (nextToken) {
-        (this.lexer as any).position -= nextToken.value?.length || 0
+      return node
+    } catch (error) {
+      if (error instanceof ParseError) {
+        throw error
       }
 
-      // If it's a closing bracket, we have an empty array []
-      if (nextToken?.type === ']' as TokenType) {
-        const pos = this.currentToken.position
-
-        // Consume the tokens
-        this.advance() // Consume [
-        this.advance() // Consume ]
-
-        // Return the empty array construction node
-        return {
-          type: 'ArrayConstruction',
-          position: pos,
-          elements: []
-        }
-      }
-
-      // Check if next token is a string literal - definitely an array literal
-      if (nextToken?.type === 'STRING' as TokenType) {
-        return this._parseSimpleArrayLiteral()
-      }
-
-      // For non-empty arrays, check if it's an array construction
-      const peekType = nextToken?.type
-      if (peekType === 'DOT' as TokenType || peekType === ']' as TokenType || peekType === 'STRING' as TokenType ||
-          peekType === 'NUM' as TokenType || peekType === '-' as TokenType) {
-        return this.parseArrayConstruction()
-      }
-    }
-
-    // Handle other expressions
-    const node = this.parseExpression()
-
-    if (this.currentToken !== null) {
-      throw new ParseError(
-        `Unexpected token: ${this.currentToken.value}`,
-        this.currentToken.position
+      // Re-throw unexpected errors
+      const newError = new ParseError(
+        `Parsing error: ${(error as Error).message}`,
+        this.currentToken?.position ?? -1
       )
+      newError.cause = error as Error
+      throw newError
     }
-
-    return node
   }
 
   // Helper method to parse simple array literals like ["xml", "yaml"]
@@ -148,7 +112,7 @@ export class FGHParser {
         })
       } else {
         // Skip unknown tokens to try to recover
-        console.log(`Skipping unexpected token '${this.currentToken.type}' in array literal`)
+
         this.advance()
       }
 
@@ -407,19 +371,14 @@ export class FGHParser {
 
         // If we see a string token, use the simple array literal parser
         if (nextToken?.type === 'STRING' as TokenType) {
-          try {
-            const right = this._parseSimpleArrayLiteral()
-            left = {
-              type: 'Difference',
-              position: startPos,
-              left,
-              right
-            }
-            continue // Continue to the next operator
-          } catch (e) {
-            // If parsing as a simple array literal fails, try the normal approach
-            console.error('Failed to parse as simple array literal:', e)
+          const right = this._parseSimpleArrayLiteral()
+          left = {
+            type: 'Difference',
+            position: startPos,
+            left,
+            right
           }
+          continue // Continue to the next operator
         }
       }
 
@@ -605,11 +564,26 @@ export class FGHParser {
     // Handle empty array case
     if (this.currentToken && this.currentToken.type === ']' as TokenType) {
       this.advance() // Consume ]
-      return {
-        type: 'ArrayConstruction',
+      const arrayNode = {
+        type: 'ArrayConstruction' as const,
         position: pos,
         elements
       }
+
+      // Check if this array is followed by a + operator
+      if (this.currentToken && this.currentToken.type === '+' as TokenType) {
+        this.advance() // Consume +
+        const right = this.parseProduct()
+
+        return {
+          type: 'Sum',
+          position: pos,
+          left: arrayNode,
+          right
+        }
+      }
+
+      return arrayNode
     }
 
     // Parse array elements until we hit closing bracket
@@ -685,7 +659,9 @@ export class FGHParser {
         })
       } else if (this.currentToken.type === 'NUM' as TokenType) {
         // Handle numeric literal
-        const numValue = parseInt(this.currentToken.value, 10)
+        const numValue = this.currentToken.value.includes('.')
+          ? parseFloat(this.currentToken.value)
+          : parseInt(this.currentToken.value, 10)
         const numPos = this.currentToken.position
         this.advance() // Consume number
 
@@ -756,32 +732,46 @@ export class FGHParser {
       if (this.currentToken?.type === ',' as TokenType) {
         this.advance()
       } else if (this.currentToken?.type !== ']' as TokenType) {
-        // Handle STRING token specially for string arrays
-        if (this.currentToken?.type === 'STRING' as TokenType) {
-          // This is likely part of a string array literal, handle it directly
-          elements.push({
-            type: 'Literal',
-            position: this.currentToken.position,
-            value: this.currentToken.value
-          })
-          this.advance() // Consume string
-        } else {
-          throw new ParseError(
-            `Expected comma or closing bracket, got ${this.currentToken?.type ?? 'EOF'}`,
-            this.currentToken?.position ?? -1
-          )
-        }
+        throw new ParseError(
+        `Expected comma or closing bracket, got ${this.currentToken?.type ?? 'EOF'}`,
+        this.currentToken?.position ?? -1
+        )
       }
     }
 
     // Consume the closing bracket
-    this.expect(']')
+    if (!this.currentToken || this.currentToken.type !== ']' as TokenType) {
+      throw new ParseError(
+        'Expected closing bracket \']\' for array literal',
+        this.currentToken?.position ?? -1
+      )
+    }
 
-    return {
-      type: 'ArrayConstruction',
+    this.advance() // Consume ]
+
+    // Create the array node
+    const arrayNode = {
+      type: 'ArrayConstruction' as const,
       position: pos,
       elements
     }
+
+    // Check if this array is followed by a + operator
+    if (this.currentToken && this.currentToken.type === '+' as TokenType) {
+      // Continue parsing as a sum expression
+      this.advance() // Consume +
+      const right = this.parseProduct()
+
+      return {
+        type: 'Sum',
+        position: pos,
+        left: arrayNode,
+        right
+      }
+    }
+
+    // Regular array with no + operator
+    return arrayNode
   }
 
   private parseObjectConstruction (): ASTNode {
@@ -1190,186 +1180,7 @@ export class FGHParser {
       }
 
       case '[': {
-        // Handle array construction, array access, slices, and comma-separated indices
-        const pos = this.basePos === 0 ? this.currentToken.position : this.basePos
-
-        // Peek at the next token to determine what type of construct this is
-        const nextToken = this.lexer.nextToken()
-        if (nextToken) {
-          (this.lexer as any).position -= nextToken.value?.length || 0
-        }
-
-        // Different handling based on context
-        const isIndexStandalone = !(this.basePos > 0)
-        const inPropertyChain = !!this.currentToken?.position && this.currentToken.position > 0
-
-        // When in a property chain or standalone, treat [0] as array index access
-        if ((isIndexStandalone || inPropertyChain) && nextToken?.type === 'NUM' as TokenType) {
-          // This is likely an index access like [0] or array.prop[0]
-          // Only treat as array construction if we're sure it's part of an array literal
-          const nextAfterNum = this.peekAhead(2)
-          if (nextAfterNum?.type === ',' as TokenType || nextAfterNum?.type === ']' as TokenType ||
-            nextToken?.type === 'IDENT' as TokenType) {
-          // If it looks like [0, ...] or just [0] or [true, false], it's an array construction
-            return this.parseArrayConstruction()
-          }
-
-          // Otherwise, proceed with normal index access handling
-          this.advance() // Consume the opening bracket
-
-          const numToken = this.currentToken
-          if (numToken?.type !== 'NUM' as TokenType) {
-            throw new ParseError(`Expected number after [, got ${numToken?.type ?? 'EOF'}`,
-              numToken?.position ?? -1)
-          }
-
-          const index = parseInt(numToken.value, 10)
-          this.advance() // Consume the number
-
-          // Make sure we have a closing bracket
-          this.expect(']')
-
-          return {
-            type: 'IndexAccess',
-            position: pos,
-            index
-          }
-        }
-
-        // Check for array literal - a construct like ["string1", "string2"] or [true, false]
-        if (nextToken?.type === 'STRING' as TokenType || nextToken?.type === 'NUM' as TokenType ||
-            nextToken?.type === ']' as TokenType || nextToken?.type === 'IDENT' as TokenType) {
-          // This is an array construction - either empty, with literals, or identifiers
-          return this.parseArrayConstruction()
-        }
-
-        // If it's a property access, it's also an array construction
-        if (nextToken?.type === 'DOT' as TokenType) {
-          return this.parseArrayConstruction()
-        }
-
-        // Check if it's a comma-separated list of indices
-        const secondToken = nextToken?.type === 'NUM' as TokenType ? this.peekAhead(2) : null
-        const hasComma = secondToken?.type === ',' as TokenType
-
-        // If it has a comma after a number, it's a comma-separated list of indices
-        if (hasComma) {
-          return this.parseArrayIndices()
-        }
-
-        // Check if the first token is a minus followed by a number, then comma
-        if (nextToken?.type === '-' as TokenType) {
-          const secondAfterMinus = this.peekAhead(2)
-          const thirdAfterMinus = this.peekAhead(3)
-          if (secondAfterMinus?.type === 'NUM' as TokenType && thirdAfterMinus?.type === ',' as TokenType) {
-            return this.parseArrayIndices()
-          }
-        }
-
-        // Otherwise process as regular index access or slice
-        this.advance() // Consume [
-
-        // When called directly without context, treat '.' as implicit
-        const isStandalone = !(this.basePos > 0)
-
-        // Handle index access
-        if (this.currentToken?.type === 'NUM' as TokenType) {
-          const numValue = parseInt(this.currentToken.value, 10)
-          this.advance() // Consume number
-
-          // Check if it's a slice (number:number) or just index access
-          if (this.currentToken?.type === ':' as TokenType) {
-            // It's a slice with start specified
-            this.advance() // Consume :
-            let end = null
-            if (this.currentToken?.type === 'NUM' as TokenType) {
-              end = parseInt(this.currentToken.value, 10)
-              this.advance()
-            }
-            this.expect(']')
-
-            // For tests we want to exclude the input property
-            const sliceNode: any = {
-              type: 'Slice',
-              position: pos,
-              start: numValue,
-              end
-            }
-
-            // Only add input when it's needed for execution
-            if (isStandalone) {
-              sliceNode.input = { type: 'Identity', position: 0 }
-            }
-
-            return sliceNode
-          } else {
-            // It's a regular index access
-            this.expect(']')
-            return {
-              type: 'IndexAccess',
-              position: pos,
-              index: numValue
-            }
-          }
-        } else if (this.currentToken?.type === ':' as TokenType) {
-          // It's a slice with implicit start [:n]
-          this.advance() // Consume :
-          let end = null
-          if (this.currentToken?.type === 'NUM' as TokenType) {
-            end = parseInt(this.currentToken.value, 10)
-            this.advance()
-          }
-          this.expect(']')
-
-          // For tests we want to exclude the input property
-          const sliceNode: any = {
-            type: 'Slice',
-            position: pos,
-            start: null,
-            end
-          }
-
-          return sliceNode
-        } else if (this.currentToken?.type === '-' as TokenType) {
-          // It's a negative index or slice
-          this.advance() // Consume -
-          const num = -parseInt(this.expect('NUM').value, 10)
-
-          if (this.currentToken?.type === ':' as TokenType) {
-            // It's a slice with negative start
-            this.advance() // Consume :
-            let end = null
-            if (this.currentToken?.type === 'NUM' as TokenType) {
-              end = parseInt(this.currentToken.value, 10)
-              this.advance()
-            }
-            this.expect(']')
-
-            // For tests we want to exclude the input property
-            const sliceNode: any = {
-              type: 'Slice',
-              position: pos,
-              start: num,
-              end
-            }
-
-            return sliceNode
-          } else {
-            // It's a negative index
-            this.expect(']')
-            return {
-              type: 'IndexAccess',
-              position: pos,
-              index: num
-            }
-          }
-        }
-
-        // If we got here, it's an invalid token sequence
-        throw new ParseError(
-          `Expected number, minus, or colon after [, got ${this.currentToken?.type ?? 'EOF'}`,
-          this.currentToken?.position ?? -1
-        )
+        return this.parseArrayConstruction()
       }
 
       case '{': {
