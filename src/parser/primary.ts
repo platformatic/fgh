@@ -320,10 +320,7 @@ export function parsePrimary (parser: Parser): ASTNode {
       const pos = parser.basePos === 0 ? parser.currentToken.position : parser.basePos
 
       // Peek at the next token to determine what type of construct parser is
-      const nextToken = parser.lexer.nextToken()
-      if (nextToken) {
-        (parser.lexer as any).position -= nextToken.value?.length || 0
-      }
+      const nextToken = parser.peekAhead(1)
 
       // Different handling based on context
       const isIndexStandalone = !(parser.basePos > 0)
