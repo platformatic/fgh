@@ -8,31 +8,31 @@ import { tmpdir } from 'node:os'
 import { query } from '../src/fgh.ts'
 
 // Helper function to create a temporary file with JSON content
-function createTempJsonFile(jsonContent: unknown): string {
+function createTempJsonFile (jsonContent: unknown): string {
   const tmpDir = join(tmpdir(), 'fgh-tests')
-  
+
   // Create temp directory if it doesn't exist
   if (!existsSync(tmpDir)) {
     mkdirSync(tmpDir, { recursive: true })
   }
-  
+
   const tmpFile = join(tmpDir, `test-${Date.now()}-${Math.random().toString(36).slice(2)}.json`)
   writeFileSync(tmpFile, JSON.stringify(jsonContent), 'utf8')
-  
+
   return tmpFile
 }
 
 // Run jq command and return the result as parsed JSON
-function runJq(expression: string, inputJson: unknown): unknown[] {
+function runJq (expression: string, inputJson: unknown): unknown[] {
   // Create a temp file with the input JSON
   const tmpFile = createTempJsonFile(inputJson)
-  
+
   try {
     // Run jq command with the given expression on the temp file
     const result = execSync(`jq -c '${expression}' ${tmpFile}`, {
       encoding: 'utf8'
     })
-    
+
     // Parse each line of the result as JSON
     return result
       .trim()
@@ -49,16 +49,16 @@ function runJq(expression: string, inputJson: unknown): unknown[] {
 }
 
 // Function to compare jq and fgh query results
-function compareJqAndFgh(expression: string, inputJson: unknown): { jqResult: unknown[], fghResult: unknown[], equal: boolean } {
+function compareJqAndFgh (expression: string, inputJson: unknown): { jqResult: unknown[], fghResult: unknown[], equal: boolean } {
   // Run jq
   const jqResult = runJq(expression, inputJson)
-  
+
   // Run fgh
   const fghResult = query(expression, inputJson)
-  
+
   // Compare results (deep equality)
   const equal = JSON.stringify(jqResult) === JSON.stringify(fghResult)
-  
+
   return { jqResult, fghResult, equal }
 }
 
@@ -122,14 +122,14 @@ const testCases = [
 for (const testCase of testCases) {
   test(`jq vs fgh: ${testCase.name}`, () => {
     const { jqResult, fghResult, equal } = compareJqAndFgh(testCase.expression, testCase.input)
-    
+
     if (!equal) {
       console.log('Expression:', testCase.expression)
       console.log('Input:', JSON.stringify(testCase.input, null, 2))
       console.log('jq result:', JSON.stringify(jqResult, null, 2))
       console.log('fgh result:', JSON.stringify(fghResult, null, 2))
     }
-    
+
     assert.strictEqual(equal, true, `Results should be identical for expression: ${testCase.expression}`)
   })
 }
@@ -162,17 +162,17 @@ test('jq vs fgh: Complex nested data', () => {
       active: true
     }
   }
-  
-  const expression = '.organization.departments[] | {dept: .name, employees: [.employees[].name], avgBudgetPerEmployee: (.budget / (.employees | length))}';
-  
+
+  const expression = '.organization.departments[] | {dept: .name, employees: [.employees[].name], avgBudgetPerEmployee: (.budget / (.employees | length))}'
+
   const { jqResult, fghResult, equal } = compareJqAndFgh(expression, complexData)
-  
+
   if (!equal) {
     console.log('Complex expression:', expression)
     console.log('jq result:', JSON.stringify(jqResult, null, 2))
     console.log('fgh result:', JSON.stringify(fghResult, null, 2))
   }
-  
+
   assert.strictEqual(equal, true, 'Results should be identical for complex nested data')
 })
 
@@ -185,17 +185,17 @@ test('jq vs fgh: Array at root', () => {
     { id: 4, name: 'David', score: 78 },
     { id: 5, name: 'Eve', score: 88 }
   ]
-  
+
   const expression = '.[] | select(.score >= 90) | {name, grade: "A"}'
-  
+
   const { jqResult, fghResult, equal } = compareJqAndFgh(expression, arrayData)
-  
+
   if (!equal) {
     console.log('Array root expression:', expression)
     console.log('jq result:', JSON.stringify(jqResult, null, 2))
     console.log('fgh result:', JSON.stringify(fghResult, null, 2))
   }
-  
+
   assert.strictEqual(equal, true, 'Results should be identical for array at root')
 })
 
@@ -210,33 +210,33 @@ test('jq vs fgh: Filtering and sorting', () => {
       { id: 5, name: 'Chair', price: 250, stock: 20, categories: ['furniture', 'office'] }
     ]
   }
-  
+
   // Find electronics with stock > 3, sort by price descending
   const expression = '.products | map(select(.categories[] == "electronics" and .stock > 3)) | sort_by(-.price) | [.[] | {name, price}]'
-  
+
   const { jqResult, fghResult, equal } = compareJqAndFgh(expression, data)
-  
+
   if (!equal) {
     console.log('Filtering expression:', expression)
     console.log('jq result:', JSON.stringify(jqResult, null, 2))
     console.log('fgh result:', JSON.stringify(fghResult, null, 2))
   }
-  
+
   assert.strictEqual(equal, true, 'Results should be identical for filtering and sorting')
 })
 
 // Special test for error handling differences
 test('jq vs fgh: Error tolerance comparison', () => {
   const data = { name: 'John', age: 30 }
-  
+
   // This might fail in different ways between jq and fgh
   const expression = '.nonexistent.property'
-  
+
   console.log('Note: This test compares error handling between jq and fgh')
   console.log('Results may differ due to how each tool handles missing properties')
-  
+
   const { jqResult, fghResult, equal } = compareJqAndFgh(expression, data)
-  
+
   // Just log the results without asserting - this is informational
   console.log('Expression:', expression)
   console.log('jq result:', JSON.stringify(jqResult, null, 2))

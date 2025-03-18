@@ -389,8 +389,22 @@ export type ASTNode =
   | LengthNode
   | HasKeyNode
 
+/**
+ * Interface for a parser that builds an Abstract Syntax Tree
+ */
 export interface Parser {
+  /**
+   * Parses the input expression and returns the resulting AST node
+   */
   parse(): ASTNode;
+
+  advance (): void;
+
+  expect (expectedType: TokenType): Token;
+
+  currentToken: Token | null;
+
+  peekAhead (count: number): Token | null;
 }
 
 /**
