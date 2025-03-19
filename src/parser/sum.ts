@@ -1,7 +1,5 @@
 import type { ASTNode, Parser } from './types.ts'
-import { parseArrayConstruction } from './array-construction.ts'
 import { parseProduct } from './product.ts'
-import { parseChain } from './chain.ts'
 
 export function parseSum (parser: Parser): ASTNode {
   const startPos = parser.currentToken?.position ?? 0

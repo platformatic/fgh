@@ -59,46 +59,46 @@ export function parsePrimary (parser: Parser): ASTNode {
       const paths: ASTNode[] = []
 
       parser.expect('(')
-      
+
       // Handle unary minus before the path expression
       if (parser.currentToken && parser.currentToken.type === '-') {
-        const minusPos = parser.currentToken.position;
-        parser.advance(); // Consume the minus
-        
+        const minusPos = parser.currentToken.position
+        parser.advance() // Consume the minus
+
         // Parse the expression after minus
-        const expr = parseExpression(parser);
-        
+        const expr = parseExpression(parser)
+
         // Create a unary minus node
         paths.push({
           type: 'UnaryMinus',
           position: minusPos,
           expression: expr
-        });
+        })
       } else {
         // Parse the first path expression normally
-        paths.push(parseExpression(parser));
+        paths.push(parseExpression(parser))
       }
 
       // Parse additional path expressions if present (comma separated)
       while (parser.currentToken && parser.currentToken.type === ',') {
         parser.advance() // Consume comma
-        
+
         // Handle unary minus for additional paths
         if (parser.currentToken && parser.currentToken.type === '-') {
-          const minusPos = parser.currentToken.position;
-          parser.advance(); // Consume the minus
-          
+          const minusPos = parser.currentToken.position
+          parser.advance() // Consume the minus
+
           // Parse the expression after minus
-          const expr = parseExpression(parser);
-          
+          const expr = parseExpression(parser)
+
           // Create a unary minus node
           paths.push({
             type: 'UnaryMinus',
             position: minusPos,
             expression: expr
-          });
+          })
         } else {
-          paths.push(parseExpression(parser));
+          paths.push(parseExpression(parser))
         }
       }
 
@@ -279,22 +279,22 @@ export function parsePrimary (parser: Parser): ASTNode {
         elseBranch
       }
     }
-    
+
     case '-': {
       // Handle unary minus operator
       const pos = parser.currentToken.position
       parser.advance() // Consume '-'
-      
+
       // Parse the expression after the minus
       const expression = parsePrimary(parser)
-      
+
       return {
         type: 'UnaryMinus',
         position: pos,
         expression
       }
     }
-    
+
     case 'DOT': {
       const dotPos = parser.basePos === 0 ? parser.currentToken.position : parser.basePos
       const dotValue = parser.currentToken.value

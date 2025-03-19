@@ -1,7 +1,6 @@
 import { ParseError } from '../types.ts'
 import type { ASTNode, Parser } from '../types.ts'
 import { parseExpression } from './expression.ts'
-import { parsePrimary } from './primary.ts'
 import { parseChain } from './chain.ts'
 
 export function parseObjectConstruction (parser: Parser): ASTNode {

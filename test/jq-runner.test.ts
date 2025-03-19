@@ -1,7 +1,6 @@
 import { test, describe, skip } from 'node:test'
 import assert from 'node:assert'
 import { execSync, spawnSync } from 'node:child_process'
-import { Readable } from 'node:stream'
 import { existsSync, mkdirSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { tmpdir } from 'node:os'
@@ -42,7 +41,7 @@ function runJq (expression: string, inputJson: unknown): unknown[] {
     console.warn('jq is not available, skipping jq execution')
     return []
   }
-  
+
   try {
     // Run jq command with the given expression on the temp file
     const result = execSync(`jq -c '${expression}' ${tmpFile}`, {

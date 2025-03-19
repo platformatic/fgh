@@ -25,7 +25,7 @@ export function parsePipe (parser: Parser): ASTNode {
 
 export function parseExpression (parser: Parser): ASTNode {
   const startPos = parser.currentToken?.position ?? 0
-  let left = parsePipe(parser)
+  const left = parsePipe(parser)
 
   // Handle comma operator for sequence expressions
   if (parser.currentToken && parser.currentToken.type === ',' as TokenType) {

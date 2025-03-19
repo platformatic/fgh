@@ -464,7 +464,7 @@ export class FGHCodeGenerator {
   private generateUnaryMinus (node: any): string {
     // Generate code for the expression to negate
     const expressionCode = this.generateNode(node.expression)
-    
+
     // Apply unary minus to the expression
     return `(-(${expressionCode}))`
   }
