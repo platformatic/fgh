@@ -144,6 +144,7 @@ export class FGHCodeGenerator {
         return this.generateLength(node)
       case 'HasKey':
         return this.generateHasKey(node)
+
       default: {
         throw new Error(`Unknown node type: ${node}`)
       }

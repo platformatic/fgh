@@ -6,6 +6,8 @@
  * These types form the foundation for type safety throughout the library.
  */
 
+import type { FGHLexer } from './lexer.ts'
+
 export type JSONValue =
   | string
   | number
@@ -389,8 +391,26 @@ export type ASTNode =
   | LengthNode
   | HasKeyNode
 
+/**
+ * Interface for a parser that builds an Abstract Syntax Tree
+ */
 export interface Parser {
+  /**
+   * Parses the input expression and returns the resulting AST node
+   */
   parse(): ASTNode;
+
+  advance (): void;
+
+  expect (expectedType: TokenType): Token;
+
+  currentToken: Token | null;
+
+  basePos: number;
+
+  lexer: FGHLexer;
+
+  peekAhead (count: number): Token | null;
 }
 
 /**

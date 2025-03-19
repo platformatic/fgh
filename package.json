@@ -55,6 +55,7 @@
     "@types/node": "^22.13.4",
     "eslint": "^9.20.1",
     "mitata": "^1.0.34",
-    "neostandard": "^0.12.1"
+    "neostandard": "^0.12.1",
+    "dequal": "^2.0.3"
   }
 }

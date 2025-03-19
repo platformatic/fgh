@@ -39,7 +39,8 @@ export const accessProperty = (
 
     if (isNullOrUndefined(obj)) {
       if (!optional) {
-        results.push(obj)
+        // For null or undefined inputs, return null (matching jq behavior for nonexistent property access)
+        results.push(null)
       }
       continue
     }
