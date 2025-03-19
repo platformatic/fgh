@@ -1,4 +1,4 @@
-import { test } from 'node:test'
+import { test, describe } from 'node:test'
 import assert from 'node:assert'
 import { execSync } from 'node:child_process'
 import { Readable } from 'node:stream'
@@ -118,128 +118,151 @@ const testCases = [
   }
 ]
 
-// Run tests for each test case
-for (const testCase of testCases) {
-  test(`jq vs fgh: ${testCase.name}`, () => {
-    const { jqResult, fghResult, equal } = compareJqAndFgh(testCase.expression, testCase.input)
+describe('jq vs fgh', () => {
+  // Run tests for each test case
+  for (const testCase of testCases) {
+    test(`jq vs fgh: ${testCase.name}`, () => {
+      const { jqResult, fghResult, equal } = compareJqAndFgh(testCase.expression, testCase.input)
+
+      if (!equal) {
+        console.log('Expression:', testCase.expression)
+        console.log('Input:', JSON.stringify(testCase.input, null, 2))
+        console.log('jq result:', JSON.stringify(jqResult, null, 2))
+        console.log('fgh result:', JSON.stringify(fghResult, null, 2))
+      }
+
+      assert.strictEqual(equal, true, `Results should be identical for expression: ${testCase.expression}`)
+    })
+  }
+
+  // Test with more complex nested data
+  test('jq vs fgh: Complex nested data', () => {
+    const complexData = {
+      organization: {
+        name: 'Acme Inc.',
+        founded: 1985,
+        departments: [
+          {
+            name: 'Engineering',
+            employees: [
+              { id: 1, name: 'Alice', role: 'Engineer', projects: ['Alpha', 'Beta'] },
+              { id: 2, name: 'Bob', role: 'Senior Engineer', projects: ['Alpha', 'Gamma'] },
+              { id: 3, name: 'Charlie', role: 'Lead Engineer', projects: ['Delta'] }
+            ],
+            budget: 1500000
+          },
+          {
+            name: 'Marketing',
+            employees: [
+              { id: 4, name: 'David', role: 'Marketing Specialist', campaigns: 3 },
+              { id: 5, name: 'Eve', role: 'Marketing Manager', campaigns: 7 }
+            ],
+            budget: 800000
+          }
+        ],
+        active: true
+      }
+    }
+
+    const expression = '.organization.departments[] | {dept: .name, employees: [.employees[].name], avgBudgetPerEmployee: (.budget / (.employees | length))}'
+
+    const { jqResult, fghResult, equal } = compareJqAndFgh(expression, complexData)
 
     if (!equal) {
-      console.log('Expression:', testCase.expression)
-      console.log('Input:', JSON.stringify(testCase.input, null, 2))
+      console.log('Complex expression:', expression)
       console.log('jq result:', JSON.stringify(jqResult, null, 2))
       console.log('fgh result:', JSON.stringify(fghResult, null, 2))
     }
 
-    assert.strictEqual(equal, true, `Results should be identical for expression: ${testCase.expression}`)
+    assert.strictEqual(equal, true, 'Results should be identical for complex nested data')
   })
-}
 
-// Test with more complex nested data
-test('jq vs fgh: Complex nested data', () => {
-  const complexData = {
-    organization: {
-      name: 'Acme Inc.',
-      founded: 1985,
-      departments: [
-        {
-          name: 'Engineering',
-          employees: [
-            { id: 1, name: 'Alice', role: 'Engineer', projects: ['Alpha', 'Beta'] },
-            { id: 2, name: 'Bob', role: 'Senior Engineer', projects: ['Alpha', 'Gamma'] },
-            { id: 3, name: 'Charlie', role: 'Lead Engineer', projects: ['Delta'] }
-          ],
-          budget: 1500000
-        },
-        {
-          name: 'Marketing',
-          employees: [
-            { id: 4, name: 'David', role: 'Marketing Specialist', campaigns: 3 },
-            { id: 5, name: 'Eve', role: 'Marketing Manager', campaigns: 7 }
-          ],
-          budget: 800000
-        }
-      ],
-      active: true
-    }
-  }
-
-  const expression = '.organization.departments[] | {dept: .name, employees: [.employees[].name], avgBudgetPerEmployee: (.budget / (.employees | length))}'
-
-  const { jqResult, fghResult, equal } = compareJqAndFgh(expression, complexData)
-
-  if (!equal) {
-    console.log('Complex expression:', expression)
-    console.log('jq result:', JSON.stringify(jqResult, null, 2))
-    console.log('fgh result:', JSON.stringify(fghResult, null, 2))
-  }
-
-  assert.strictEqual(equal, true, 'Results should be identical for complex nested data')
-})
-
-// Test with an array at the root
-test('jq vs fgh: Array at root', () => {
-  const arrayData = [
-    { id: 1, name: 'Alice', score: 95 },
-    { id: 2, name: 'Bob', score: 87 },
-    { id: 3, name: 'Charlie', score: 92 },
-    { id: 4, name: 'David', score: 78 },
-    { id: 5, name: 'Eve', score: 88 }
-  ]
-
-  const expression = '.[] | select(.score >= 90) | {name, grade: "A"}'
-
-  const { jqResult, fghResult, equal } = compareJqAndFgh(expression, arrayData)
-
-  if (!equal) {
-    console.log('Array root expression:', expression)
-    console.log('jq result:', JSON.stringify(jqResult, null, 2))
-    console.log('fgh result:', JSON.stringify(fghResult, null, 2))
-  }
-
-  assert.strictEqual(equal, true, 'Results should be identical for array at root')
-})
-
-// Test with complex filtering and sorting
-test('jq vs fgh: Filtering and sorting', () => {
-  const data = {
-    products: [
-      { id: 1, name: 'Laptop', price: 1200, stock: 5, categories: ['electronics', 'computers'] },
-      { id: 2, name: 'Phone', price: 800, stock: 15, categories: ['electronics', 'mobile'] },
-      { id: 3, name: 'Desk', price: 350, stock: 8, categories: ['furniture', 'office'] },
-      { id: 4, name: 'Monitor', price: 400, stock: 3, categories: ['electronics', 'computers'] },
-      { id: 5, name: 'Chair', price: 250, stock: 20, categories: ['furniture', 'office'] }
+  // Test with an array at the root
+  test('jq vs fgh: Array at root', () => {
+    const arrayData = [
+      { id: 1, name: 'Alice', score: 95 },
+      { id: 2, name: 'Bob', score: 87 },
+      { id: 3, name: 'Charlie', score: 92 },
+      { id: 4, name: 'David', score: 78 },
+      { id: 5, name: 'Eve', score: 88 }
     ]
-  }
 
-  // Find electronics with stock > 3, sort by price descending
-  const expression = '.products | map(select(.categories[] == "electronics" and .stock > 3)) | sort_by(-.price) | [.[] | {name, price}]'
+    const expression = '.[] | select(.score >= 90) | {name, grade: "A"}'
 
-  const { jqResult, fghResult, equal } = compareJqAndFgh(expression, data)
+    const { jqResult, fghResult, equal } = compareJqAndFgh(expression, arrayData)
 
-  if (!equal) {
-    console.log('Filtering expression:', expression)
-    console.log('jq result:', JSON.stringify(jqResult, null, 2))
-    console.log('fgh result:', JSON.stringify(fghResult, null, 2))
-  }
+    if (!equal) {
+      console.log('Array root expression:', expression)
+      console.log('jq result:', JSON.stringify(jqResult, null, 2))
+      console.log('fgh result:', JSON.stringify(fghResult, null, 2))
+    }
 
-  assert.strictEqual(equal, true, 'Results should be identical for filtering and sorting')
-})
+    assert.strictEqual(equal, true, 'Results should be identical for array at root')
+  })
 
-// Special test for error handling differences
-test('jq vs fgh: Error tolerance comparison', () => {
-  const data = { name: 'John', age: 30 }
+  // Test array concatenation with + operator
+  test('jq vs fgh: Array concatenation with + operator', () => {
+    const data = {
+      firstArray: [1, 2, 3],
+      secondArray: [4, 5, 6]
+    }
 
-  // This might fail in different ways between jq and fgh
-  const expression = '.nonexistent.property'
+    const expression = '.firstArray + .secondArray'
 
-  console.log('Note: This test compares error handling between jq and fgh')
-  console.log('Results may differ due to how each tool handles missing properties')
+    const { jqResult, fghResult, equal } = compareJqAndFgh(expression, data)
 
-  const { jqResult, fghResult, equal } = compareJqAndFgh(expression, data)
+    if (!equal) {
+      console.log('Array concatenation expression:', expression)
+      console.log('Input:', JSON.stringify(data, null, 2))
+      console.log('jq result:', JSON.stringify(jqResult, null, 2))
+      console.log('fgh result:', JSON.stringify(fghResult, null, 2))
+    }
 
-  // Just log the results without asserting - this is informational
-  console.log('Expression:', expression)
-  console.log('jq result:', JSON.stringify(jqResult, null, 2))
-  console.log('fgh result:', JSON.stringify(fghResult, null, 2))
-  console.log('Results match:', equal)
+    assert.strictEqual(equal, true, 'Results should be identical for array concatenation')
+  })
+
+  // Test with complex filtering and sorting
+  test('jq vs fgh: Filtering and sorting', () => {
+    const data = {
+      products: [
+        { id: 1, name: 'Laptop', price: 1200, stock: 5, categories: ['electronics', 'computers'] },
+        { id: 2, name: 'Phone', price: 800, stock: 15, categories: ['electronics', 'mobile'] },
+        { id: 3, name: 'Desk', price: 350, stock: 8, categories: ['furniture', 'office'] },
+        { id: 4, name: 'Monitor', price: 400, stock: 3, categories: ['electronics', 'computers'] },
+        { id: 5, name: 'Chair', price: 250, stock: 20, categories: ['furniture', 'office'] }
+      ]
+    }
+
+    // Find electronics with stock > 3, sort by price descending
+    const expression = '.products | map(select(.categories[] == "electronics" and .stock > 3)) | sort_by(-.price) | [.[] | {name, price}]'
+
+    const { jqResult, fghResult, equal } = compareJqAndFgh(expression, data)
+
+    if (!equal) {
+      console.log('Filtering expression:', expression)
+      console.log('jq result:', JSON.stringify(jqResult, null, 2))
+      console.log('fgh result:', JSON.stringify(fghResult, null, 2))
+    }
+
+    assert.strictEqual(equal, true, 'Results should be identical for filtering and sorting')
+  })
+
+  // Test for error handling with nonexistent properties
+  test('jq vs fgh: Error handling with nonexistent properties', () => {
+    const data = { name: 'John', age: 30 }
+
+    // Test accessing a nonexistent property
+    const expression = '.nonexistent.property'
+
+    const { jqResult, fghResult, equal } = compareJqAndFgh(expression, data)
+
+    if (!equal) {
+      console.log('Expression:', expression)
+      console.log('Input:', JSON.stringify(data, null, 2))
+      console.log('jq result:', JSON.stringify(jqResult, null, 2))
+      console.log('fgh result:', JSON.stringify(fghResult, null, 2))
+    }
+
+    assert.strictEqual(equal, true, 'Results should be identical for nonexistent property access')
+  })
 })
