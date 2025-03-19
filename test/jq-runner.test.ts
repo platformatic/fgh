@@ -1,11 +1,21 @@
-import { test, describe } from 'node:test'
+import { test, describe, skip } from 'node:test'
 import assert from 'node:assert'
-import { execSync } from 'node:child_process'
+import { execSync, spawnSync } from 'node:child_process'
 import { Readable } from 'node:stream'
 import { existsSync, mkdirSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { tmpdir } from 'node:os'
 import { query } from '../src/fgh.ts'
+
+// Check if jq is available
+function isJqAvailable (): boolean {
+  try {
+    const result = spawnSync('jq', ['--version'], { stdio: 'ignore' })
+    return result.status === 0
+  } catch (error) {
+    return false
+  }
+}
 
 // Helper function to create a temporary file with JSON content
 function createTempJsonFile (jsonContent: unknown): string {
@@ -27,6 +37,12 @@ function runJq (expression: string, inputJson: unknown): unknown[] {
   // Create a temp file with the input JSON
   const tmpFile = createTempJsonFile(inputJson)
 
+  // Skip if jq is not available
+  if (!isJqAvailable()) {
+    console.warn('jq is not available, skipping jq execution')
+    return []
+  }
+  
   try {
     // Run jq command with the given expression on the temp file
     const result = execSync(`jq -c '${expression}' ${tmpFile}`, {
@@ -118,7 +134,14 @@ const testCases = [
   }
 ]
 
-describe('jq vs fgh', () => {
+// Use describe or skip based on jq availability
+const describeOrSkip = isJqAvailable() ? describe : skip
+
+describeOrSkip('jq vs fgh', () => {
+  // Log a message if tests are being skipped
+  if (!isJqAvailable()) {
+    console.log('Skipping jq comparison tests because jq is not available on this system.')
+  }
   // Run tests for each test case
   for (const testCase of testCases) {
     test(`jq vs fgh: ${testCase.name}`, () => {
