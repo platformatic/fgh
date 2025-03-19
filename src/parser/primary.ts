@@ -3,7 +3,6 @@ import type { ASTNode, Parser, TokenType } from '../types.ts'
 import { parseExpression } from './expression.ts'
 import { parseArrayConstruction } from './array-construction.ts'
 import { parseObjectConstruction } from './object-construction.ts'
-import { parseArrayIndices } from './array-indices.ts'
 
 export function parsePrimary (parser: Parser): ASTNode {
   if (!parser.currentToken) {
@@ -419,15 +418,6 @@ export function parsePrimary (parser: Parser): ASTNode {
       // If it's a property access, it's also an array construction
       if (nextToken?.type === 'DOT' as TokenType) {
         return parseArrayConstruction(parser)
-      }
-
-      // Check if it's a comma-separated list of indices
-      const secondToken = nextToken?.type === 'NUM' as TokenType ? parser.peekAhead(2) : null
-      const hasComma = secondToken?.type !== null && secondToken?.type.toString() === ','
-
-      // If it has a comma after a number, it's a comma-separated list of indices
-      if (hasComma) {
-        return parseArrayIndices(parser)
       }
 
       // Otherwise process as regular index access or slice
