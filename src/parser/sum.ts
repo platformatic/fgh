@@ -12,20 +12,7 @@ export function parseSum (parser: Parser): ASTNode {
     const operator = parser.currentToken.type
     parser.advance() // Consume the operator
 
-    // Special case for array literals after minus operator
-    if (operator === '-' as TokenType && parser.currentToken?.type === '[' as TokenType) {
-      const right = parseArrayConstruction(parser)
-      left = {
-        type: 'Difference',
-        position: startPos,
-        left,
-        right
-      }
-      continue
-    }
-
-    // Normal handling for other cases
-    const right = parseProduct(parser) // Changed from parseChain to parseProduct
+    const right = parseProduct(parser)
 
     left = {
       type: operator === '+' as TokenType ? 'Sum' : 'Difference',
