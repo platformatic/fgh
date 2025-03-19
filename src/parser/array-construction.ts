@@ -1,5 +1,5 @@
 import { ParseError } from '../types.ts'
-import type { ASTNode, Parser } from '../types.ts'
+import type { ASTNode, Parser, TokenType } from '../types.ts'
 import { parsePipe } from './expression.ts'
 
 export function parseArrayConstruction (parser: Parser): ASTNode {

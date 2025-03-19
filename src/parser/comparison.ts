@@ -1,4 +1,4 @@
-import type { ASTNode, Parser } from './types.ts'
+import type { ASTNode, Parser, TokenType } from '../types.ts'
 import { parseSum } from './sum.ts'
 
 export function parseComparison (parser: Parser): ASTNode {

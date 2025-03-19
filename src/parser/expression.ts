@@ -1,4 +1,4 @@
-import type { ASTNode, Parser } from './types.ts'
+import type { ASTNode, Parser, TokenType } from '../types.ts'
 import { parseLogical } from './logical.ts'
 
 export function parsePipe (parser: Parser): ASTNode {

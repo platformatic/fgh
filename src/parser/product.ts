@@ -1,4 +1,4 @@
-import type { ASTNode, Parser } from './types.ts'
+import type { ASTNode, Parser } from '../types.ts'
 import { parseChain } from './chain.ts'
 
 export function parseProduct (parser: Parser): ASTNode {

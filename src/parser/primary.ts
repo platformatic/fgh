@@ -1,8 +1,9 @@
 import { ParseError } from '../types.ts'
-import type { ASTNode, Parser } from '../types.ts'
+import type { ASTNode, Parser, TokenType } from '../types.ts'
 import { parseExpression } from './expression.ts'
 import { parseArrayConstruction } from './array-construction.ts'
 import { parseObjectConstruction } from './object-construction.ts'
+import { parseArrayIndices } from './array-indices.ts'
 
 export function parsePrimary (parser: Parser): ASTNode {
   if (!parser.currentToken) {
@@ -61,7 +62,7 @@ export function parsePrimary (parser: Parser): ASTNode {
       parser.expect('(')
 
       // Handle unary minus before the path expression
-      if (parser.currentToken && parser.currentToken.type === '-') {
+      if (parser.currentToken && parser.currentToken.type === ('-' as TokenType)) {
         const minusPos = parser.currentToken.position
         parser.advance() // Consume the minus
 
@@ -84,7 +85,7 @@ export function parsePrimary (parser: Parser): ASTNode {
         parser.advance() // Consume comma
 
         // Handle unary minus for additional paths
-        if (parser.currentToken && parser.currentToken.type === '-') {
+        if (parser.currentToken && parser.currentToken.type === ('-' as TokenType)) {
           const minusPos = parser.currentToken.position
           parser.advance() // Consume the minus
 
@@ -280,7 +281,7 @@ export function parsePrimary (parser: Parser): ASTNode {
       }
     }
 
-    case '-': {
+    case ('-' as TokenType): {
       // Handle unary minus operator
       const pos = parser.currentToken.position
       parser.advance() // Consume '-'
@@ -380,7 +381,7 @@ export function parsePrimary (parser: Parser): ASTNode {
         // This is likely an index access like [0] or array.prop[0]
         // Only treat as array construction if we're sure it's part of an array literal
         const nextAfterNum = parser.peekAhead(2)
-        if (nextAfterNum?.type === ',' as TokenType || nextAfterNum?.type === ']' as TokenType ||
+        if (nextAfterNum?.type === (',' as TokenType) || nextAfterNum?.type === (']' as TokenType) ||
             nextToken?.type === 'IDENT' as TokenType) {
           // If it looks like [0, ...] or just [0] or [true, false], it's an array construction
           return parseArrayConstruction(parser)
@@ -422,7 +423,7 @@ export function parsePrimary (parser: Parser): ASTNode {
 
       // Check if it's a comma-separated list of indices
       const secondToken = nextToken?.type === 'NUM' as TokenType ? parser.peekAhead(2) : null
-      const hasComma = secondToken?.type === ',' as TokenType
+      const hasComma = secondToken?.type !== null && secondToken?.type.toString() === ','
 
       // If it has a comma after a number, it's a comma-separated list of indices
       if (hasComma) {

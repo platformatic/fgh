@@ -12,8 +12,8 @@ import { FGHLexer } from './lexer.ts'
 import { parseExpression } from './parser/expression.ts'
 
 export class FGHParser {
-  private lexer: FGHLexer
-  private basePos: number = 0
+  lexer: FGHLexer
+  basePos: number = 0
 
   currentToken: Token | null = null
 
