@@ -86,7 +86,6 @@ test('has - with dynamic keys', () => {
     },
     property: 'age'
   }
-  console.log(JSON.stringify(data))
 
   // Check if object has the property stored in `.property`
   assert.deepStrictEqual(

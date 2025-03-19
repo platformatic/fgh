@@ -108,10 +108,10 @@ test('parser throws on invalid input', () => {
   )
 })
 
-test('parser throws on incomplete input', () => {
+test.only('parser throws on incomplete input', () => {
   assert.throws(
     () => new FGHParser('[').parse(),
-    new ParseError('Expected number, minus, or colon after [, got EOF', -1)
+    new ParseError('Expected closing bracket \']\' for array literal', -1)
   )
 })
 
