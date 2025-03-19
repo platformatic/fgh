@@ -44,6 +44,11 @@ export const accessProperty = (
       continue
     }
 
+    // Throw error if not an object or array (unless using optional access)
+    if (typeof obj !== 'object' && !optional) {
+      throw new Error(`Cannot index scalar with string: ${prop}`)
+    }
+
     const value = obj[prop]
 
     if (value !== undefined || !optional) {
@@ -62,9 +67,11 @@ export const accessProperty = (
  *
  * @param obj Array of arrays or objects to access elements from
  * @param idx The index to access (negative indices count from the end)
+ * @param optional Whether to use optional indexing (skip non-array/object values)
  * @returns Array of elements extracted at the specified indices
+ * @throws Error when attempting to index a scalar without optional flag
  */
-export const accessIndex = (obj: Array<any>, idx: number): any => {
+export const accessIndex = (obj: Array<any>, idx: number, optional = false): any => {
   const results: any[] = []
 
   for (const item of obj) {
@@ -73,6 +80,8 @@ export const accessIndex = (obj: Array<any>, idx: number): any => {
       results.push(item[index])
     } else if (typeof item === 'object' && item !== null) {
       results.push(Object.values(item)[idx])
+    } else if (!optional) {
+      throw new Error(`Cannot index scalar with number: ${idx}`)
     }
   }
 

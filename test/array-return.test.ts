@@ -44,9 +44,10 @@ describe('Array Return API', () => {
 
   it('should return an array containing undefined when result is undefined', () => {
     const gen = compile('.nonexistent[0]')
-    const result = gen({ something: 'else' })
 
-    assert.deepStrictEqual(result, [])
+    assert.throws(() => {
+      gen({ something: 'else' })
+    })
   })
 
   it('should return array of scalar values when using multiple expressions', () => {

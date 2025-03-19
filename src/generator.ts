@@ -165,12 +165,12 @@ export class FGHCodeGenerator {
     return `accessProperty(${input}, '${properties.join('.')}', ${optional})`
   }
 
-  private generateIndexAccess (node: IndexAccessNode): string {
+  private generateIndexAccess (node: IndexAccessNode, optional: boolean = false): string {
     if (node.input) {
       const inputCode = this.generateNode(node.input)
-      return `accessIndex(${inputCode}, ${node.index})`
+      return `accessIndex(${inputCode}, ${node.index}, ${optional})`
     }
-    return `accessIndex(input, ${node.index})`
+    return `accessIndex(input, ${node.index}, ${optional})`
   }
 
   private generateArrayIteration (node: ArrayIterationNode): string {
@@ -239,6 +239,8 @@ export class FGHCodeGenerator {
   private generateOptional (node: OptionalNode): string {
     if (node.expression.type === 'PropertyAccess') {
       return this.generatePropertyAccess(node.expression, true)
+    } else if (node.expression.type === 'IndexAccess') {
+      return this.generateIndexAccess(node.expression, true)
     }
     const exprCode = this.generateNode(node.expression)
     return `(isNullOrUndefined(input) ? undefined : ${exprCode})`
