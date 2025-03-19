@@ -460,8 +460,6 @@ export class FGHCodeGenerator {
     return `hasKey(input, ${keyCode})`
   }
 
-
-
   generate (ast: ASTNode): Function {
     const body = this.generateNode(ast)
 

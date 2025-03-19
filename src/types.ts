@@ -348,8 +348,6 @@ export interface HasKeyNode extends BaseNode {
   key: ASTNode;
 }
 
-
-
 export type ASTNode =
   | IdentityNode
   | PropertyAccessNode
