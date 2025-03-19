@@ -4,9 +4,9 @@ import { accessProperty, accessIndex, accessSlice, iterateArray } from '../../sr
 
 describe('Access Helper Functions', () => {
   describe('accessProperty', () => {
-    it('should return undefined for null or undefined objects', () => {
+    it('should return null for null or undefined objects', () => {
       assert.deepStrictEqual(accessProperty([null], 'prop'), [null])
-      assert.deepStrictEqual(accessProperty([undefined], 'prop'), [undefined])
+      assert.deepStrictEqual(accessProperty([undefined], 'prop'), [null])
     })
 
     it('should access top-level properties', () => {

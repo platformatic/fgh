@@ -11,9 +11,9 @@ test('safeQuery returns empty array for invalid expressions', () => {
   const invalidSyntaxResult = safeQuery('.name[', { name: 'John' })
   assert.deepStrictEqual(invalidSyntaxResult, [])
 
-  // Invalid property access - this actually returns [undefined] in the implementation
+  // Invalid property access - returns [null] to match jq behavior
   const invalidPropertyResult = safeQuery('.nonexistent.property', { name: 'John' })
-  assert.deepStrictEqual(invalidPropertyResult, [undefined])
+  assert.deepStrictEqual(invalidPropertyResult, [null])
 
   // Completely invalid expression
   const veryInvalidResult = safeQuery('this is not a valid expression', { name: 'John' })

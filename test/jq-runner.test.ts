@@ -5,6 +5,7 @@ import { existsSync, mkdirSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { tmpdir } from 'node:os'
 import { query } from '../src/fgh.ts'
+import { dequal } from 'dequal'
 
 // Check if jq is available
 function isJqAvailable (): boolean {
@@ -71,8 +72,8 @@ function compareJqAndFgh (expression: string, inputJson: unknown): { jqResult: u
   // Run fgh
   const fghResult = query(expression, inputJson)
 
-  // Compare results (deep equality)
-  const equal = JSON.stringify(jqResult) === JSON.stringify(fghResult)
+  // Compare results using dequal for deep equality
+  const equal = dequal(jqResult, fghResult)
 
   return { jqResult, fghResult, equal }
 }
