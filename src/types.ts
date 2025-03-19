@@ -121,7 +121,6 @@ export type NodeType =
   | 'Tonumber'
   | 'Length'
   | 'HasKey'
-  | 'UnaryMinus'
 
 export interface BaseNode {
   type: NodeType;
@@ -349,10 +348,7 @@ export interface HasKeyNode extends BaseNode {
   key: ASTNode;
 }
 
-export interface UnaryMinusNode extends BaseNode {
-  type: 'UnaryMinus';
-  expression: ASTNode;
-}
+
 
 export type ASTNode =
   | IdentityNode
@@ -396,7 +392,6 @@ export type ASTNode =
   | TonumberNode
   | LengthNode
   | HasKeyNode
-  | UnaryMinusNode
 
 /**
  * Interface for a parser that builds an Abstract Syntax Tree
