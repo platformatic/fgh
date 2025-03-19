@@ -4,12 +4,8 @@ import { parseExpression } from './expression.ts'
 import { parseChain } from './chain.ts'
 
 export function parseObjectConstruction (parser: Parser): ASTNode {
-  if (!parser.currentToken || parser.currentToken.type !== '{') {
-    throw new ParseError('Expected {', parser.currentToken?.position ?? -1)
-  }
-
   const pos = parser.basePos === 0 ? parser.currentToken.position : parser.basePos
-  parser.advance() // Consume {
+  parser.expect('{') // Consume {
 
   const fields: any[] = []
 
