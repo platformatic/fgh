@@ -1,6 +1,6 @@
 {
   "name": "fgh",
-  "version": "2.4.0",
+  "version": "2.4.1",
   "description": "A typescript implementation of the JQ-like query language",
   "main": "dist/fgh.js",
   "bin": {
