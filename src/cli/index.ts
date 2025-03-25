@@ -14,6 +14,7 @@ import { Readable } from 'node:stream'
 import { parseArgs } from 'node:util'
 import { compile } from '../fgh.ts'
 import type { QueryFunction } from '../types.ts'
+import esMain from 'es-main'
 
 interface CliOptions {
   input: Readable
@@ -77,7 +78,7 @@ export async function processJsonStream (options: CliOptions): Promise<void> {
 }
 
 // When run directly from command line
-if (process.argv[1] === new URL(import.meta.url).pathname) {
+if (esMain(import.meta)) {
   // Configure CLI options
   const options = {
     help: {
